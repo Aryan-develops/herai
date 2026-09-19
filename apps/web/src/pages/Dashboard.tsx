@@ -1,0 +1,187 @@
+import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
+import { Activity, Bot, CalendarPlus, Droplet, FileText, ListPlus, ShieldAlert, Sparkles } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
+import { api, type HealthReportRecord, type TimelineEvent } from "@/lib/api";
+import { AppShell } from "@/components/AppShell";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+
+export function Dashboard() {
+  const { user } = useAuth();
+  const [events, setEvents] = useState<TimelineEvent[] | null>(null);
+  const [reports, setReports] = useState<HealthReportRecord[]>([]);
+
+  useEffect(() => {
+    api.getTimeline().then(({ events }) => setEvents(events.slice(0, 4)));
+    api.listReports().then(({ reports }) => setReports(reports)).catch(() => {});
+  }, []);
+
+  const urgentReport = reports.find((r) => r.emergency);
+  const carePlanItems = reports
+    .filter((r) => !r.emergency && (r.questionsToAsk?.length || r.carePlan?.discuss_with_clinician?.length))
+    .slice(0, 2);
+
+  return (
+    <AppShell>
+      <div className="flex items-center gap-2 text-xs font-medium text-brand-600">
+        <Sparkles className="h-3.5 w-3.5" />
+        Phase 3 · Agentic AI core live
+      </div>
+      <h1 className="mt-2 font-display text-3xl font-medium text-ink-900">
+        Welcome, {user?.name?.split(" ")[0]}
+      </h1>
+      <p className="mt-1.5 max-w-xl text-ink-700/70">
+        Log how you're feeling and HERAI keeps the timeline. Ask a question and a pipeline of
+        specialist agents reasons over it step by step.
+      </p>
+
+      {urgentReport && (
+        <Link to={`/reports/${urgentReport._id}`} className="mt-6 flex items-center gap-3 rounded-2xl border border-red-300 bg-red-50 p-4 hover:bg-red-100">
+          <ShieldAlert className="h-5 w-5 shrink-0 text-red-600" />
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-semibold text-red-800">Urgent: {urgentReport.fileName}</p>
+            <p className="text-xs text-red-700">The Safety Agent flagged this report — tap to review.</p>
+          </div>
+        </Link>
+      )}
+
+      <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <Link to="/chat">
+          <Card className="group h-full transition-shadow hover:shadow-md">
+            <CardContent className="flex items-center gap-4 p-5">
+              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-brand-500 to-violet-500 text-white">
+                <Bot className="h-5 w-5" />
+              </span>
+              <div>
+                <h3 className="font-display font-semibold text-ink-900">Ask HERAI</h3>
+                <p className="text-sm text-ink-700/60">Agentic AI symptom guidance</p>
+              </div>
+            </CardContent>
+          </Card>
+        </Link>
+        <Link to="/reports">
+          <Card className="group h-full transition-shadow hover:shadow-md">
+            <CardContent className="flex items-center gap-4 p-5">
+              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-emerald-100 text-emerald-600">
+                <FileText className="h-5 w-5" />
+              </span>
+              <div>
+                <h3 className="font-display font-semibold text-ink-900">Reports</h3>
+                <p className="text-sm text-ink-700/60">Upload & analyze lab reports</p>
+              </div>
+            </CardContent>
+          </Card>
+        </Link>
+        <Link to="/log">
+          <Card className="group h-full transition-shadow hover:shadow-md">
+            <CardContent className="flex items-center gap-4 p-5">
+              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-violet-100 text-violet-600">
+                <CalendarPlus className="h-5 w-5" />
+              </span>
+              <div>
+                <h3 className="font-display font-semibold text-ink-900">Log an entry</h3>
+                <p className="text-sm text-ink-700/60">Symptom or cycle logging</p>
+              </div>
+            </CardContent>
+          </Card>
+        </Link>
+        <Link to="/timeline">
+          <Card className="group h-full transition-shadow hover:shadow-md">
+            <CardContent className="flex items-center gap-4 p-5">
+              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-brand-100 text-brand-600">
+                <ListPlus className="h-5 w-5" />
+              </span>
+              <div>
+                <h3 className="font-display font-semibold text-ink-900">View timeline</h3>
+                <p className="text-sm text-ink-700/60">Your full logged history</p>
+              </div>
+            </CardContent>
+          </Card>
+        </Link>
+      </div>
+
+      <div className="mt-10">
+        <div className="flex items-center justify-between">
+          <h2 className="font-display text-lg font-semibold text-ink-900">Recent activity</h2>
+          <Link to="/timeline" className="text-sm font-medium text-brand-600 hover:underline">
+            View all
+          </Link>
+        </div>
+
+        {events === null && <p className="mt-4 text-sm text-ink-700/60">Loading…</p>}
+
+        {events?.length === 0 && (
+          <div className="mt-4 rounded-2xl border border-dashed border-neutral-300 bg-white/60 p-8 text-center">
+            <p className="text-ink-700/70">Nothing logged yet — start your timeline.</p>
+            <Link to="/log" className="mt-3 inline-block">
+              <Button variant="outline" size="sm">
+                Log your first entry
+              </Button>
+            </Link>
+          </div>
+        )}
+
+        {events && events.length > 0 && (
+          <div className="mt-4 space-y-2">
+            {events.map((event) => (
+              <div
+                key={event.id}
+                className="flex items-center gap-3 rounded-xl border border-neutral-200 bg-white px-4 py-3"
+              >
+                <span
+                  className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${
+                    event.type === "cycle" ? "bg-brand-100 text-brand-600" : "bg-violet-100 text-violet-600"
+                  }`}
+                >
+                  {event.type === "cycle" ? <Droplet className="h-4 w-4" /> : <Activity className="h-4 w-4" />}
+                </span>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-medium text-ink-900">
+                    {event.type === "cycle"
+                      ? `${event.data.flow[0].toUpperCase()}${event.data.flow.slice(1)} flow`
+                      : event.data.symptoms.map((s) => s.name).join(", ")}
+                  </p>
+                  <p className="text-xs text-ink-700/50">
+                    {new Date(event.loggedAt).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" })}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {carePlanItems.length > 0 && (
+        <div className="mt-10">
+          <div className="flex items-center justify-between">
+            <h2 className="font-display text-lg font-semibold text-ink-900">Care plan updates</h2>
+            <Link to="/reports" className="text-sm font-medium text-brand-600 hover:underline">
+              View reports
+            </Link>
+          </div>
+          <p className="mt-1 text-sm text-ink-700/60">From your uploaded reports — discuss these at your next visit.</p>
+          <div className="mt-4 space-y-3">
+            {carePlanItems.map((r) => {
+              const items = (r.questionsToAsk?.length ? r.questionsToAsk : r.carePlan?.discuss_with_clinician) ?? [];
+              return (
+                <Link
+                  key={r._id}
+                  to={`/reports/${r._id}`}
+                  className="block rounded-xl border border-neutral-200 bg-white px-4 py-3 hover:border-brand-300"
+                >
+                  <p className="text-sm font-medium text-ink-900">{r.fileName}</p>
+                  <ul className="mt-1.5 space-y-1">
+                    {items.slice(0, 2).map((item, i) => (
+                      <li key={i} className="text-xs text-ink-700/70">• {item}</li>
+                    ))}
+                  </ul>
+                </Link>
+              );
+            })}
+          </div>
+        </div>
+      )}
+    </AppShell>
+  );
+}

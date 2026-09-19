@@ -1,0 +1,28 @@
+services:
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    restart: unless-stopped
+    ports:
+      - "4000:4000"
+    environment:
+      - PORT=4000
+    env_file:
+      - .env
+
+  ai-service:
+    build:
+      context: .
+      dockerfile: apps/ai-service/Dockerfile
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+
+# Note: this compose file is provided for anyone deploying with Docker
+# (e.g. production, or a teammate with Docker installed). Local dev does NOT
+# require Docker — `npm run dev` at the repo root starts everything. See
+# README.md. The database is Supabase (hosted Postgres) — no local `mongo`/
+# `postgres` service needed here.

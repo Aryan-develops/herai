@@ -1,0 +1,23 @@
+node_modules/
+dist/
+build/
+.env
+.env.local
+*.log
+# Dev-server capture files. They are not *.log and would otherwise be caught
+# by `git add .` — agent logs can contain user health data (see
+# LOG_HEALTH_DATA in .env.example).
+*-log.txt
+.dev-log.txt
+.ai-log.txt
+.DS_Store
+apps/api/uploads/
+
+# python
+.venv/
+__pycache__/
+*.pyc
+
+# editors
+.vscode/
+.idea/

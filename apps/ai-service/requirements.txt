@@ -1,0 +1,18 @@
+fastapi>=0.115.6
+uvicorn[standard]>=0.32.1
+pydantic>=2.10.3
+python-dotenv>=1.0.1
+python-multipart>=0.0.20
+pypdf>=5.1.0
+reportlab>=4.2.5
+pillow>=11.0.0
+pytesseract>=0.3.13
+
+# Real LLM providers (app/llm/*_provider.py). Not needed under DEMO_MODE=true
+# — the factory imports whichever one is selected, lazily.
+anthropic>=1.6.0
+google-genai>=2.24.0
+# Local ONNX embeddings (app/llm/embeddings.py). Anthropic serves no
+# embeddings API, and running them locally keeps per-query RAG cost at zero
+# and user health queries off third-party servers.
+fastembed>=0.8.0

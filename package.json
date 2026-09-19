@@ -1,0 +1,20 @@
+{
+  "name": "herai",
+  "private": true,
+  "version": "0.1.0",
+  "description": "HERAI - Agentic AI-Powered Multimodal Women's Health Intelligence & Personalized Care Platform (SIH 2026, USICT034)",
+  "workspaces": [
+    "apps/web",
+    "apps/api"
+  ],
+  "scripts": {
+    "dev": "concurrently -n API,WEB,AI -c green,cyan,magenta \"npm run dev -w apps/api\" \"npm run dev -w apps/web\" \"npm run dev:ai\"",
+    "dev:api": "npm run dev -w apps/api",
+    "dev:web": "npm run dev -w apps/web",
+    "dev:ai": "node apps/ai-service/run-dev.cjs",
+    "build": "npm run build -w apps/api && npm run build -w apps/web"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.0"
+  }
+}
