@@ -1,0 +1,7 @@
+{
+  "rewrites": [
+    { "source": "/api/:path*", "destination": "https://herai-api.vercel.app/api/:path*" },
+    { "source": "/ai/:path*", "destination": "https://herai-ai-service.onrender.com/:path*" },
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
+}
