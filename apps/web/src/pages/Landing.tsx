@@ -34,11 +34,6 @@ export function Landing() {
       </header>
 
       <main className="relative z-10 mx-auto max-w-5xl px-6 pt-20 pb-24 text-center">
-        <div className="animate-fade-up mx-auto mb-6 flex w-fit items-center gap-2 rounded-full border border-brand-200 bg-white/80 px-4 py-1.5 text-xs font-medium text-brand-700 shadow-sm">
-          <Sparkles className="h-3.5 w-3.5" />
-          Built for Smart India Hackathon 2026 · USICT034
-        </div>
-
         <h1 className="animate-fade-up font-display text-5xl leading-[1.1] font-medium tracking-tight text-ink-900 sm:text-6xl [animation-delay:80ms]">
           Understand your body with{" "}
           <span className="bg-gradient-to-r from-brand-600 via-brand-500 to-violet-500 bg-clip-text text-transparent">
