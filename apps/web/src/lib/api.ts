@@ -96,6 +96,8 @@ export interface AuthUser {
   onboardingComplete: boolean;
   /** Minors need a guardian's approval before any health data is processed. */
   consentStatus: ConsentStatus;
+  /** True for OAuth/passkey accounts until they've been asked their age. */
+  needsDateOfBirth: boolean;
 }
 
 export interface ConsentRequest {
@@ -225,6 +227,24 @@ export const api = {
     clearSession();
   },
   me: () => request<{ user: AuthUser }>("/auth/me"),
+  // Full page navigation, not fetch — the gateway 302s straight to the
+  // provider's consent screen, which fetch() can't follow cross-origin.
+  oauthUrl: (provider: "google") => `/api/auth/oauth/${provider}`,
+  exchangeOAuthCode: (code: string) =>
+    request<{ user: AuthUser; session: Session }>("/auth/oauth/callback", {
+      method: "POST",
+      body: JSON.stringify({ code }),
+    }).then((res) => {
+      setSession(res.session);
+      return res;
+    }),
+  submitDateOfBirth: (data: { dateOfBirth: string; name?: string; guardianEmail?: string; guardianName?: string }) =>
+    request<{ user: AuthUser }>("/auth/date-of-birth", { method: "POST", body: JSON.stringify(data) }),
+  // Passkey auth (lib/supabaseBrowser.ts) yields a Supabase session directly
+  // in the browser, with no gateway round-trip — this just hands it to the
+  // same local session store password/OAuth logins use, so every other call
+  // treats it identically from here on.
+  adoptSession: (session: Session) => setSession(session),
   // Permanent and irreversible: erases the account plus all health data.
   // Callers must confirm with the user before calling this.
   deleteAccount: async () => {

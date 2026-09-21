@@ -3,8 +3,13 @@ import { z } from "zod";
 import { REPORTS_BUCKET, createAuthClient, supabaseAdmin } from "../config/supabase.js";
 import { HttpError } from "../middleware/errorHandler.js";
 import type { AuthedRequest } from "../middleware/auth.js";
+import { env } from "../config/env.js";
 import { createConsentRequest } from "./consentController.js";
 import { ageFromDateOfBirth, isMinor } from "../utils/consent.js";
+
+// Providers Supabase is actually configured for. Widening this needs a
+// matching provider enabled in the Supabase dashboard, not just a code change.
+const OAUTH_PROVIDERS = new Set(["google"]);
 
 type ConsentStatus = "not_required" | "pending" | "granted" | "declined" | "withdrawn";
 
@@ -40,6 +45,9 @@ interface AuthPayload {
   email: string;
   onboardingComplete: boolean;
   consentStatus: ConsentStatus;
+  // OAuth and passkey sign-in create the account without ever asking for
+  // this — see requireDateOfBirth for why the gateway can't skip it.
+  needsDateOfBirth: boolean;
 }
 
 interface SessionPayload {
@@ -51,7 +59,7 @@ interface SessionPayload {
 async function loadAuthPayload(userId: string, email: string): Promise<AuthPayload> {
   const { data: profile, error } = await supabaseAdmin
     .from("profiles")
-    .select("name, onboarding_complete, consent_status")
+    .select("name, onboarding_complete, consent_status, date_of_birth")
     .eq("id", userId)
     .single();
 
@@ -65,6 +73,7 @@ async function loadAuthPayload(userId: string, email: string): Promise<AuthPaylo
     email,
     onboardingComplete: profile.onboarding_complete,
     consentStatus: profile.consent_status,
+    needsDateOfBirth: !profile.date_of_birth,
   };
 }
 
@@ -153,6 +162,122 @@ export async function login(req: AuthedRequest, res: Response) {
   };
 
   res.json({ user, session });
+}
+
+// Starts the Supabase OAuth authorization-code flow: redirect the browser
+// straight to the provider's consent screen. Supabase's own callback
+// exchanges the provider code, then bounces the browser to `redirectTo` with
+// a *Supabase* code in the query string, which the client hands to
+// oauthCallback below to actually get a session.
+export async function oauthStart(req: AuthedRequest, res: Response) {
+  const provider = req.params.provider?.toLowerCase();
+  if (!provider || !OAUTH_PROVIDERS.has(provider)) {
+    throw new HttpError(400, `Unsupported OAuth provider: ${req.params.provider}`);
+  }
+
+  const { data, error } = await createAuthClient().auth.signInWithOAuth({
+    // Cast is safe: membership was just checked against OAUTH_PROVIDERS.
+    provider: provider as "google",
+    options: { redirectTo: `${env.appBaseUrl}/oauth/callback` },
+  });
+
+  if (error || !data.url) {
+    throw new HttpError(500, "Failed to start OAuth sign-in");
+  }
+
+  res.redirect(data.url);
+}
+
+const oauthCallbackSchema = z.object({ code: z.string().min(1) });
+
+export async function oauthCallback(req: AuthedRequest, res: Response) {
+  const parsed = oauthCallbackSchema.safeParse(req.body);
+  if (!parsed.success) {
+    throw new HttpError(400, "Missing authorization code");
+  }
+
+  const { data, error } = await createAuthClient().auth.exchangeCodeForSession(parsed.data.code);
+  if (error || !data.session || !data.user) {
+    throw new HttpError(401, "OAuth sign-in failed — please try again");
+  }
+
+  const user = await loadAuthPayload(data.user.id, data.user.email ?? "");
+  const session: SessionPayload = {
+    accessToken: data.session.access_token,
+    refreshToken: data.session.refresh_token,
+    expiresAt: data.session.expires_at ?? null,
+  };
+
+  res.json({ user, session });
+}
+
+// OAuth and passkey sign-in never ask for date of birth, so the account lands
+// with needsDateOfBirth=true (see loadAuthPayload) until this runs. Deliberately
+// NOT gated by requireDateOfBirth itself — that would be a lock with no key.
+const dateOfBirthSchema = z
+  .object({
+    dateOfBirth: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Date of birth must be YYYY-MM-DD"),
+    // Passkey sign-up has no name at all (WebAuthn carries no profile info);
+    // OAuth already has one from the provider. Optional, only fills a blank.
+    name: z.string().min(1).max(120).optional(),
+    guardianEmail: z.string().email().optional(),
+    guardianName: z.string().min(1).max(120).optional(),
+  })
+  .refine((data) => !isMinor(data.dateOfBirth) || !!data.guardianEmail, {
+    message: "A parent or guardian's email is required for someone under 18",
+    path: ["guardianEmail"],
+  })
+  .refine((data) => ageFromDateOfBirth(data.dateOfBirth) >= 0 && ageFromDateOfBirth(data.dateOfBirth) < 120, {
+    message: "Please enter a valid date of birth",
+    path: ["dateOfBirth"],
+  });
+
+export async function submitDateOfBirth(req: AuthedRequest, res: Response) {
+  if (!req.userId || !req.userEmail) {
+    throw new HttpError(401, "Not authenticated");
+  }
+
+  const parsed = dateOfBirthSchema.safeParse(req.body);
+  if (!parsed.success) {
+    throw new HttpError(400, parsed.error.issues[0]?.message ?? "Invalid input");
+  }
+  const { dateOfBirth, name, guardianEmail, guardianName } = parsed.data;
+  const minor = isMinor(dateOfBirth);
+
+  const { data: existing } = await supabaseAdmin
+    .from("profiles")
+    .select("date_of_birth, name")
+    .eq("id", req.userId)
+    .single();
+
+  if (existing?.date_of_birth) {
+    throw new HttpError(409, "Date of birth is already on file");
+  }
+
+  const { error: updateError } = await supabaseAdmin
+    .from("profiles")
+    .update({
+      date_of_birth: dateOfBirth,
+      consent_status: minor ? "pending" : "not_required",
+      ...(name && !existing?.name ? { name } : {}),
+    })
+    .eq("id", req.userId);
+
+  if (updateError) {
+    throw new HttpError(500, "Failed to save date of birth");
+  }
+
+  if (minor) {
+    await createConsentRequest({
+      userId: req.userId,
+      minorName: name || existing?.name || "your child",
+      guardianEmail: guardianEmail!,
+      guardianName,
+    });
+  }
+
+  const user = await loadAuthPayload(req.userId, req.userEmail);
+  res.json({ user });
 }
 
 const refreshSchema = z.object({ refreshToken: z.string().min(1) });

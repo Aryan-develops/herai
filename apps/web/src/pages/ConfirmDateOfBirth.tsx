@@ -1,21 +1,23 @@
 import { useState, type FormEvent } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { CalendarDays, Lock, Mail, ShieldCheck, User } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { CalendarDays, Mail, ShieldCheck } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
-import { ApiError } from "@/lib/api";
+import { api, ApiError } from "@/lib/api";
 import { isMinor } from "@/lib/age";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { AuthLayout } from "@/components/AuthLayout";
-import { GoogleButton } from "@/components/GoogleButton";
 
-export function Register() {
-  const { register } = useAuth();
+/**
+ * OAuth and passkey sign-in create an account with no date of birth at all —
+ * see requireDateOfBirth on the gateway. This is the mandatory interstitial
+ * that collects it before anything else, so a minor can't reach health-data
+ * routes without the same parental-consent gate password signup already has.
+ */
+export function ConfirmDateOfBirth() {
+  const { refreshUser } = useAuth();
   const navigate = useNavigate();
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
   const [dateOfBirth, setDateOfBirth] = useState("");
   const [guardianEmail, setGuardianEmail] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -28,14 +30,11 @@ export function Register() {
     setError(null);
     setSubmitting(true);
     try {
-      const user = await register({
-        name,
-        email,
-        password,
+      const { user } = await api.submitDateOfBirth({
         dateOfBirth,
         guardianEmail: minor ? guardianEmail : undefined,
       });
-      // A minor can't reach the app until a guardian approves.
+      await refreshUser();
       navigate(user.consentStatus === "pending" ? "/consent-pending" : "/dashboard");
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Something went wrong");
@@ -45,53 +44,8 @@ export function Register() {
   }
 
   return (
-    <AuthLayout title="Create your account" subtitle="Set up HERAI in under a minute — no credit card, no clinic visit.">
-      <div className="mb-5">
-        <GoogleButton />
-      </div>
-      <div className="mb-5 flex items-center gap-3 text-xs text-ink-700/50">
-        <div className="h-px flex-1 bg-neutral-200" />
-        or sign up with email
-        <div className="h-px flex-1 bg-neutral-200" />
-      </div>
-
+    <AuthLayout title="One more thing" subtitle="We need your date of birth before HERAI can record any health information.">
       <form onSubmit={onSubmit} className="space-y-4">
-        <div className="space-y-1.5">
-          <Label htmlFor="name">Name</Label>
-          <Input
-            id="name"
-            required
-            icon={<User className="h-4 w-4" />}
-            placeholder="Jane Doe"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-          />
-        </div>
-        <div className="space-y-1.5">
-          <Label htmlFor="email">Email</Label>
-          <Input
-            id="email"
-            type="email"
-            required
-            icon={<Mail className="h-4 w-4" />}
-            placeholder="you@example.com"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-          />
-        </div>
-        <div className="space-y-1.5">
-          <Label htmlFor="password">Password</Label>
-          <Input
-            id="password"
-            type="password"
-            required
-            minLength={8}
-            icon={<Lock className="h-4 w-4" />}
-            placeholder="At least 8 characters"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
-        </div>
         <div className="space-y-1.5">
           <Label htmlFor="dateOfBirth">Date of birth</Label>
           <Input
@@ -129,19 +83,11 @@ export function Register() {
           </div>
         )}
 
-        {error && (
-          <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{error}</p>
-        )}
+        {error && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{error}</p>}
         <Button type="submit" size="lg" className="w-full" disabled={submitting}>
-          {submitting ? "Creating account…" : "Sign up"}
+          {submitting ? "Saving…" : "Continue"}
         </Button>
       </form>
-      <p className="mt-6 text-center text-sm text-ink-700/70">
-        Already have an account?{" "}
-        <Link to="/login" className="font-medium text-brand-600 hover:underline">
-          Log in
-        </Link>
-      </p>
     </AuthLayout>
   );
 }

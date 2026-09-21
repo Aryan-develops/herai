@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { Activity, Bot, CalendarPlus, Droplet, FileText, ListPlus, ShieldAlert, Sparkles } from "lucide-react";
+import { Activity, Bot, CalendarPlus, Droplet, Fingerprint, FileText, ListPlus, ShieldAlert, Sparkles } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
-import { api, type HealthReportRecord, type TimelineEvent } from "@/lib/api";
+import { api, ApiError, type HealthReportRecord, type TimelineEvent } from "@/lib/api";
+import { getSession } from "@/lib/session";
+import { registerPasskey } from "@/lib/passkey";
 import { AppShell } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -11,11 +13,27 @@ export function Dashboard() {
   const { user } = useAuth();
   const [events, setEvents] = useState<TimelineEvent[] | null>(null);
   const [reports, setReports] = useState<HealthReportRecord[]>([]);
+  const [passkeyStatus, setPasskeyStatus] = useState<"idle" | "working" | "done" | "error">("idle");
+  const [passkeyError, setPasskeyError] = useState<string | null>(null);
 
   useEffect(() => {
     api.getTimeline().then(({ events }) => setEvents(events.slice(0, 4)));
     api.listReports().then(({ reports }) => setReports(reports)).catch(() => {});
   }, []);
+
+  async function onSetUpPasskey() {
+    const session = getSession();
+    if (!session) return;
+    setPasskeyStatus("working");
+    setPasskeyError(null);
+    try {
+      await registerPasskey(session);
+      setPasskeyStatus("done");
+    } catch (err) {
+      setPasskeyError(err instanceof ApiError || err instanceof Error ? err.message : "Something went wrong");
+      setPasskeyStatus("error");
+    }
+  }
 
   const urgentReport = reports.find((r) => r.emergency);
   const carePlanItems = reports
@@ -35,6 +53,25 @@ export function Dashboard() {
         Log how you're feeling and HERAI keeps the timeline. Ask a question and a pipeline of
         specialist agents reasons over it step by step.
       </p>
+
+      {passkeyStatus !== "done" && (
+        <div className="mt-6 flex items-center justify-between gap-3 rounded-2xl border border-neutral-200 bg-white p-4">
+          <div className="flex items-center gap-3">
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-violet-100 text-violet-600">
+              <Fingerprint className="h-4.5 w-4.5" />
+            </span>
+            <div>
+              <p className="text-sm font-medium text-ink-900">Set up a passkey</p>
+              <p className="text-xs text-ink-700/60">
+                {passkeyStatus === "error" ? passkeyError : "Sign in faster next time, no password needed."}
+              </p>
+            </div>
+          </div>
+          <Button variant="outline" size="sm" onClick={onSetUpPasskey} disabled={passkeyStatus === "working"}>
+            {passkeyStatus === "working" ? "Setting up…" : "Set up"}
+          </Button>
+        </div>
+      )}
 
       {urgentReport && (
         <Link to={`/reports/${urgentReport._id}`} className="mt-6 flex items-center gap-3 rounded-2xl border border-red-300 bg-red-50 p-4 hover:bg-red-100">

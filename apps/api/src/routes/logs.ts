@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { requireAuth } from "../middleware/auth.js";
 import { requireConsent } from "../middleware/requireConsent.js";
+import { requireDateOfBirth } from "../middleware/requireDateOfBirth.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import {
   createCycleLog,
@@ -16,6 +17,7 @@ import {
 export const logsRouter = Router();
 
 logsRouter.use(requireAuth);
+logsRouter.use(requireDateOfBirth);
 logsRouter.use(requireConsent);
 
 logsRouter.post("/symptoms", asyncHandler(createSymptomLog));
