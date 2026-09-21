@@ -12,11 +12,16 @@ export async function loginWithPasskey(): Promise<{ session: Session }> {
   const { data: options, error: startError } = await supabaseBrowser.auth.passkey.startAuthentication();
   if (startError || !options) throw new Error(startError?.message ?? "Could not start passkey sign-in");
 
-  const credential = await startAuthentication({ optionsJSON: options.options });
+  // @simplewebauthn/browser and @supabase/auth-js each define their own
+  // WebAuthn JSON types — structurally near-identical (both implement the
+  // same WebAuthn spec JSON serialization) but not nominally assignable, so
+  // TS rejects passing one library's type into the other's function. The
+  // runtime values are the actual WebAuthn-spec JSON either way.
+  const credential = await startAuthentication({ optionsJSON: options.options as never });
 
   const { data, error } = await supabaseBrowser.auth.passkey.verifyAuthentication({
     challengeId: options.challenge_id,
-    credential,
+    credential: credential as never,
   });
   if (error || !data.session) throw new Error(error?.message ?? "Passkey sign-in failed");
 
@@ -40,11 +45,11 @@ export async function registerPasskey(session: Session): Promise<void> {
   const { data: options, error: startError } = await supabaseBrowser.auth.passkey.startRegistration();
   if (startError || !options) throw new Error(startError?.message ?? "Could not start passkey registration");
 
-  const credential = await startRegistration({ optionsJSON: options.options });
+  const credential = await startRegistration({ optionsJSON: options.options as never });
 
   const { error } = await supabaseBrowser.auth.passkey.verifyRegistration({
     challengeId: options.challenge_id,
-    credential,
+    credential: credential as never,
   });
   if (error) throw new Error(error.message ?? "Passkey registration failed");
 }
