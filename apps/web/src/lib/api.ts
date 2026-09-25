@@ -99,6 +99,7 @@ export interface AuthUser {
   /** True for OAuth/passkey accounts until they've been asked their age. */
   needsDateOfBirth: boolean;
   isProvider?: boolean;
+  isPartner?: boolean;
 }
 
 export interface ConsentRequest {
@@ -155,6 +156,10 @@ export interface CycleInsights {
   ovulationDate: string | null;
   fertileWindow: { start: string; end: string } | null;
   phase: "menstrual" | "follicular" | "ovulation" | "luteal" | null;
+  /** Finer overlay on `phase`: PMS window, or cramp-prone days. */
+  subPhase: "pms" | "cramps" | null;
+  daysUntilNextPeriod: number | null;
+  confidence: "high" | "medium" | "low";
   cycleHistory: { start: string; lengthDays: number }[];
   regularity: "regular" | "irregular" | "insufficient_data";
 }
@@ -316,6 +321,147 @@ export interface AgentExecutionRecord {
   createdAt: string;
 }
 
+// ---------------------------------------------------------------- moods, partners, payments, settings
+
+export type Mood = "great" | "good" | "okay" | "low" | "irritable" | "anxious" | "sad";
+export type Need = "space" | "hug" | "food" | "talk" | "rest";
+export type PhaseKey = "menstrual" | "cramps" | "follicular" | "ovulation" | "luteal" | "pms";
+export type DayPhase = "menstrual" | "follicular" | "ovulation" | "luteal" | "pms";
+export type Relationship = "partner" | "family" | "friend";
+export type Lang = "en" | "hi";
+
+export interface MoodLog {
+  id: string;
+  mood: Mood;
+  energy: number | null;
+  need: Need | null;
+  loggedAt: string;
+}
+
+export interface SharedScopes {
+  phase: boolean;
+  mood: boolean;
+  symptoms: boolean;
+  predictions: boolean;
+  comfort: boolean;
+  fertility: boolean;
+}
+
+export interface PartnerLink {
+  id: string;
+  firstName: string;
+  nickname: string | null;
+  relationship: Relationship;
+  status: "active" | "paused" | "revoked";
+  scopes: SharedScopes;
+  createdAt: string;
+}
+
+export type InviteDirection = "woman_invites_partner" | "partner_requests_woman";
+
+export interface InviteCreated {
+  invite: { id: string; direction: InviteDirection; relationship: Relationship; expiresAt: string };
+  code: string;
+  link: string;
+  emailSent: boolean;
+}
+
+export interface OpenInvite {
+  id: string;
+  direction: InviteDirection;
+  relationship: Relationship;
+  expiresAt: string;
+  createdAt: string;
+}
+
+export interface SubscriptionView {
+  state: "trialing" | "active" | "expired" | "none";
+  trialEndsAt: string | null;
+  currentPeriodEnd: string | null;
+  autopay: boolean;
+  paywallOn: boolean;
+  priceInr: number;
+  hasAccess: boolean;
+  daysLeft: number | null;
+}
+
+export interface WomanCard {
+  linkId: string;
+  firstName: string;
+  relationship: Relationship;
+  available: boolean;
+  phaseKey?: PhaseKey | null;
+  cycleDay?: number | null;
+  mood?: Mood | null;
+}
+
+export interface PartnerGuidance {
+  key: string;
+  phaseKey: PhaseKey;
+  title: string;
+  blurb: string;
+  do: string[];
+  say: string[];
+  avoid: string[];
+  moodNote: string | null;
+  need: { title: string; text: string } | null;
+  tasks: { id: string; text: string }[];
+  lesson: string;
+  disclaimer: string;
+  clinicianNote: string;
+  source: "curated" | "ai";
+}
+
+export interface WomanSummary {
+  available: true;
+  link: { id: string; firstName: string; relationship: Relationship; since: string };
+  phase: {
+    key: PhaseKey | null;
+    cycleDay: number | null;
+    cycleLengthDays: number;
+    daysUntilNextPeriod: number | null;
+    nextPeriodStart: string | null;
+    confidence: "high" | "medium" | "low";
+    estimated: boolean;
+  };
+  mood: { mood: Mood; energy: number | null; need: Need | null; at: string } | null;
+  symptoms: string[] | null;
+  comfort: string[] | null;
+  fertility: { window: { start: string; end: string }; ovulationDate: string | null } | null;
+  guidance: PartnerGuidance | null;
+  calendar: { date: string; phase: DayPhase | null }[] | null;
+  events: { id: string; title: string; date: string; headsUp: "menstrual" | "pms" | null }[];
+  progress: { doneToday: string[]; streak: number };
+  subscription: SubscriptionView;
+}
+
+export type SummaryResponse = WomanSummary | { available: false; message: string };
+
+export interface PaymentPlans {
+  plan: { id: string; priceInr: number; period: string; trialDays: number };
+  testingPhase: boolean;
+  paymentsConnected: boolean;
+  methods: { id: string; label: string; providers: string[]; available: boolean }[];
+  upiApps: { id: string; label: string }[];
+  providers: { id: string; label: string; connected: boolean; autopay: boolean }[];
+  subscription: SubscriptionView;
+}
+
+export interface NotificationPrefs {
+  partnerDailyNudge: boolean;
+  nudgeHour: number;
+  emailEnabled: boolean;
+  pushEnabled: boolean;
+  language: Lang;
+}
+
+export interface MoodInsight {
+  ready: boolean;
+  needed?: number;
+  insight: { phase: DayPhase; message: string } | null;
+  message?: string;
+}
+
 export const api = {
   register: async (data: {
     name: string;
@@ -390,6 +536,67 @@ export const api = {
   getCycleInsights: () => request<{ insights: CycleInsights }>("/logs/cycles/insights"),
 
   getTimeline: () => request<{ events: TimelineEvent[] }>("/logs/timeline"),
+
+  createMoodLog: (data: { mood: Mood; energy?: number; need?: Need }) =>
+    request<{ mood: MoodLog }>("/logs/moods", { method: "POST", body: JSON.stringify(data) }),
+  listMoodLogs: (days = 30) => request<{ moods: MoodLog[] }>(`/logs/moods?days=${days}`),
+  moodInsights: () => request<MoodInsight>("/logs/moods/insights"),
+
+  // Partner mode
+  createInvite: (data: { direction?: InviteDirection; relationship?: Relationship; email?: string }) =>
+    request<InviteCreated>("/partner/invites", { method: "POST", body: JSON.stringify(data) }),
+  listInvites: () => request<{ invites: OpenInvite[] }>("/partner/invites"),
+  cancelInvite: (id: string) => request<void>(`/partner/invites/${id}`, { method: "DELETE" }),
+  previewInvite: (q: { code?: string; token?: string }) => {
+    const p = new URLSearchParams();
+    if (q.code) p.set("code", q.code);
+    if (q.token) p.set("token", q.token);
+    return request<{ inviterFirstName: string; direction: InviteDirection; relationship: Relationship }>(
+      `/partner/invites/preview?${p.toString()}`,
+    );
+  },
+  acceptInvite: (data: { code?: string; token?: string }) =>
+    request<{ linkId: string; role: "woman" | "partner" }>("/partner/invites/accept", { method: "POST", body: JSON.stringify(data) }),
+  listMyPartners: () => request<{ partners: PartnerLink[] }>("/partner/links"),
+  updatePartnerLink: (id: string, data: { status?: "active" | "paused"; scopes?: Partial<SharedScopes>; nickname?: string | null }) =>
+    request<{ partner: PartnerLink }>(`/partner/links/${id}`, { method: "PATCH", body: JSON.stringify(data) }),
+  revokePartnerLink: (id: string) => request<void>(`/partner/links/${id}`, { method: "DELETE" }),
+  partnerAccessLog: (id: string) => request<{ entries: { action: string; at: string }[] }>(`/partner/links/${id}/access-log`),
+  listWomen: (lang?: Lang) => request<{ women: WomanCard[]; subscription: SubscriptionView }>(`/partner/women${lang ? `?lang=${lang}` : ""}`),
+  womanSummary: (linkId: string, lang?: Lang) => request<SummaryResponse>(`/partner/women/${linkId}/summary${lang ? `?lang=${lang}` : ""}`),
+  partnerFeedback: (linkId: string, data: { guidanceKey: string; helpful: boolean }) =>
+    request<{ ok: true }>(`/partner/women/${linkId}/feedback`, { method: "POST", body: JSON.stringify(data) }),
+  partnerTask: (linkId: string, data: { taskId: string; done: boolean }) =>
+    request<{ doneToday: string[]; streak: number }>(`/partner/women/${linkId}/tasks`, { method: "POST", body: JSON.stringify(data) }),
+  partnerAddEvent: (linkId: string, data: { title: string; date: string }) =>
+    request<{ event: { id: string; title: string; date: string } }>(`/partner/women/${linkId}/events`, { method: "POST", body: JSON.stringify(data) }),
+  partnerDeleteEvent: (linkId: string, eventId: string) => request<void>(`/partner/women/${linkId}/events/${eventId}`, { method: "DELETE" }),
+  mySubscription: () => request<{ subscription: SubscriptionView }>("/partner/subscription"),
+
+  // Payments (interface only until a provider is connected)
+  paymentPlans: () => request<PaymentPlans>("/payments/plans"),
+  checkout: (data: { method: string; upiApp?: string; vpa?: string; autopay?: boolean }) =>
+    request<{ status: "not_connected" | "failed" | "requires_action" | "paid"; message?: string; redirectUrl?: string | null }>("/payments/checkout", {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
+  setAutopay: (enabled: boolean) => request<{ autopay: boolean; note: string }>("/payments/autopay", { method: "POST", body: JSON.stringify({ enabled }) }),
+  cancelSubscription: () => request<{ subscription: SubscriptionView }>("/payments/cancel", { method: "POST" }),
+  createGift: (months: number) => request<{ code: string; months: number; priceInr: number; free: boolean }>("/payments/gift/create", { method: "POST", body: JSON.stringify({ months }) }),
+  redeemGift: (code: string) => request<{ months: number; subscription: SubscriptionView }>("/payments/gift/redeem", { method: "POST", body: JSON.stringify({ code }) }),
+
+  // Settings
+  getSecurity: () => request<{ email: string | null; providers: string[]; hasPassword: boolean }>("/settings/security"),
+  changePassword: async (data: { currentPassword?: string; newPassword: string }) => {
+    const res = await request<{ session: Session }>("/settings/password", { method: "POST", body: JSON.stringify(data) });
+    setSession(res.session);
+  },
+  updateName: (name: string) => request<{ name: string }>("/settings/profile", { method: "PATCH", body: JSON.stringify({ name }) }),
+  getPrefs: () => request<{ prefs: NotificationPrefs }>("/settings/prefs"),
+  updatePrefs: (data: Partial<NotificationPrefs>) => request<{ prefs: NotificationPrefs }>("/settings/prefs", { method: "PUT", body: JSON.stringify(data) }),
+  getComfort: () => request<{ items: string[] }>("/settings/comfort"),
+  putComfort: (items: string[]) => request<{ items: string[] }>("/settings/comfort", { method: "PUT", body: JSON.stringify({ items }) }),
+  exportData: () => request<Record<string, unknown>>("/settings/export"),
 
   listProviders: (q: { type?: ProviderType; lat?: number; lng?: number; radiusKm?: number; city?: string; homeCollection?: boolean; teleconsult?: boolean; available?: boolean }) => {
     const p = new URLSearchParams();

@@ -20,6 +20,10 @@ import { ProviderDashboard } from "@/pages/ProviderDashboard";
 import { Chat } from "@/pages/Chat";
 import { ReportUpload } from "@/pages/ReportUpload";
 import { ReportDetail } from "@/pages/ReportDetail";
+import { Settings } from "@/pages/Settings";
+import { PartnerHome } from "@/pages/PartnerHome";
+import { PartnerUpgrade } from "@/pages/PartnerUpgrade";
+import { Join } from "@/pages/Join";
 
 function App() {
   return (
@@ -33,6 +37,8 @@ function App() {
         {/* Creates the session itself (Supabase OAuth code exchange) — must sit
             outside ProtectedRoute, which would otherwise bounce to /login first. */}
         <Route path="/oauth/callback" element={<OAuthCallback />} />
+        {/* Invite links work signed out: the page remembers the invite through sign-in. */}
+        <Route path="/join/:token" element={<Join />} />
         <Route element={<ProtectedRoute />}>
           <Route path="/confirm-dob" element={<ConfirmDateOfBirth />} />
           <Route path="/consent-pending" element={<ConsentPending />} />
@@ -49,6 +55,9 @@ function App() {
                 <Route path="/care/:id" element={<CareProviderPage />} />
                 <Route path="/provider" element={<ProviderDashboard />} />
                 <Route path="/chat" element={<Chat />} />
+                <Route path="/settings" element={<Settings />} />
+                <Route path="/partner" element={<PartnerHome />} />
+                <Route path="/partner/upgrade" element={<PartnerUpgrade />} />
                 <Route path="/reports" element={<ReportUpload />} />
                 <Route path="/reports/:id" element={<ReportDetail />} />
               </Route>

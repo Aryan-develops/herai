@@ -83,3 +83,47 @@ export async function registerPasskey(session: Session): Promise<void> {
   });
   if (error) throw new Error(error.message ?? "Passkey registration failed");
 }
+
+export interface PasskeyInfo {
+  id: string;
+  name: string;
+  createdAt: string;
+  lastUsedAt: string | null;
+}
+
+async function withSession(session: Session) {
+  await supabaseBrowser.auth.setSession({ access_token: session.accessToken, refresh_token: session.refreshToken });
+}
+
+export async function listPasskeys(session: Session): Promise<PasskeyInfo[]> {
+  await withSession(session);
+  const { data, error } = await supabaseBrowser.auth.passkey.list();
+  if (error || !data) throw new Error(error?.message ?? "Couldn't load your passkeys");
+  return data.map((p) => ({
+    id: p.id,
+    name: p.friendly_name || "Passkey",
+    createdAt: p.created_at,
+    lastUsedAt: p.last_used_at ?? null,
+  }));
+}
+
+export async function renamePasskey(session: Session, id: string, name: string): Promise<void> {
+  await withSession(session);
+  const { error } = await supabaseBrowser.auth.passkey.update({ passkeyId: id, friendlyName: name.slice(0, 120) });
+  if (error) throw new Error(error.message);
+}
+
+export async function deletePasskey(session: Session, id: string): Promise<void> {
+  await withSession(session);
+  const { error } = await supabaseBrowser.auth.passkey.delete({ passkeyId: id });
+  if (error) throw new Error(error.message);
+}
+
+/** True when this device has a built-in authenticator (Face ID, Touch ID, Windows Hello, Android biometrics). */
+export async function deviceSupportsBiometricPasskey(): Promise<boolean> {
+  try {
+    return !!window.PublicKeyCredential && (await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable());
+  } catch {
+    return false;
+  }
+}

@@ -50,6 +50,8 @@ interface AuthPayload {
   needsDateOfBirth: boolean;
   // True when this account owns a partner lab/doctor listing (shows the provider dashboard).
   isProvider: boolean;
+  // True when someone shares their cycle with this account (shows the Partner home).
+  isPartner: boolean;
 }
 
 interface SessionPayload {
@@ -70,6 +72,12 @@ async function loadAuthPayload(userId: string, email: string): Promise<AuthPaylo
   }
 
   const { data: owned } = await supabaseAdmin.from("care_providers").select("id").eq("owner_id", userId).maybeSingle();
+  const { data: following } = await supabaseAdmin
+    .from("partner_links")
+    .select("id")
+    .eq("partner_id", userId)
+    .neq("status", "revoked")
+    .limit(1);
 
   return {
     id: userId,
@@ -79,6 +87,7 @@ async function loadAuthPayload(userId: string, email: string): Promise<AuthPaylo
     consentStatus: profile.consent_status,
     needsDateOfBirth: !profile.date_of_birth,
     isProvider: !!owned,
+    isPartner: (following?.length ?? 0) > 0,
   };
 }
 

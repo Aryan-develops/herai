@@ -1,18 +1,18 @@
-import type { ReactNode } from "react";
-import { NavLink } from "react-router-dom";
-import { Bot, CalendarPlus, Droplet, FileText, HeartPulse, LayoutDashboard, ListPlus, LogOut, Store } from "lucide-react";
+import { useEffect, type ReactNode } from "react";
+import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
+import { Bot, CalendarPlus, Droplet, FileText, HeartHandshake, HeartPulse, LayoutDashboard, ListPlus, Settings, Store } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
-import { Button } from "@/components/ui/button";
 import { GetHelpButton } from "@/components/GetHelp";
+import { takePendingJoin } from "@/lib/join";
 import { cn } from "@/lib/utils";
 
 const DESKTOP_NAV = [
   { to: "/dashboard", label: "Home", icon: LayoutDashboard },
   { to: "/cycle", label: "Cycle", icon: Droplet },
-  { to: "/chat", label: "Ask HERAI", icon: Bot },
+  { to: "/chat", label: "Ask", icon: Bot },
   { to: "/reports", label: "Reports", icon: FileText },
   { to: "/timeline", label: "Timeline", icon: ListPlus },
-  { to: "/log", label: "Log entry", icon: CalendarPlus },
+  { to: "/log", label: "Log", icon: CalendarPlus },
 ];
 
 // Bottom bar is capped at five top-level destinations; Timeline stays
@@ -25,8 +25,28 @@ const MOBILE_NAV = [
   { to: "/reports", label: "Reports", icon: FileText },
 ];
 
+// People who follow someone get Partner in the bar; Reports moves to Home's cards to keep it at five.
+const MOBILE_NAV_PARTNER = [
+  { to: "/dashboard", label: "Home", icon: LayoutDashboard },
+  { to: "/partner", label: "Partner", icon: HeartHandshake },
+  { to: "/cycle", label: "Cycle", icon: Droplet },
+  { to: "/log", label: "Log", icon: CalendarPlus },
+  { to: "/chat", label: "Ask", icon: Bot },
+];
+
 export function AppShell({ children }: { children: ReactNode }) {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const { pathname } = useLocation();
+
+  // An invite link opened while signed out is resumed once they're in.
+  useEffect(() => {
+    const pending = takePendingJoin();
+    if (pending && !pathname.startsWith("/join")) navigate(`/join/${pending}`, { replace: true });
+  }, [pathname, navigate]);
+
+  const desktopNav = user?.isPartner ? [DESKTOP_NAV[0], { to: "/partner", label: "Partner", icon: HeartHandshake }, ...DESKTOP_NAV.slice(1)] : DESKTOP_NAV;
+  const mobileNav = user?.isPartner ? MOBILE_NAV_PARTNER : MOBILE_NAV;
   const initials = user?.name
     ?.split(" ")
     .map((p) => p[0])
@@ -46,20 +66,26 @@ export function AppShell({ children }: { children: ReactNode }) {
       <header className="sticky top-0 z-30 border-b border-neutral-200/80 bg-white/75 backdrop-blur-xl">
         <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3 sm:px-6">
           <div className="flex items-center gap-8">
-            <div className="flex items-center gap-2 font-display text-lg font-semibold text-ink-900">
+            <Link
+              to="/settings"
+              aria-label="HERAI settings"
+              title="Settings"
+              className="group flex items-center gap-2 rounded-xl font-display text-lg font-semibold text-ink-900 transition-opacity hover:opacity-80"
+            >
               <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-brand-500 to-violet-500 text-white shadow-soft">
                 <HeartPulse className="h-4 w-4" aria-hidden="true" />
               </span>
               HERAI
-            </div>
+              <Settings className="h-3.5 w-3.5 text-neutral-400 transition-transform duration-300 group-hover:rotate-90" aria-hidden="true" />
+            </Link>
             <nav aria-label="Main" className="hidden items-center gap-1 lg:flex">
-              {DESKTOP_NAV.map(({ to, label, icon: Icon }) => (
+              {desktopNav.map(({ to, label, icon: Icon }) => (
                 <NavLink
                   key={to}
                   to={to}
                   className={({ isActive }) =>
                     cn(
-                      "flex items-center gap-1.5 whitespace-nowrap rounded-xl px-3 py-2 text-sm font-medium transition-colors",
+                      "flex items-center gap-1.5 whitespace-nowrap rounded-xl px-2.5 py-2 text-sm font-medium transition-colors",
                       isActive
                         ? "bg-brand-50 text-brand-700"
                         : "text-neutral-500 hover:bg-neutral-100 hover:text-ink-900"
@@ -74,22 +100,24 @@ export function AppShell({ children }: { children: ReactNode }) {
           </div>
           <div className="flex items-center gap-1.5 sm:gap-2">
             {user?.isProvider && (
-              <NavLink to="/provider" className="hidden items-center gap-1.5 rounded-xl px-3 py-2 text-sm font-medium text-brand-700 hover:bg-brand-50 sm:flex">
-                <Store className="h-4 w-4" aria-hidden="true" />
-                Provider
+              <NavLink
+                to="/provider"
+                aria-label="Provider dashboard"
+                title="Provider dashboard"
+                className="flex h-10 w-10 items-center justify-center rounded-xl text-brand-700 hover:bg-brand-50"
+              >
+                <Store className="h-4.5 w-4.5" aria-hidden="true" />
               </NavLink>
             )}
             <GetHelpButton />
-            <span
-              aria-label={user?.name ? `Signed in as ${user.name}` : "Signed in"}
-              className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-brand-100 to-violet-100 text-xs font-semibold text-brand-700"
+            <Link
+              to="/settings"
+              aria-label={user?.name ? `Settings for ${user.name}` : "Settings"}
+              title="Settings"
+              className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-brand-100 to-violet-100 text-xs font-semibold text-brand-700 transition-shadow hover:shadow-soft"
             >
               {initials}
-            </span>
-            <Button variant="ghost" size="sm" onClick={() => logout()} aria-label="Log out">
-              <LogOut className="h-4 w-4" aria-hidden="true" />
-              <span className="hidden sm:inline">Log out</span>
-            </Button>
+            </Link>
           </div>
         </div>
       </header>
@@ -103,7 +131,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         className="fixed inset-x-0 bottom-0 z-30 border-t border-neutral-200/80 bg-white/90 pb-[env(safe-area-inset-bottom)] backdrop-blur-xl lg:hidden"
       >
         <ul className="mx-auto flex max-w-md items-stretch justify-around px-2">
-          {MOBILE_NAV.map(({ to, label, icon: Icon }) => (
+          {mobileNav.map(({ to, label, icon: Icon }) => (
             <li key={to} className="flex-1">
               <NavLink
                 to={to}

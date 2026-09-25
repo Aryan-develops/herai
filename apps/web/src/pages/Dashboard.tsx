@@ -1,12 +1,13 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { Activity, Bot, CalendarPlus, Droplet, Fingerprint, FileText, ListPlus, MapPin, ShieldAlert } from "lucide-react";
+import { Activity, Bot, CalendarPlus, Droplet, Fingerprint, FileText, HeartHandshake, ListPlus, MapPin, ShieldAlert } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { api, ApiError, type CycleInsights, type HealthReportRecord, type TimelineEvent } from "@/lib/api";
 import { getSession } from "@/lib/session";
 import { hasPasskey, registerPasskey } from "@/lib/passkey";
 import { AppShell } from "@/components/AppShell";
 import { CycleHero } from "@/components/CycleHero";
+import { MoodCheckIn } from "@/components/MoodCheckIn";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 
@@ -67,6 +68,23 @@ export function Dashboard() {
 
       <CycleHero insights={insights} loading={insightsLoading} />
 
+      <MoodCheckIn />
+
+      {user?.isPartner && (
+        <Link
+          to="/partner"
+          className="mt-6 flex items-center gap-4 rounded-2xl border border-brand-200 bg-brand-50/60 p-4 transition-colors hover:bg-brand-50"
+        >
+          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-brand-500 to-violet-500 text-white">
+            <HeartHandshake className="h-5 w-5" aria-hidden="true" />
+          </span>
+          <div>
+            <p className="font-display font-semibold text-ink-900">Partner home</p>
+            <p className="text-sm text-ink-700/70">See how she's doing today and small ways to help.</p>
+          </div>
+        </Link>
+      )}
+
       {passkeyStatus !== "done" && passkeyStatus !== "checking" && (
         <div className="mt-6 flex items-center justify-between gap-3 rounded-2xl border border-neutral-200 bg-white p-4">
           <div className="flex items-center gap-3">
@@ -76,11 +94,11 @@ export function Dashboard() {
             <div>
               <p className="text-sm font-medium text-ink-900">Set up a passkey</p>
               <p className="text-xs text-ink-700/60">
-                {passkeyStatus === "error" ? passkeyError : "Sign in faster next time, no password needed."}
+                {passkeyStatus === "error" ? passkeyError : "Sign in with Face ID or your fingerprint. No password needed."}
               </p>
             </div>
           </div>
-          <Button variant="outline" size="sm" onClick={onSetUpPasskey} disabled={passkeyStatus === "working"}>
+          <Button variant="outline" size="sm" onClick={onSetUpPasskey} disabled={passkeyStatus === "working"} aria-label="Set up a passkey with Face ID or fingerprint">
             {passkeyStatus === "working" ? "Setting up…" : "Set up"}
           </Button>
         </div>
@@ -105,7 +123,7 @@ export function Dashboard() {
               </span>
               <div>
                 <h3 className="font-display font-semibold text-ink-900">Ask HERAI</h3>
-                <p className="text-sm text-ink-700/60">Agentic AI symptom guidance</p>
+                <p className="text-sm text-ink-700/60">Ask about symptoms and your cycle</p>
               </div>
             </CardContent>
           </Card>

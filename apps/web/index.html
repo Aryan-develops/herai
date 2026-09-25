@@ -10,6 +10,18 @@
       href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,500&family=Inter:wght@400;500;600;700;800&display=swap"
       rel="stylesheet"
     />
+    <meta name="color-scheme" content="light dark" />
+    <script>
+      // Set the theme before first paint so a dark-mode user never sees a white flash.
+      try {
+        var t = localStorage.getItem("herai.theme");
+        var dark = t === "dark" || (t !== "light" && window.matchMedia("(prefers-color-scheme: dark)").matches);
+        if (dark) {
+          document.documentElement.classList.add("dark");
+          document.documentElement.style.colorScheme = "dark";
+        }
+      } catch (e) {}
+    </script>
     <title>HERAI — Women's Health Intelligence</title>
   </head>
   <body>
