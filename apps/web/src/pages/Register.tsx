@@ -1,14 +1,18 @@
 import { useState, type FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { CalendarDays, Lock, Mail, ShieldCheck, User } from "lucide-react";
+import { CalendarDays, Mail, User } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { ApiError } from "@/lib/api";
 import { isMinor } from "@/lib/age";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Alert } from "@/components/ui/alert";
+import { Spinner } from "@/components/ui/spinner";
+import { PasswordInput } from "@/components/ui/password-input";
 import { AuthLayout } from "@/components/AuthLayout";
 import { GoogleButton } from "@/components/GoogleButton";
+import { MinorConsentNotice } from "@/components/MinorConsentNotice";
 
 export function Register() {
   const { register } = useAuth();
@@ -38,18 +42,17 @@ export function Register() {
       // A minor can't reach the app until a guardian approves.
       navigate(user.consentStatus === "pending" ? "/consent-pending" : "/dashboard");
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Something went wrong");
+      setError(err instanceof ApiError ? err.message : "Something went wrong. Please try again.");
     } finally {
       setSubmitting(false);
     }
   }
 
   return (
-    <AuthLayout title="Create your account" subtitle="Set up HERAI in under a minute — no credit card, no clinic visit.">
-      <div className="mb-5">
-        <GoogleButton />
-      </div>
-      <div className="mb-5 flex items-center gap-3 text-xs text-ink-700/50">
+    <AuthLayout title="Create your account" subtitle="Free to start — set up in under a minute.">
+      <GoogleButton />
+
+      <div className="my-6 flex items-center gap-3 text-xs text-neutral-500" role="separator" aria-label="or">
         <div className="h-px flex-1 bg-neutral-200" />
         or sign up with email
         <div className="h-px flex-1 bg-neutral-200" />
@@ -61,8 +64,9 @@ export function Register() {
           <Input
             id="name"
             required
-            icon={<User className="h-4 w-4" />}
-            placeholder="Jane Doe"
+            autoComplete="name"
+            icon={<User className="h-4 w-4" aria-hidden="true" />}
+            placeholder="Your name"
             value={name}
             onChange={(e) => setName(e.target.value)}
           />
@@ -73,7 +77,8 @@ export function Register() {
             id="email"
             type="email"
             required
-            icon={<Mail className="h-4 w-4" />}
+            autoComplete="email"
+            icon={<Mail className="h-4 w-4" aria-hidden="true" />}
             placeholder="you@example.com"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
@@ -81,16 +86,19 @@ export function Register() {
         </div>
         <div className="space-y-1.5">
           <Label htmlFor="password">Password</Label>
-          <Input
+          <PasswordInput
             id="password"
-            type="password"
             required
             minLength={8}
-            icon={<Lock className="h-4 w-4" />}
+            autoComplete="new-password"
             placeholder="At least 8 characters"
+            aria-describedby="password-hint"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
           />
+          <p id="password-hint" className="text-xs text-neutral-500">
+            Use 8 or more characters.
+          </p>
         </div>
         <div className="space-y-1.5">
           <Label htmlFor="dateOfBirth">Date of birth</Label>
@@ -98,47 +106,35 @@ export function Register() {
             id="dateOfBirth"
             type="date"
             required
+            autoComplete="bday"
             max={new Date().toISOString().slice(0, 10)}
-            icon={<CalendarDays className="h-4 w-4" />}
+            icon={<CalendarDays className="h-4 w-4" aria-hidden="true" />}
+            aria-describedby="dob-hint"
             value={dateOfBirth}
             onChange={(e) => setDateOfBirth(e.target.value)}
           />
+          <p id="dob-hint" className="text-xs text-neutral-500">
+            Used to keep the app safe for your age. Never shown to anyone else.
+          </p>
         </div>
 
-        {minor && (
-          <div className="space-y-3 rounded-xl border border-brand-200 bg-brand-50/60 p-4">
-            <div className="flex items-start gap-2.5 text-sm text-ink-800">
-              <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-brand-600" />
-              <p>
-                Since you're under 18, a parent or guardian has to approve your account before HERAI
-                can record any health information. We'll email them a link.
-              </p>
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="guardianEmail">Parent or guardian's email</Label>
-              <Input
-                id="guardianEmail"
-                type="email"
-                required
-                icon={<Mail className="h-4 w-4" />}
-                placeholder="parent@example.com"
-                value={guardianEmail}
-                onChange={(e) => setGuardianEmail(e.target.value)}
-              />
-            </div>
-          </div>
-        )}
+        {minor && <MinorConsentNotice value={guardianEmail} onChange={setGuardianEmail} />}
 
-        {error && (
-          <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{error}</p>
-        )}
+        {error && <Alert tone="error">{error}</Alert>}
+
         <Button type="submit" size="lg" className="w-full" disabled={submitting}>
-          {submitting ? "Creating account…" : "Sign up"}
+          {submitting && <Spinner />}
+          {submitting ? "Creating account…" : "Create account"}
         </Button>
+
+        <p className="text-center text-xs text-neutral-500">
+          By continuing you agree that HERAI provides health information, not medical diagnosis.
+        </p>
       </form>
-      <p className="mt-6 text-center text-sm text-ink-700/70">
+
+      <p className="mt-7 text-center text-sm text-ink-700/75">
         Already have an account?{" "}
-        <Link to="/login" className="font-medium text-brand-600 hover:underline">
+        <Link to="/login" className="font-semibold text-brand-600 hover:underline">
           Log in
         </Link>
       </p>

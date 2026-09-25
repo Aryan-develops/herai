@@ -6,7 +6,9 @@ export function TagInput({
   values,
   onChange,
   placeholder,
+  id,
 }: {
+  id?: string;
   values: string[];
   onChange: (values: string[]) => void;
   placeholder?: string;
@@ -33,6 +35,7 @@ export function TagInput({
   return (
     <div>
       <Input
+        id={id}
         value={draft}
         onChange={(e) => setDraft(e.target.value)}
         onKeyDown={onKeyDown}
@@ -47,8 +50,13 @@ export function TagInput({
               className="flex items-center gap-1 rounded-full bg-brand-50 px-2.5 py-1 text-xs font-medium text-brand-700"
             >
               {v}
-              <button type="button" onClick={() => onChange(values.filter((x) => x !== v))}>
-                <X className="h-3 w-3" />
+              <button
+                type="button"
+                aria-label={`Remove ${v}`}
+                className="cursor-pointer rounded-full p-0.5 hover:bg-brand-100"
+                onClick={() => onChange(values.filter((x) => x !== v))}
+              >
+                <X className="h-3 w-3" aria-hidden="true" />
               </button>
             </span>
           ))}

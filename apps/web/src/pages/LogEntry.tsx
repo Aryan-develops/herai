@@ -1,16 +1,32 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Plus, X } from "lucide-react";
+import { Droplet, Plus, Activity, X } from "lucide-react";
 import { api, ApiError, type CycleLog, type SymptomEntry } from "@/lib/api";
 import { AppShell } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent } from "@/components/ui/card";
+import { Alert } from "@/components/ui/alert";
+import { Spinner } from "@/components/ui/spinner";
+import { cn } from "@/lib/utils";
 
-const SEVERITY_LABEL = ["", "Mild", "Noticeable", "Moderate", "Severe", "Extreme"];
+const SEVERITY = [
+  { n: 1, label: "Mild" },
+  { n: 2, label: "Noticeable" },
+  { n: 3, label: "Moderate" },
+  { n: 4, label: "Severe" },
+  { n: 5, label: "Extreme" },
+];
+
+const QUICK_SYMPTOMS = ["Cramps", "Headache", "Fatigue", "Bloating", "Mood swings", "Nausea", "Back pain", "Cravings"];
+
+const FLOWS: { value: CycleLog["flow"]; label: string; drops: number }[] = [
+  { value: "spotting", label: "Spotting", drops: 1 },
+  { value: "light", label: "Light", drops: 1 },
+  { value: "medium", label: "Medium", drops: 2 },
+  { value: "heavy", label: "Heavy", drops: 3 },
+];
 
 export function LogEntry() {
   const navigate = useNavigate();
@@ -18,48 +34,57 @@ export function LogEntry() {
 
   return (
     <AppShell>
-      <h1 className="font-display text-2xl font-semibold text-ink-900">Log an entry</h1>
-      <p className="mt-1 text-ink-700/70">Keep your health timeline current.</p>
+      <h1 className="font-display text-2xl font-semibold text-ink-900 sm:text-3xl">Log an entry</h1>
+      <p className="mt-1.5 text-ink-700/75">It takes a few seconds and makes your insights sharper.</p>
 
-      <div className="mt-6 inline-flex rounded-xl bg-neutral-100 p-1">
-        <TabButton active={tab === "symptom"} onClick={() => setTab("symptom")}>
-          Symptom
+      <div role="tablist" aria-label="Entry type" className="mt-6 inline-flex rounded-2xl bg-neutral-100 p-1">
+        <TabButton id="symptom" active={tab === "symptom"} onClick={() => setTab("symptom")} icon={<Activity className="h-4 w-4" />}>
+          Symptoms
         </TabButton>
-        <TabButton active={tab === "cycle"} onClick={() => setTab("cycle")}>
-          Cycle
+        <TabButton id="cycle" active={tab === "cycle"} onClick={() => setTab("cycle")} icon={<Droplet className="h-4 w-4" />}>
+          Period
         </TabButton>
       </div>
 
-      <Card className="mt-4 max-w-xl">
-        <CardContent className="p-6">
-          {tab === "symptom" ? (
-            <SymptomForm onDone={() => navigate("/timeline")} />
-          ) : (
-            <CycleForm onDone={() => navigate("/timeline")} />
-          )}
-        </CardContent>
-      </Card>
+      <div
+        role="tabpanel"
+        id={`panel-${tab}`}
+        aria-labelledby={`tab-${tab}`}
+        className="mt-4 max-w-xl rounded-3xl border border-neutral-200 bg-white p-5 shadow-soft sm:p-7"
+      >
+        {tab === "symptom" ? <SymptomForm onDone={() => navigate("/timeline")} /> : <CycleForm onDone={() => navigate("/timeline")} />}
+      </div>
     </AppShell>
   );
 }
 
 function TabButton({
+  id,
   active,
   onClick,
+  icon,
   children,
 }: {
+  id: string;
   active: boolean;
   onClick: () => void;
+  icon: React.ReactNode;
   children: React.ReactNode;
 }) {
   return (
     <button
       type="button"
+      role="tab"
+      id={`tab-${id}`}
+      aria-selected={active}
+      aria-controls={`panel-${id}`}
       onClick={onClick}
-      className={`rounded-lg px-4 py-1.5 text-sm font-medium transition-colors ${
-        active ? "bg-white text-ink-900 shadow-sm" : "text-ink-700/60 hover:text-ink-900"
-      }`}
+      className={cn(
+        "flex min-h-10 cursor-pointer items-center gap-2 rounded-xl px-4 text-sm font-medium transition-all duration-200",
+        active ? "bg-white text-brand-700 shadow-soft" : "text-neutral-500 hover:text-ink-900"
+      )}
     >
+      <span aria-hidden="true">{icon}</span>
       {children}
     </button>
   );
@@ -73,74 +98,117 @@ function SymptomForm({ onDone }: { onDone: () => void }) {
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
-  function addEntry() {
-    const trimmed = name.trim();
+  function addEntry(symptom: string = name) {
+    const trimmed = symptom.trim();
     if (!trimmed) return;
-    setEntries((es) => [...es, { name: trimmed, severity }]);
+    setEntries((es) => [...es.filter((e) => e.name.toLowerCase() !== trimmed.toLowerCase()), { name: trimmed, severity }]);
     setName("");
-    setSeverity(3);
   }
 
   async function submit() {
-    if (entries.length === 0) {
-      setError("Add at least one symptom");
+    // Include a symptom typed but not yet added.
+    const pending = name.trim() ? [...entries, { name: name.trim(), severity }] : entries;
+    if (pending.length === 0) {
+      setError("Pick or type at least one symptom.");
       return;
     }
     setError(null);
     setSubmitting(true);
     try {
-      await api.createSymptomLog({ symptoms: entries, notes: notes || undefined });
+      await api.createSymptomLog({ symptoms: pending, notes: notes || undefined });
       onDone();
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Something went wrong");
+      setError(err instanceof ApiError ? err.message : "Something went wrong. Please try again.");
     } finally {
       setSubmitting(false);
     }
   }
 
   return (
-    <div className="space-y-5">
-      <div className="space-y-1.5">
-        <Label>Symptom</Label>
-        <div className="flex gap-2">
-          <Input
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="e.g. cramps, headache"
-            onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), addEntry())}
-          />
-          <Select
-            className="w-36"
-            value={severity}
-            onChange={(e) => setSeverity(Number(e.target.value))}
-          >
-            {[1, 2, 3, 4, 5].map((n) => (
-              <option key={n} value={n}>
-                {n} — {SEVERITY_LABEL[n]}
-              </option>
-            ))}
-          </Select>
-          <Button type="button" variant="outline" onClick={addEntry}>
-            <Plus className="h-4 w-4" />
+    <div className="space-y-6">
+      <fieldset>
+        <legend className="text-sm font-medium text-ink-800">How strong is it?</legend>
+        <div className="mt-2 grid grid-cols-5 gap-1.5">
+          {SEVERITY.map(({ n, label }) => (
+            <button
+              key={n}
+              type="button"
+              aria-pressed={severity === n}
+              onClick={() => setSeverity(n)}
+              className={cn(
+                "flex min-h-14 cursor-pointer flex-col items-center justify-center rounded-2xl border text-xs font-medium transition-all duration-200 active:scale-95",
+                severity === n
+                  ? "border-brand-500 bg-brand-50 text-brand-700 shadow-soft"
+                  : "border-neutral-200 bg-white text-neutral-500 hover:border-brand-300"
+              )}
+            >
+              <span className="tabular font-display text-lg font-semibold">{n}</span>
+              <span className="hidden sm:block">{label}</span>
+            </button>
+          ))}
+        </div>
+        <p className="mt-1.5 text-xs text-neutral-500 sm:hidden">{SEVERITY[severity - 1].label}</p>
+      </fieldset>
+
+      <div>
+        <p className="text-sm font-medium text-ink-800">What are you feeling?</p>
+        <div className="mt-2 flex flex-wrap gap-2">
+          {QUICK_SYMPTOMS.map((s) => {
+            const selected = entries.some((e) => e.name.toLowerCase() === s.toLowerCase());
+            return (
+              <button
+                key={s}
+                type="button"
+                aria-pressed={selected}
+                onClick={() =>
+                  selected ? setEntries((es) => es.filter((e) => e.name.toLowerCase() !== s.toLowerCase())) : addEntry(s)
+                }
+                className={cn(
+                  "min-h-10 cursor-pointer rounded-full border px-3.5 text-sm font-medium transition-all duration-200 active:scale-95",
+                  selected
+                    ? "border-brand-500 bg-brand-500 text-white shadow-soft"
+                    : "border-neutral-200 bg-white text-ink-800 hover:border-brand-300 hover:bg-brand-50"
+                )}
+              >
+                {s}
+              </button>
+            );
+          })}
+        </div>
+
+        <div className="mt-3 flex gap-2">
+          <div className="flex-1">
+            <Label htmlFor="symptom-name" className="sr-only">
+              Other symptom
+            </Label>
+            <Input
+              id="symptom-name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Something else? Type it here"
+              onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), addEntry())}
+            />
+          </div>
+          <Button type="button" variant="outline" onClick={() => addEntry()} aria-label="Add symptom" className="w-11 px-0">
+            <Plus className="h-4 w-4" aria-hidden="true" />
           </Button>
         </div>
       </div>
 
       {entries.length > 0 && (
-        <ul className="space-y-2">
+        <ul className="space-y-2" aria-label="Symptoms to log">
           {entries.map((entry, i) => (
-            <li
-              key={`${entry.name}-${i}`}
-              className="flex items-center justify-between rounded-xl bg-neutral-50 px-3 py-2 text-sm"
-            >
+            <li key={`${entry.name}-${i}`} className="flex items-center justify-between rounded-2xl bg-brand-50/70 px-3.5 py-2.5 text-sm">
               <span className="font-medium text-ink-900">{entry.name}</span>
-              <span className="flex items-center gap-3 text-ink-700/60">
-                {SEVERITY_LABEL[entry.severity]}
+              <span className="flex items-center gap-2 text-ink-700/70">
+                {SEVERITY[entry.severity - 1].label}
                 <button
                   type="button"
+                  aria-label={`Remove ${entry.name}`}
+                  className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg hover:bg-brand-100"
                   onClick={() => setEntries((es) => es.filter((_, idx) => idx !== i))}
                 >
-                  <X className="h-3.5 w-3.5" />
+                  <X className="h-4 w-4" aria-hidden="true" />
                 </button>
               </span>
             </li>
@@ -149,14 +217,15 @@ function SymptomForm({ onDone }: { onDone: () => void }) {
       )}
 
       <div className="space-y-1.5">
-        <Label>Notes (optional)</Label>
-        <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Anything else worth noting…" />
+        <Label htmlFor="symptom-notes">Notes (optional)</Label>
+        <Textarea id="symptom-notes" value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Anything else worth noting…" />
       </div>
 
-      {error && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{error}</p>}
+      {error && <Alert tone="error">{error}</Alert>}
 
-      <Button className="w-full" onClick={submit} disabled={submitting}>
-        {submitting ? "Saving…" : "Log symptoms"}
+      <Button className="w-full" size="lg" onClick={submit} disabled={submitting}>
+        {submitting && <Spinner />}
+        {submitting ? "Saving…" : "Save symptoms"}
       </Button>
     </div>
   );
@@ -175,30 +244,51 @@ function CycleForm({ onDone }: { onDone: () => void }) {
       await api.createCycleLog({ flow, notes: notes || undefined });
       onDone();
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Something went wrong");
+      setError(err instanceof ApiError ? err.message : "Something went wrong. Please try again.");
     } finally {
       setSubmitting(false);
     }
   }
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-6">
+      <fieldset>
+        <legend className="text-sm font-medium text-ink-800">How's your flow today?</legend>
+        <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-4">
+          {FLOWS.map((f) => (
+            <button
+              key={f.value}
+              type="button"
+              aria-pressed={flow === f.value}
+              onClick={() => setFlow(f.value)}
+              className={cn(
+                "flex min-h-20 cursor-pointer flex-col items-center justify-center gap-1.5 rounded-2xl border text-sm font-medium transition-all duration-200 active:scale-95",
+                flow === f.value
+                  ? "border-brand-500 bg-brand-50 text-brand-700 shadow-soft"
+                  : "border-neutral-200 bg-white text-neutral-600 hover:border-brand-300"
+              )}
+            >
+              <span className="flex" aria-hidden="true">
+                {Array.from({ length: f.drops }).map((_, i) => (
+                  <Droplet key={i} className={cn("h-4 w-4", flow === f.value ? "fill-brand-500 text-brand-500" : "text-neutral-400")} />
+                ))}
+              </span>
+              {f.label}
+            </button>
+          ))}
+        </div>
+      </fieldset>
+
       <div className="space-y-1.5">
-        <Label>Flow</Label>
-        <Select value={flow} onChange={(e) => setFlow(e.target.value as CycleLog["flow"])}>
-          <option value="spotting">Spotting</option>
-          <option value="light">Light</option>
-          <option value="medium">Medium</option>
-          <option value="heavy">Heavy</option>
-        </Select>
+        <Label htmlFor="cycle-notes">Notes (optional)</Label>
+        <Textarea id="cycle-notes" value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Cramps, mood, anything worth noting…" />
       </div>
-      <div className="space-y-1.5">
-        <Label>Notes (optional)</Label>
-        <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Anything else worth noting…" />
-      </div>
-      {error && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{error}</p>}
-      <Button className="w-full" onClick={submit} disabled={submitting}>
-        {submitting ? "Saving…" : "Log cycle entry"}
+
+      {error && <Alert tone="error">{error}</Alert>}
+
+      <Button className="w-full" size="lg" onClick={submit} disabled={submitting}>
+        {submitting && <Spinner />}
+        {submitting ? "Saving…" : "Save period entry"}
       </Button>
     </div>
   );

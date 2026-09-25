@@ -1,9 +1,11 @@
 import { useEffect, useRef, useState, type DragEvent } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { CheckCircle2, FileText, Loader2, ShieldAlert, Trash2, Upload } from "lucide-react";
 import { api, type HealthProfile, type HealthReportRecord } from "@/lib/api";
 import { streamDocumentAnalysis, type DocPipelineEvent } from "@/lib/aiDocument";
 import { AppShell } from "@/components/AppShell";
+import { Button } from "@/components/ui/button";
+import { Alert } from "@/components/ui/alert";
 import { cn } from "@/lib/utils";
 
 const ALLOWED_TYPES = ["application/pdf", "image/jpeg", "image/png"];
@@ -139,10 +141,10 @@ export function ReportUpload() {
 
   return (
     <AppShell>
-      <h1 className="font-display text-2xl font-semibold text-ink-900">Lab reports</h1>
-      <p className="mt-1 max-w-xl text-ink-700/70">
-        Upload a lab report (PDF, JPG, or PNG) and the same agent pipeline that powers chat — Document
-        Intelligence, Women's Health, Risk Assessment, and the Safety gate — reasons over your actual values.
+      <h1 className="font-display text-2xl font-semibold text-ink-900 sm:text-3xl">Lab reports</h1>
+      <p className="mt-1.5 max-w-xl text-ink-700/75">
+        Upload a lab report and HERAI explains your values in plain language, flags anything worth a
+        clinician's attention, and suggests questions to ask.
       </p>
 
       <div
@@ -152,48 +154,52 @@ export function ReportUpload() {
         }}
         onDragLeave={() => setDragActive(false)}
         onDrop={onDrop}
-        onClick={() => !busy && inputRef.current?.click()}
         className={cn(
-          "mt-6 flex cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed p-10 text-center transition-colors",
-          dragActive ? "border-brand-400 bg-brand-50/50" : "border-neutral-300 bg-white/60",
+          "mt-6 rounded-3xl border-2 border-dashed p-8 text-center transition-all duration-200 sm:p-12",
+          dragActive ? "scale-[1.01] border-brand-400 bg-brand-50" : "border-brand-200 bg-white/70",
           busy && "pointer-events-none opacity-70"
         )}
       >
         <input
           ref={inputRef}
+          id="report-file"
           type="file"
           accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png"
-          className="hidden"
+          className="sr-only"
           onChange={(e) => {
             const file = e.target.files?.[0];
             if (file) handleFile(file);
             e.target.value = "";
           }}
         />
-        <Upload className="h-8 w-8 text-brand-500" />
-        <p className="mt-3 font-medium text-ink-900">Drag & drop a report here, or click to browse</p>
-        <p className="mt-1 text-xs text-ink-700/50">PDF, JPG, or PNG — up to 10MB</p>
+        <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-brand-100 to-violet-100 text-brand-600">
+          <Upload className="h-6 w-6" aria-hidden="true" />
+        </span>
+        <p className="mt-4 font-display text-lg font-semibold text-ink-900">Drop a report here</p>
+        <p className="mt-1 text-sm text-ink-700/70">PDF, JPG or PNG, up to 10MB</p>
+        <Button type="button" className="mt-5" onClick={() => inputRef.current?.click()} disabled={busy}>
+          Choose a file
+        </Button>
       </div>
 
       {error && (
-        <div className="mt-4 flex items-center gap-2 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-          <ShieldAlert className="h-4 w-4 shrink-0" />
+        <Alert tone="error" className="mt-4">
           {error}
-        </div>
+        </Alert>
       )}
 
       {busy && (
-        <div className="mt-4 rounded-2xl border border-neutral-200 bg-white p-4">
+        <div className="mt-4 rounded-3xl border border-neutral-200 bg-white p-5 shadow-soft" aria-live="polite">
           {phase === "uploading" && (
-            <div className="flex items-center gap-2 text-sm text-ink-700/60">
-              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            <div className="flex items-center gap-2 text-sm text-ink-700/70">
+              <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />
               Uploading…
             </div>
           )}
           {steps.length > 0 && <div className="space-y-1.5">{steps.map((s) => <StepRow key={s.agent} step={s} />)}</div>}
           {phase === "saving" && (
-            <div className="mt-2 flex items-center gap-2 text-sm text-ink-700/60">
-              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            <div className="mt-2 flex items-center gap-2 text-sm text-ink-700/70">
+              <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />
               Saving to your reports…
             </div>
           )}
@@ -201,60 +207,59 @@ export function ReportUpload() {
       )}
 
       <div className="mt-10">
-        <h2 className="font-display text-lg font-semibold text-ink-900">Your reports</h2>
+        <h2 className="font-display text-xl font-semibold text-ink-900">Your reports</h2>
 
-        {reports === null && <p className="mt-4 text-sm text-ink-700/60">Loading…</p>}
+        {reports === null && (
+          <div className="mt-4 space-y-2" aria-hidden="true">
+            <div className="skeleton h-16 w-full rounded-2xl" />
+            <div className="skeleton h-16 w-full rounded-2xl" />
+          </div>
+        )}
 
         {reports?.length === 0 && (
-          <div className="mt-4 rounded-2xl border border-dashed border-neutral-300 bg-white/60 p-8 text-center">
-            <p className="text-ink-700/70">No reports uploaded yet.</p>
+          <div className="mt-4 rounded-3xl border border-dashed border-neutral-300 bg-white/60 p-8 text-center">
+            <span className="mx-auto flex h-11 w-11 items-center justify-center rounded-2xl bg-neutral-100 text-neutral-500">
+              <FileText className="h-5 w-5" aria-hidden="true" />
+            </span>
+            <p className="mt-3 font-medium text-ink-900">No reports yet</p>
+            <p className="mt-1 text-sm text-ink-700/70">Your uploaded reports and their explanations will appear here.</p>
           </div>
         )}
 
         {reports && reports.length > 0 && (
-          <div className="mt-4 space-y-2">
+          <ul className="mt-4 space-y-2.5">
             {reports.map((r) => {
               const risk = r.riskAssessment?.risk_level;
               return (
-                <div
-                  key={r._id}
-                  role="button"
-                  tabIndex={0}
-                  onClick={() => navigate(`/reports/${r._id}`)}
-                  onKeyDown={(e) => e.key === "Enter" && navigate(`/reports/${r._id}`)}
-                  className="flex w-full cursor-pointer items-center gap-3 rounded-xl border border-neutral-200 bg-white px-4 py-3 text-left hover:border-brand-300"
-                >
-                  <span className={cn("flex h-9 w-9 shrink-0 items-center justify-center rounded-full", r.emergency ? "bg-red-100 text-red-600" : "bg-brand-100 text-brand-600")}>
-                    {r.emergency ? <ShieldAlert className="h-4 w-4" /> : <FileText className="h-4 w-4" />}
+                <li key={r._id} className="group relative flex items-center gap-3 rounded-2xl border border-neutral-200 bg-white p-3 pr-2 shadow-soft transition-all duration-200 hover:-translate-y-0.5 hover:border-brand-300 hover:shadow-lift sm:p-4">
+                  <span className={cn("flex h-11 w-11 shrink-0 items-center justify-center rounded-xl", r.emergency ? "bg-red-100 text-red-600" : "bg-brand-100 text-brand-600")}>
+                    {r.emergency ? <ShieldAlert className="h-5 w-5" aria-hidden="true" /> : <FileText className="h-5 w-5" aria-hidden="true" />}
                   </span>
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-medium text-ink-900">{r.fileName}</p>
-                    <p className="text-xs text-ink-700/50">
+                  <Link to={`/reports/${r._id}`} className="min-w-0 flex-1 after:absolute after:inset-0 after:rounded-2xl">
+                    <p className="truncate text-sm font-semibold text-ink-900">{r.fileName}</p>
+                    <p className="mt-0.5 text-xs text-ink-700/60">
                       {new Date(r.uploadedAt).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" })}
                     </p>
-                  </div>
+                  </Link>
                   {r.emergency ? (
-                    <span className="rounded-full bg-red-100 px-2.5 py-1 text-xs font-semibold text-red-700">Urgent</span>
+                    <span className="hidden rounded-full bg-red-100 px-2.5 py-1 text-xs font-semibold text-red-700 sm:inline">Urgent</span>
                   ) : risk ? (
-                    <span className={cn("rounded-full px-2.5 py-1 text-xs font-semibold capitalize", RISK_STYLES[risk] ?? "bg-neutral-100 text-neutral-700")}>
+                    <span className={cn("hidden rounded-full px-2.5 py-1 text-xs font-semibold capitalize sm:inline", RISK_STYLES[risk] ?? "bg-neutral-100 text-neutral-700")}>
                       {risk} risk
                     </span>
                   ) : null}
                   <button
                     type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleDelete(r._id, r.fileName);
-                    }}
-                    className="shrink-0 rounded-lg p-1.5 text-neutral-300 hover:bg-red-50 hover:text-red-500"
+                    onClick={() => handleDelete(r._id, r.fileName)}
+                    className="relative z-10 flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center rounded-xl text-neutral-400 transition-colors hover:bg-red-50 hover:text-red-600"
                     aria-label={`Delete ${r.fileName}`}
                   >
-                    <Trash2 className="h-4 w-4" />
+                    <Trash2 className="h-4 w-4" aria-hidden="true" />
                   </button>
-                </div>
+                </li>
               );
             })}
-          </div>
+          </ul>
         )}
       </div>
     </AppShell>

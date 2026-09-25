@@ -133,7 +133,7 @@ function ChipList({ items }: { items: string[] }) {
 
 function PlanColumn({ title, items }: { title: string; items: string[] }) {
   return (
-    <div className="rounded-xl border border-neutral-200 bg-neutral-50/60 p-3">
+    <div className="rounded-2xl border border-neutral-200 bg-neutral-50 p-3.5">
       <h4 className="text-xs font-semibold tracking-wide text-ink-700/60 uppercase">{title}</h4>
       <ul className="mt-2 space-y-1.5">
         {items.map((item, i) => (
@@ -148,8 +148,8 @@ function PlanColumn({ title, items }: { title: string; items: string[] }) {
 
 function EmergencyBanner({ data }: { data: EmergencyEvent["data"] }) {
   return (
-    <div className="flex gap-3 rounded-xl border border-red-300 bg-red-50 p-4">
-      <ShieldAlert className="h-5 w-5 shrink-0 text-red-600" />
+    <div role="alert" className="flex gap-3 rounded-2xl border border-red-300 bg-red-50 p-4">
+      <ShieldAlert className="h-5 w-5 shrink-0 text-red-600" aria-hidden="true" />
       <div>
         <p className="font-semibold text-red-800">Emergency care may be needed</p>
         <p className="mt-1 text-sm text-red-700">{data.message}</p>
@@ -221,7 +221,7 @@ function AssistantResult({ result, onFollowUp }: { result: FinalResult; onFollow
         <div className="grid gap-2 sm:grid-cols-3">
           <PlanColumn title="Today" items={result.care_plan.today} />
           <PlanColumn title="This week" items={result.care_plan.this_week} />
-          <PlanColumn title="Discuss with clinician" items={result.care_plan.discuss_with_clinician} />
+          <PlanColumn title="Ask your clinician" items={result.care_plan.discuss_with_clinician} />
         </div>
       )}
 
@@ -306,26 +306,33 @@ export function Chat() {
 
   return (
     <AppShell>
-      <h1 className="font-display text-2xl font-semibold text-ink-900">Ask HERAI</h1>
-      <p className="mt-1 max-w-xl text-ink-700/70">
-        Describe how you're feeling. A pipeline of specialist agents — intake, symptom analysis,
-        women's health intelligence, risk assessment, safety triage, and care planning — reasons
-        over it step by step.
-      </p>
+      <div className="flex items-center gap-3">
+        <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-brand-500 to-violet-500 text-white shadow-soft">
+          <Bot className="h-5 w-5" aria-hidden="true" />
+        </span>
+        <div>
+          <h1 className="font-display text-2xl font-semibold text-ink-900">Ask HERAI</h1>
+          <p className="text-sm text-ink-700/70">Specialist agents reason through it step by step.</p>
+        </div>
+      </div>
 
-      <div className="mt-6 space-y-4">
+      <div className="mt-6 space-y-5" aria-live="polite">
         {turns.length === 0 && (
-          <div className="rounded-2xl border border-dashed border-neutral-300 bg-white/60 p-6">
-            <p className="text-sm text-ink-700/70">Try one of these, or write your own:</p>
-            <div className="mt-3 flex flex-wrap gap-2">
+          <div className="rounded-3xl border border-brand-100 bg-gradient-to-br from-white to-brand-50/60 p-6 shadow-soft">
+            <p className="font-display text-lg font-semibold text-ink-900">How are you feeling?</p>
+            <p className="mt-1 text-sm text-ink-700/75">
+              Describe a symptom or a worry in your own words. Try one of these, or write your own:
+            </p>
+            <div className="mt-4 grid gap-2 sm:grid-cols-1">
               {SUGGESTIONS.map((s) => (
                 <button
                   key={s}
                   type="button"
                   onClick={() => send(s)}
-                  className="rounded-full border border-neutral-200 bg-white px-3 py-1.5 text-xs font-medium text-ink-700 hover:border-brand-300 hover:text-brand-700"
+                  className="flex cursor-pointer items-center justify-between gap-3 rounded-2xl border border-neutral-200 bg-white px-4 py-3 text-left text-sm font-medium text-ink-800 transition-all duration-200 hover:-translate-y-0.5 hover:border-brand-300 hover:shadow-soft"
                 >
                   {s}
+                  <Send className="h-4 w-4 shrink-0 text-brand-500" aria-hidden="true" />
                 </button>
               ))}
             </div>
@@ -333,25 +340,25 @@ export function Chat() {
         )}
 
         {turns.map((turn) => (
-          <div key={turn.id} className="space-y-2">
+          <div key={turn.id} className="space-y-3">
             <div className="flex justify-end">
-              <div className="flex max-w-[80%] items-start gap-2">
-                <div className="rounded-2xl rounded-tr-sm bg-ink-900 px-4 py-2.5 text-sm text-white">
+              <div className="flex max-w-[88%] items-start gap-2 sm:max-w-[80%]">
+                <div className="rounded-3xl rounded-tr-md bg-gradient-to-br from-brand-500 to-brand-600 px-4 py-2.5 text-sm text-white shadow-soft">
                   {turn.userMessage}
                 </div>
-                <span className="mt-1 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-neutral-200 text-neutral-600">
-                  <User2 className="h-3.5 w-3.5" />
+                <span className="mt-1 hidden h-7 w-7 shrink-0 items-center justify-center rounded-full bg-brand-100 text-brand-700 sm:flex">
+                  <User2 className="h-3.5 w-3.5" aria-hidden="true" />
                 </span>
               </div>
             </div>
 
             <div className="flex items-start gap-2">
-              <span className="mt-1 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-brand-500 to-violet-500 text-white">
-                <Bot className="h-3.5 w-3.5" />
+              <span className="mt-1 hidden h-7 w-7 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-brand-500 to-violet-500 text-white sm:flex">
+                <Bot className="h-3.5 w-3.5" aria-hidden="true" />
               </span>
-              <div className="w-full max-w-[85%] rounded-2xl rounded-tl-sm border border-neutral-200 bg-white p-4 shadow-sm">
+              <div className="w-full max-w-full rounded-3xl rounded-tl-md border border-neutral-200 bg-white p-4 shadow-soft sm:max-w-[90%] sm:p-5">
                 {turn.steps.length > 0 && (
-                  <div className="mb-3 space-y-1.5 border-b border-neutral-100 pb-3">
+                  <div className="mb-4 space-y-1.5 border-b border-neutral-100 pb-4">
                     {turn.steps.map((step) => (
                       <StepRow key={step.agent} step={step} />
                     ))}
@@ -361,8 +368,8 @@ export function Chat() {
                 {turn.emergency && <EmergencyBanner data={turn.emergency} />}
 
                 {turn.status === "error" && (
-                  <div className="flex items-center gap-2 text-sm text-red-600">
-                    <AlertTriangle className="h-4 w-4" />
+                  <div role="alert" className="flex items-center gap-2 text-sm text-red-700">
+                    <AlertTriangle className="h-4 w-4" aria-hidden="true" />
                     {turn.error}
                   </div>
                 )}
@@ -373,8 +380,8 @@ export function Chat() {
 
                 {turn.status === "streaming" && turn.steps.length === 0 && (
                   <div className="flex items-center gap-2 text-sm text-ink-700/60">
-                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                    Starting pipeline…
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />
+                    Starting…
                   </div>
                 )}
               </div>
@@ -384,24 +391,36 @@ export function Chat() {
         <div ref={bottomRef} />
       </div>
 
-      <form onSubmit={handleSubmit} className="sticky bottom-4 mt-6 flex items-end gap-2 rounded-2xl border border-neutral-200 bg-white p-2 shadow-lg">
-        <Textarea
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" && !e.shiftKey) {
-              e.preventDefault();
-              send(input);
-            }
-          }}
-          placeholder="e.g. I've been tired for two weeks"
-          className="min-h-11 flex-1 resize-none border-none shadow-none focus-visible:ring-0"
-          rows={1}
-        />
-        <Button type="submit" disabled={busy || !input.trim()} size="sm">
-          {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-        </Button>
-      </form>
+      <div className="sticky bottom-20 z-10 mt-6 lg:bottom-4">
+        <form
+          onSubmit={handleSubmit}
+          className="flex items-end gap-2 rounded-3xl border border-neutral-200 bg-white/95 p-2 shadow-lift backdrop-blur"
+        >
+          <label htmlFor="chat-input" className="sr-only">
+            Describe how you're feeling
+          </label>
+          <Textarea
+            id="chat-input"
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault();
+                send(input);
+              }
+            }}
+            placeholder="e.g. I've been tired for two weeks"
+            className="min-h-11 flex-1 resize-none border-none shadow-none focus-visible:ring-0"
+            rows={1}
+          />
+          <Button type="submit" disabled={busy || !input.trim()} aria-label="Send message" className="h-11 w-11 rounded-2xl px-0">
+            {busy ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : <Send className="h-4 w-4" aria-hidden="true" />}
+          </Button>
+        </form>
+        <p className="mt-2 text-center text-[11px] text-neutral-500">
+          HERAI shares health information, not diagnoses. In an emergency, contact local emergency services.
+        </p>
+      </div>
     </AppShell>
   );
 }

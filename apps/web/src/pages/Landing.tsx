@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
-import { ArrowRight, Droplet, HeartPulse, MessageCircleHeart, ShieldCheck, Sparkles, Users } from "lucide-react";
+import { ArrowRight, Droplet, HeartPulse, MessageCircleHeart, ShieldCheck, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { PartnerShowcase } from "@/components/PartnerShowcase";
 
 const PHASES = [
   { name: "Period", tone: "bg-brand-100 text-brand-700", dot: "bg-brand-500" },
@@ -110,25 +111,7 @@ export function Landing() {
           />
         </div>
 
-        <section
-          aria-labelledby="couples-heading"
-          className="animate-fade-up mt-16 rounded-3xl border border-brand-100 bg-gradient-to-br from-white to-brand-50 p-8 text-left shadow-soft [animation-delay:420ms] sm:p-10"
-        >
-          <div className="flex items-start gap-4">
-            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-brand-100 text-brand-600">
-              <Users className="h-5 w-5" aria-hidden="true" />
-            </span>
-            <div>
-              <h2 id="couples-heading" className="font-display text-2xl font-semibold text-ink-900">
-                Better together
-              </h2>
-              <p className="mt-2 max-w-2xl text-ink-700/80">
-                Coming soon: invite a partner to understand where you are in your cycle — and get simple,
-                thoughtful ideas for how to support you. You choose what's shared, and can stop any time.
-              </p>
-            </div>
-          </div>
-        </section>
+        <PartnerShowcase />
       </main>
 
       <footer className="relative z-10 border-t border-neutral-200 bg-white/60 py-8">

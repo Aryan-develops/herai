@@ -1,9 +1,10 @@
 import { useState } from "react";
-import { MailCheck, XCircle } from "lucide-react";
 import { AuthLayout } from "@/components/AuthLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Alert } from "@/components/ui/alert";
+import { Spinner } from "@/components/ui/spinner";
 import { api, ApiError } from "@/lib/api";
 import { useAuth } from "@/context/AuthContext";
 
@@ -42,23 +43,10 @@ export function ConsentPending() {
       }
     >
       <div className="space-y-6">
-        <div
-          className={
-            declined
-              ? "flex items-start gap-3 rounded-xl border border-neutral-200 bg-neutral-50 p-4 text-sm text-ink-700"
-              : "flex items-start gap-3 rounded-xl border border-brand-200 bg-brand-50/60 p-4 text-sm text-ink-800"
-          }
-        >
-          {declined ? (
-            <XCircle className="mt-0.5 h-4 w-4 shrink-0" />
-          ) : (
-            <MailCheck className="mt-0.5 h-4 w-4 shrink-0 text-brand-600" />
-          )}
-          <p>
-            Because you're under 18, HERAI needs a parent or guardian's permission before it can
-            record or analyse any health information. Nothing is processed until they approve.
-          </p>
-        </div>
+        <Alert tone={declined ? "warning" : "info"}>
+          Because you're under 18, HERAI needs a parent or guardian's permission before it can record or analyse
+          any health information. Nothing is processed until they approve.
+        </Alert>
 
         <form onSubmit={resend} className="space-y-3">
           <Label htmlFor="guardianEmail">Send to a different email</Label>
@@ -70,11 +58,12 @@ export function ConsentPending() {
             value={guardianEmail}
             onChange={(event) => setGuardianEmail(event.target.value)}
           />
-          <Button type="submit" className="w-full" disabled={busy}>
+          <Button type="submit" size="lg" className="w-full" disabled={busy}>
+            {busy && <Spinner />}
             {busy ? "Sending…" : "Send request"}
           </Button>
-          {sent && <p className="text-sm text-sage-700">Request sent. They'll get a link to approve.</p>}
-          {error && <p className="text-sm text-red-600">{error}</p>}
+          {sent && <Alert tone="success">Request sent. They'll get a link to approve.</Alert>}
+          {error && <Alert tone="error">{error}</Alert>}
         </form>
 
         <Button variant="ghost" className="w-full" onClick={() => logout()}>

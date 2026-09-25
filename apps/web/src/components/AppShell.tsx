@@ -51,14 +51,14 @@ export function AppShell({ children }: { children: ReactNode }) {
               </span>
               HERAI
             </div>
-            <nav aria-label="Main" className="hidden items-center gap-1 md:flex">
+            <nav aria-label="Main" className="hidden items-center gap-1 lg:flex">
               {DESKTOP_NAV.map(({ to, label, icon: Icon }) => (
                 <NavLink
                   key={to}
                   to={to}
                   className={({ isActive }) =>
                     cn(
-                      "flex items-center gap-1.5 rounded-xl px-3 py-2 text-sm font-medium transition-colors",
+                      "flex items-center gap-1.5 whitespace-nowrap rounded-xl px-3 py-2 text-sm font-medium transition-colors",
                       isActive
                         ? "bg-brand-50 text-brand-700"
                         : "text-neutral-500 hover:bg-neutral-100 hover:text-ink-900"
@@ -86,13 +86,13 @@ export function AppShell({ children }: { children: ReactNode }) {
         </div>
       </header>
 
-      <main id="main" className="mx-auto max-w-5xl px-4 pt-6 pb-28 sm:px-6 sm:pt-10 md:pb-12">
+      <main id="main" className="mx-auto max-w-5xl px-4 pt-6 pb-28 sm:px-6 sm:pt-10 lg:pb-12">
         {children}
       </main>
 
       <nav
         aria-label="Main"
-        className="fixed inset-x-0 bottom-0 z-30 border-t border-neutral-200/80 bg-white/90 pb-[env(safe-area-inset-bottom)] backdrop-blur-xl md:hidden"
+        className="fixed inset-x-0 bottom-0 z-30 border-t border-neutral-200/80 bg-white/90 pb-[env(safe-area-inset-bottom)] backdrop-blur-xl lg:hidden"
       >
         <ul className="mx-auto flex max-w-md items-stretch justify-around px-2">
           {MOBILE_NAV.map(({ to, label, icon: Icon }) => (

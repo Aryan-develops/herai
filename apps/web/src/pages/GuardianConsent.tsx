@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import { ShieldCheck, CheckCircle2, XCircle, AlertTriangle } from "lucide-react";
+import { ShieldCheck } from "lucide-react";
 import { AuthLayout } from "@/components/AuthLayout";
 import { Button } from "@/components/ui/button";
+import { Alert } from "@/components/ui/alert";
+import { Spinner } from "@/components/ui/spinner";
 import { api, ApiError, type ConsentRequest } from "@/lib/api";
 
 /**
@@ -53,7 +55,7 @@ export function GuardianConsent() {
   if (loading) {
     return (
       <AuthLayout title="Parental consent" subtitle="Checking this link…">
-        <p className="text-sm text-ink-700/70">Loading…</p>
+        <div aria-hidden="true" className="space-y-3"><div className="skeleton h-16 w-full" /><div className="skeleton h-10 w-full" /></div>
       </AuthLayout>
     );
   }
@@ -61,10 +63,7 @@ export function GuardianConsent() {
   if (error && !request) {
     return (
       <AuthLayout title="Link not valid" subtitle="We couldn't open this consent request.">
-        <div className="flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800">
-          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
-          <p>{error}</p>
-        </div>
+        <Alert tone="error">{error}</Alert>
       </AuthLayout>
     );
   }
@@ -74,14 +73,11 @@ export function GuardianConsent() {
   if (request.status === "granted") {
     return (
       <AuthLayout title="Consent given" subtitle={`${request.minorName} can now use HERAI.`}>
-        <div className="flex items-start gap-3 rounded-xl border border-sage-100 bg-sage-50 p-4 text-sm text-sage-700">
-          <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" />
-          <p>You approved this account. You can withdraw your consent at any time using this same link.</p>
-        </div>
+        <Alert tone="success">You approved this account. You can withdraw your consent at any time using this same link.</Alert>
         <Button variant="outline" className="mt-6 w-full" onClick={withdraw} disabled={submitting}>
           {submitting ? "Withdrawing…" : "Withdraw consent"}
         </Button>
-        {error && <p className="mt-3 text-sm text-red-600">{error}</p>}
+        {error && <Alert tone="error" className="mt-3">{error}</Alert>}
       </AuthLayout>
     );
   }
@@ -92,13 +88,10 @@ export function GuardianConsent() {
         title={request.status === "withdrawn" ? "Consent withdrawn" : "Consent declined"}
         subtitle={`${request.minorName} cannot use HERAI's health features.`}
       >
-        <div className="flex items-start gap-3 rounded-xl border border-neutral-200 bg-neutral-50 p-4 text-sm text-ink-700">
-          <XCircle className="mt-0.5 h-4 w-4 shrink-0" />
-          <p>
+        <Alert tone="warning">
             No health data is being processed for this account. If this was a mistake, ask them to
             send a new consent request from the app.
-          </p>
-        </div>
+          </Alert>
       </AuthLayout>
     );
   }
@@ -106,10 +99,7 @@ export function GuardianConsent() {
   if (request.expired) {
     return (
       <AuthLayout title="Link expired" subtitle="This consent request is no longer valid.">
-        <div className="flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
-          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
-          <p>Ask {request.minorName} to send a new request from the app.</p>
-        </div>
+        <Alert tone="warning">Ask {request.minorName} to send a new request from the app.</Alert>
       </AuthLayout>
     );
   }
@@ -120,8 +110,8 @@ export function GuardianConsent() {
       subtitle={`${request.minorName} is under 18 and needs your permission to use HERAI.`}
     >
       <div className="space-y-5">
-        <div className="flex items-start gap-3 rounded-xl border border-brand-200 bg-brand-50/60 p-4 text-sm text-ink-800">
-          <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-brand-600" />
+        <div className="flex items-start gap-3 rounded-2xl border border-brand-200 bg-brand-50/70 p-4 text-sm text-ink-800">
+          <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-brand-600" aria-hidden="true" />
           <div>
             <p className="font-medium">What you're agreeing to</p>
             <ul className="mt-2 list-disc space-y-1 pl-4 text-ink-700">
@@ -139,15 +129,16 @@ export function GuardianConsent() {
         </p>
 
         <div className="flex gap-3">
-          <Button className="flex-1" onClick={() => respond("grant")} disabled={submitting}>
+          <Button size="lg" className="flex-1" onClick={() => respond("grant")} disabled={submitting}>
+            {submitting && <Spinner />}
             {submitting ? "Saving…" : "I give consent"}
           </Button>
-          <Button variant="outline" className="flex-1" onClick={() => respond("decline")} disabled={submitting}>
+          <Button size="lg" variant="outline" className="flex-1" onClick={() => respond("decline")} disabled={submitting}>
             Decline
           </Button>
         </div>
 
-        {error && <p className="text-sm text-red-600">{error}</p>}
+        {error && <Alert tone="error">{error}</Alert>}
 
         <p className="text-xs text-ink-700/60">
           Sent to {request.guardianEmail}. If you weren't expecting this, you can ignore it — nothing
