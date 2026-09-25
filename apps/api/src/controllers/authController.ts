@@ -178,7 +178,12 @@ export async function oauthStart(req: AuthedRequest, res: Response) {
   const { data, error } = await createAuthClient().auth.signInWithOAuth({
     // Cast is safe: membership was just checked against OAUTH_PROVIDERS.
     provider: provider as "google",
-    options: { redirectTo: `${env.appBaseUrl}/oauth/callback` },
+    options: {
+      redirectTo: `${env.appBaseUrl}/oauth/callback`,
+      // Without this Google silently reuses the last signed-in account, with no
+      // way to pick a different one.
+      queryParams: { prompt: "select_account" },
+    },
   });
 
   if (error || !data.url) {
