@@ -1,5 +1,14 @@
 # HERAI roadmap (revised)
 
+## MASTER TASK for the next session (after the usage limit refreshes)
+Owner's instruction: complete everything pending below, in order, without stopping to ask, then verify it.
+1. Section 1 (mobile screens), Section 4 (Settings tab), Section 4b (dark mode, mobile provider editing).
+2. All Partner Mode phases 1-5 (Section 3), including payment UI, nudges, mood cards, feedback loop, fertility opt-in, support circles, localisation, privacy docs and audit log.
+3. Section 5 items that can be done in code (docs, DPA template, disclosures, AI-service auth, email delivery plumbing); list the ones that need the owner's keys or decisions.
+4. Verify each piece: `tsc` on api/web/mobile, `npm run build -w apps/web`, API e2e scripts, and a page-by-page browser walkthrough at 375/768/1280 widths (web) and on mobile web. Check every page and icon uses the new theme: Landing, Login, Register, DOB, Onboarding, Dashboard, Cycle, Log, Timeline, Chat, Reports, Report detail, Care, Provider, My requests, Settings, Partner pages, consent screens.
+5. Push to master, confirm Vercel api + web READY on the new commit and Render healthy, then report what passed and what didn't.
+Commit in small steps so a limit hit never leaves work unsaved.
+
 Status as of commit bce76ad. Live: web (herai-web-kappa.vercel.app), API (Vercel), AI service (Render free tier).
 
 ## Done
