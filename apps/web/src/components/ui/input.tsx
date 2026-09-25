@@ -15,7 +15,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(({ className, icon
         <input
           ref={ref}
           className={cn(
-            "flex h-11 w-full rounded-xl border border-neutral-200 bg-white pr-3 pl-10 text-sm shadow-sm transition-shadow placeholder:text-neutral-400 focus-visible:border-brand-400 focus-visible:ring-4 focus-visible:ring-brand-100 focus-visible:outline-none disabled:opacity-50",
+            "flex h-11 w-full rounded-xl border border-neutral-200 bg-white pr-3 pl-10 text-sm text-ink-900 shadow-soft transition-shadow placeholder:text-neutral-400 focus-visible:border-brand-400 focus-visible:ring-4 focus-visible:ring-brand-200 focus-visible:outline-none disabled:opacity-50",
             className
           )}
           {...props}
@@ -28,7 +28,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(({ className, icon
     <input
       ref={ref}
       className={cn(
-        "flex h-11 w-full rounded-xl border border-neutral-200 bg-white px-3 text-sm shadow-sm transition-shadow placeholder:text-neutral-400 focus-visible:border-brand-400 focus-visible:ring-4 focus-visible:ring-brand-100 focus-visible:outline-none disabled:opacity-50",
+        "flex h-11 w-full rounded-xl border border-neutral-200 bg-white px-3 text-sm text-ink-900 shadow-soft transition-shadow placeholder:text-neutral-400 focus-visible:border-brand-400 focus-visible:ring-4 focus-visible:ring-brand-200 focus-visible:outline-none disabled:opacity-50",
         className
       )}
       {...props}

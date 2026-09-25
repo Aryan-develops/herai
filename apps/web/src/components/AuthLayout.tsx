@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { HeartPulse, ShieldCheck, Sparkles } from "lucide-react";
+import { Droplet, HeartPulse, ShieldCheck, Sparkles } from "lucide-react";
 import type { ReactNode } from "react";
 
 export function AuthLayout({
@@ -12,46 +12,54 @@ export function AuthLayout({
   children: ReactNode;
 }) {
   return (
-    <div className="grid min-h-screen lg:grid-cols-2">
-      <div className="relative hidden overflow-hidden bg-gradient-to-br from-brand-600 via-brand-500 to-violet-600 lg:flex lg:flex-col lg:justify-between lg:p-12">
-        <div className="pointer-events-none absolute inset-0">
-          <div className="animate-float-slow absolute -top-24 -left-24 h-96 w-96 rounded-full bg-white/10 blur-3xl" />
-          <div className="animate-float-slower absolute -right-24 bottom-0 h-96 w-96 rounded-full bg-white/10 blur-3xl" />
+    <div className="grid min-h-dvh lg:grid-cols-[1.05fr_1fr]">
+      <div className="relative hidden overflow-hidden bg-gradient-to-br from-brand-500 via-brand-600 to-violet-600 lg:flex lg:flex-col lg:justify-between lg:p-12">
+        <div className="pointer-events-none absolute inset-0" aria-hidden="true">
+          <div className="animate-float-slow absolute -top-24 -left-24 h-96 w-96 rounded-full bg-peach-400/30 blur-3xl" />
+          <div className="animate-float-slower absolute -right-24 bottom-0 h-[28rem] w-[28rem] rounded-full bg-white/15 blur-3xl" />
+          <div className="absolute top-1/3 right-12 h-40 w-40 rounded-full border border-white/20" />
+          <div className="absolute top-1/3 right-20 mt-8 h-24 w-24 rounded-full border border-white/25" />
         </div>
 
         <Link to="/" className="relative z-10 flex items-center gap-2 font-display text-xl font-semibold text-white">
-          <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-white/15 backdrop-blur">
-            <HeartPulse className="h-4.5 w-4.5" />
+          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/20 backdrop-blur">
+            <HeartPulse className="h-5 w-5" aria-hidden="true" />
           </span>
           HERAI
         </Link>
 
         <div className="relative z-10">
-          <p className="font-display text-3xl leading-snug font-medium text-white">
-            "Your health data, reasoned about by a team of specialists — grounded, explainable,
-            never guessed."
+          <p className="font-display text-4xl leading-tight font-medium text-white">
+            Know your body.
+            <br />
+            Feel understood.
+          </p>
+          <p className="mt-4 max-w-sm text-white/85">
+            Track your cycle, log how you feel, and get grounded guidance from a team of specialist AI — that
+            always knows when to point you to a real clinician.
           </p>
 
-          <div className="mt-10 space-y-4">
-            <TrustPoint icon={<Sparkles className="h-4 w-4" />} text="Multi-agent AI, not a single chatbot" />
-            <TrustPoint icon={<ShieldCheck className="h-4 w-4" />} text="Safety-first triage, always defers to clinicians" />
+          <div className="mt-10 space-y-3.5">
+            <TrustPoint icon={<Droplet className="h-4 w-4" />} text="Cycle predictions that learn from you" />
+            <TrustPoint icon={<Sparkles className="h-4 w-4" />} text="Specialist AI agents, not one generic chatbot" />
+            <TrustPoint icon={<ShieldCheck className="h-4 w-4" />} text="Safety-first, and private by design" />
           </div>
         </div>
 
-        <p className="relative z-10 text-xs text-white/70">© 2026 HERAI · SIH USICT034</p>
+        <p className="relative z-10 text-xs text-white/70">© 2026 HERAI</p>
       </div>
 
-      <div className="flex items-center justify-center bg-neutral-50 px-6 py-16">
+      <div className="flex items-center justify-center bg-neutral-50 px-5 py-12 sm:px-6 sm:py-16">
         <div className="w-full max-w-sm">
           <Link to="/" className="mb-8 flex items-center gap-2 font-display text-xl font-semibold text-ink-900 lg:hidden">
-            <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-brand-500 to-violet-500 text-white">
-              <HeartPulse className="h-4.5 w-4.5" />
+            <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-brand-500 to-violet-500 text-white shadow-soft">
+              <HeartPulse className="h-4 w-4" aria-hidden="true" />
             </span>
             HERAI
           </Link>
 
-          <h1 className="font-display text-2xl font-semibold text-ink-900">{title}</h1>
-          <p className="mt-1.5 text-sm text-ink-700/70">{subtitle}</p>
+          <h1 className="font-display text-3xl font-semibold text-ink-900">{title}</h1>
+          <p className="mt-2 text-sm text-ink-700/75">{subtitle}</p>
 
           <div className="mt-8">{children}</div>
         </div>
@@ -62,8 +70,10 @@ export function AuthLayout({
 
 function TrustPoint({ icon, text }: { icon: ReactNode; text: string }) {
   return (
-    <div className="flex items-center gap-3 text-sm text-white/90">
-      <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white/15">{icon}</span>
+    <div className="flex items-center gap-3 text-sm text-white/95">
+      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/20" aria-hidden="true">
+        {icon}
+      </span>
       {text}
     </div>
   );

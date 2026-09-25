@@ -1,33 +1,82 @@
 @import "tailwindcss";
 
 @theme {
-  --color-brand-50: #fdf2f8;
-  --color-brand-100: #fce7f3;
-  --color-brand-200: #fbcfe8;
-  --color-brand-300: #f9a8d4;
-  --color-brand-400: #f472b6;
-  --color-brand-500: #ec4899;
-  --color-brand-600: #db2777;
-  --color-brand-700: #be185d;
-  --color-brand-800: #9d174d;
-  --color-brand-900: #831843;
+  /* Rose — primary */
+  --color-brand-50: #fff1f5;
+  --color-brand-100: #ffe1ea;
+  --color-brand-200: #ffc7d8;
+  --color-brand-300: #ff9bbb;
+  --color-brand-400: #f76a97;
+  --color-brand-500: #e8447c;
+  --color-brand-600: #d12468;
+  --color-brand-700: #ac1a55;
+  --color-brand-800: #8b1a49;
+  --color-brand-900: #6f1a3f;
 
-  --color-violet-50: #f5f3ff;
-  --color-violet-100: #ede9fe;
-  --color-violet-400: #a78bfa;
-  --color-violet-500: #8b5cf6;
-  --color-violet-600: #7c3aed;
+  /* Lavender */
+  --color-violet-50: #f6f3ff;
+  --color-violet-100: #ece6ff;
+  --color-violet-400: #a891f5;
+  --color-violet-500: #8f73ec;
+  --color-violet-600: #7a57dc;
+  --color-violet-700: #6641bf;
 
-  --color-ink-900: #1e1b2e;
-  --color-ink-700: #3d3752;
+  /* Peach, sage, amber — phase + status accents */
+  --color-peach-50: #fff4ee;
+  --color-peach-100: #ffe6d8;
+  --color-peach-400: #ff9f7a;
+  --color-peach-600: #d9622f;
+  --color-sage-50: #f0f8f4;
+  --color-sage-100: #dcf0e5;
+  --color-sage-500: #4fa27c;
+  --color-sage-700: #2f7658;
+  --color-amber-50: #fff8e8;
+  --color-amber-100: #ffefc7;
+  --color-amber-700: #a35c0b;
+
+  /* Warm neutrals: cream canvas, blush borders, plum-tinted text */
+  --color-neutral-50: #fff9f7;
+  --color-neutral-100: #fbf0ed;
+  --color-neutral-200: #f2e3df;
+  --color-neutral-300: #e3cfcb;
+  --color-neutral-400: #a8939b;
+  --color-neutral-500: #7d6a74;
+  --color-neutral-600: #5f4f5c;
+  --color-neutral-900: #2a1f2d;
+
+  --color-ink-900: #2a1f2d;
+  --color-ink-800: #3a2c3e;
+  --color-ink-700: #4f3f54;
+
+  --radius-xl: 0.875rem;
+  --radius-2xl: 1.125rem;
+  --radius-3xl: 1.5rem;
+
+  --shadow-soft: 0 1px 2px rgb(74 31 52 / 0.05), 0 4px 16px -4px rgb(74 31 52 / 0.08);
+  --shadow-lift: 0 2px 4px rgb(74 31 52 / 0.05), 0 12px 32px -8px rgb(209 36 104 / 0.18);
 
   --font-display: "Fraunces", ui-serif, Georgia, serif;
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
 }
 
+html {
+  color-scheme: light;
+}
+
 body {
   @apply bg-neutral-50 text-ink-900 antialiased;
   font-feature-settings: "cv11", "salt";
+  line-height: 1.6;
+}
+
+/* Visible keyboard focus everywhere, without changing mouse behaviour. */
+:focus-visible {
+  outline: 2px solid var(--color-brand-500);
+  outline-offset: 2px;
+}
+
+.tabular {
+  font-variant-numeric: tabular-nums;
 }
 
 @keyframes float-slow {
@@ -45,14 +94,26 @@ body {
   to { opacity: 1; transform: translateY(0); }
 }
 
-.animate-float-slow {
-  animation: float-slow 14s ease-in-out infinite;
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
 }
 
-.animate-float-slower {
-  animation: float-slower 18s ease-in-out infinite;
+.animate-float-slow { animation: float-slow 14s ease-in-out infinite; }
+.animate-float-slower { animation: float-slower 18s ease-in-out infinite; }
+.animate-fade-up { animation: fade-up 0.5s ease-out both; }
+
+.skeleton {
+  background: linear-gradient(90deg, var(--color-neutral-100) 25%, var(--color-neutral-200) 50%, var(--color-neutral-100) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s linear infinite;
+  border-radius: var(--radius-xl);
 }
 
-.animate-fade-up {
-  animation: fade-up 0.6s ease-out both;
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }

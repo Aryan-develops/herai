@@ -17,7 +17,7 @@ const STATUS_LABEL: Record<string, string> = {
 };
 
 const STATUS_STYLE: Record<string, string> = {
-  in_range: "bg-emerald-100 text-emerald-700",
+  in_range: "bg-sage-100 text-sage-700",
   below_range: "bg-amber-100 text-amber-700",
   above_range: "bg-amber-100 text-amber-700",
   critical_low: "bg-red-100 text-red-700",
@@ -26,7 +26,7 @@ const STATUS_STYLE: Record<string, string> = {
 };
 
 const RISK_STYLES: Record<string, string> = {
-  low: "bg-emerald-100 text-emerald-700",
+  low: "bg-sage-100 text-sage-700",
   moderate: "bg-amber-100 text-amber-700",
   high: "bg-orange-100 text-orange-700",
   urgent: "bg-red-100 text-red-700",
@@ -256,7 +256,7 @@ export function ReportDetail() {
           <ul className="mt-3 space-y-1.5">
             {risk.factors.map((f, i) => (
               <li key={i} className="flex items-center gap-2 text-sm text-ink-700/80">
-                <span className={cn("h-1.5 w-1.5 shrink-0 rounded-full", f.impact === "increases" ? "bg-orange-500" : f.impact === "decreases" ? "bg-emerald-500" : "bg-neutral-300")} />
+                <span className={cn("h-1.5 w-1.5 shrink-0 rounded-full", f.impact === "increases" ? "bg-orange-500" : f.impact === "decreases" ? "bg-sage-500" : "bg-neutral-300")} />
                 {f.factor}
               </li>
             ))}

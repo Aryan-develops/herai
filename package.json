@@ -2,7 +2,7 @@
   "name": "herai",
   "private": true,
   "version": "0.1.0",
-  "description": "HERAI - Agentic AI-Powered Multimodal Women's Health Intelligence & Personalized Care Platform (SIH 2026, USICT034)",
+  "description": "HERAI - Agentic AI-Powered Multimodal Women's Health Intelligence & Personalized Care Platform",
   "workspaces": [
     "apps/web",
     "apps/api"

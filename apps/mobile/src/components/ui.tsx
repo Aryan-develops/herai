@@ -57,7 +57,7 @@ export function Field({
   return (
     <View style={styles.field}>
       <Text style={styles.label}>{label}</Text>
-      <TextInput placeholderTextColor="#9ca3af" style={styles.input} accessibilityLabel={label} {...props} />
+      <TextInput placeholderTextColor={colors.muted} style={styles.input} accessibilityLabel={label} {...props} />
     </View>
   );
 }
@@ -78,12 +78,12 @@ export function Card({ children }: { children: React.ReactNode }) {
 const styles = StyleSheet.create({
   button: {
     height: 48,
-    borderRadius: 12,
+    borderRadius: 14,
     alignItems: "center",
     justifyContent: "center",
     paddingHorizontal: 16,
   },
-  buttonPrimary: { backgroundColor: colors.ink900 },
+  buttonPrimary: { backgroundColor: colors.brand600 },
   buttonOutline: { backgroundColor: colors.white, borderWidth: 1, borderColor: colors.neutral300 },
   buttonGhost: { backgroundColor: "transparent" },
   buttonDisabled: { opacity: 0.5 },
@@ -97,17 +97,17 @@ const styles = StyleSheet.create({
     height: 46,
     borderWidth: 1,
     borderColor: colors.neutral300,
-    borderRadius: 10,
+    borderRadius: 12,
     paddingHorizontal: 12,
     fontSize: 15,
     color: colors.ink900,
     backgroundColor: colors.white,
   },
-  errorBox: { backgroundColor: colors.red50, borderRadius: 10, padding: 10, marginBottom: 12 },
+  errorBox: { backgroundColor: colors.red50, borderRadius: 12, padding: 10, marginBottom: 12 },
   errorText: { color: colors.red600, fontSize: 13 },
   card: {
     backgroundColor: colors.white,
-    borderRadius: 16,
+    borderRadius: 20,
     borderWidth: 1,
     borderColor: colors.neutral200,
     padding: 16,

@@ -73,7 +73,7 @@ export function ConsentPending() {
           <Button type="submit" className="w-full" disabled={busy}>
             {busy ? "Sending…" : "Send request"}
           </Button>
-          {sent && <p className="text-sm text-emerald-700">Request sent. They'll get a link to approve.</p>}
+          {sent && <p className="text-sm text-sage-700">Request sent. They'll get a link to approve.</p>}
           {error && <p className="text-sm text-red-600">{error}</p>}
         </form>
 

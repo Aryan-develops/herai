@@ -74,7 +74,7 @@ export function GuardianConsent() {
   if (request.status === "granted") {
     return (
       <AuthLayout title="Consent given" subtitle={`${request.minorName} can now use HERAI.`}>
-        <div className="flex items-start gap-3 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-800">
+        <div className="flex items-start gap-3 rounded-xl border border-sage-100 bg-sage-50 p-4 text-sm text-sage-700">
           <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" />
           <p>You approved this account. You can withdraw your consent at any time using this same link.</p>
         </div>

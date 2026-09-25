@@ -17,7 +17,7 @@ interface StepState {
 }
 
 const RISK_STYLES: Record<string, string> = {
-  low: "bg-emerald-100 text-emerald-700",
+  low: "bg-sage-100 text-sage-700",
   moderate: "bg-amber-100 text-amber-700",
   high: "bg-orange-100 text-orange-700",
   urgent: "bg-red-100 text-red-700",
@@ -29,7 +29,7 @@ function StepRow({ step }: { step: StepState }) {
       {step.status === "running" ? (
         <Loader2 className="h-3.5 w-3.5 shrink-0 animate-spin text-brand-500" />
       ) : (
-        <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-emerald-500" />
+        <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-sage-500" />
       )}
       <span className={step.status === "running" ? "text-ink-900" : "text-ink-700/70"}>{step.label}</span>
     </div>
@@ -139,11 +139,7 @@ export function ReportUpload() {
 
   return (
     <AppShell>
-      <div className="flex items-center gap-2 text-xs font-medium text-brand-600">
-        <FileText className="h-3.5 w-3.5" />
-        Phase 4 · Document Intelligence
-      </div>
-      <h1 className="mt-2 font-display text-2xl font-semibold text-ink-900">Lab reports</h1>
+      <h1 className="font-display text-2xl font-semibold text-ink-900">Lab reports</h1>
       <p className="mt-1 max-w-xl text-ink-700/70">
         Upload a lab report (PDF, JPG, or PNG) and the same agent pipeline that powers chat — Document
         Intelligence, Women's Health, Risk Assessment, and the Safety gate — reasons over your actual values.

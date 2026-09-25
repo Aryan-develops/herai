@@ -15,7 +15,7 @@ const PHASE_LABEL: Record<NonNullable<CycleInsights["phase"]>, string> = {
 
 const PHASE_COLOR: Record<NonNullable<CycleInsights["phase"]>, string> = {
   menstrual: "bg-brand-100 text-brand-700",
-  follicular: "bg-emerald-100 text-emerald-700",
+  follicular: "bg-sage-100 text-sage-700",
   ovulation: "bg-violet-100 text-violet-700",
   luteal: "bg-amber-100 text-amber-700",
 };

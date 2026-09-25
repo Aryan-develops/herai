@@ -1,7 +1,6 @@
 # HERAI
 
 Agentic AI-Powered Multimodal Women's Health Intelligence & Personalized Care Platform.
-Built for Smart India Hackathon 2026 — problem statement **USICT034**.
 
 > HERAI is a health information and risk-awareness support tool. It does not provide
 > medical diagnoses and is not a substitute for professional medical care.

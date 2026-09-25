@@ -40,7 +40,7 @@ interface Turn {
 }
 
 const RISK_STYLES: Record<string, string> = {
-  low: "bg-emerald-100 text-emerald-700",
+  low: "bg-sage-100 text-sage-700",
   moderate: "bg-amber-100 text-amber-700",
   high: "bg-orange-100 text-orange-700",
   urgent: "bg-red-100 text-red-700",
@@ -84,7 +84,7 @@ function StepRow({ step }: { step: StepState }) {
       {step.status === "running" ? (
         <Loader2 className="h-3.5 w-3.5 shrink-0 animate-spin text-brand-500" />
       ) : (
-        <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-emerald-500" />
+        <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-sage-500" />
       )}
       <span className={cn(step.status === "running" ? "text-ink-900" : "text-ink-700/70")}>{step.label}</span>
       {step.status === "done" && step.duration_ms !== undefined && (
@@ -96,7 +96,7 @@ function StepRow({ step }: { step: StepState }) {
 
 function ConfidenceBadge({ confidence }: { confidence: number }) {
   const pct = Math.round(confidence * 100);
-  const tone = pct >= 75 ? "text-emerald-700 bg-emerald-100" : pct >= 55 ? "text-amber-700 bg-amber-100" : "text-orange-700 bg-orange-100";
+  const tone = pct >= 75 ? "text-sage-700 bg-sage-100" : pct >= 55 ? "text-amber-700 bg-amber-100" : "text-orange-700 bg-orange-100";
   return (
     <span className={cn("inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold", tone)}>
       <Sparkles className="h-3 w-3" />
@@ -207,7 +207,7 @@ function AssistantResult({ result, onFollowUp }: { result: FinalResult; onFollow
                 <span
                   className={cn(
                     "h-1.5 w-1.5 shrink-0 rounded-full",
-                    f.impact === "increases" ? "bg-orange-500" : f.impact === "decreases" ? "bg-emerald-500" : "bg-neutral-300"
+                    f.impact === "increases" ? "bg-orange-500" : f.impact === "decreases" ? "bg-sage-500" : "bg-neutral-300"
                   )}
                 />
                 {f.factor}
@@ -306,11 +306,7 @@ export function Chat() {
 
   return (
     <AppShell>
-      <div className="flex items-center gap-2 text-xs font-medium text-brand-600">
-        <Bot className="h-3.5 w-3.5" />
-        Phase 3 · Agentic AI core
-      </div>
-      <h1 className="mt-2 font-display text-2xl font-semibold text-ink-900">Ask HERAI</h1>
+      <h1 className="font-display text-2xl font-semibold text-ink-900">Ask HERAI</h1>
       <p className="mt-1 max-w-xl text-ink-700/70">
         Describe how you're feeling. A pipeline of specialist agents — intake, symptom analysis,
         women's health intelligence, risk assessment, safety triage, and care planning — reasons
