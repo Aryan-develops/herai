@@ -18,6 +18,7 @@ import {
 } from "@/lib/aiChat";
 import { AppShell } from "@/components/AppShell";
 import { SourcesList } from "@/components/SourcesList";
+import { GetHelpButton } from "@/components/GetHelp";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
@@ -159,19 +160,51 @@ function EmergencyBanner({ data }: { data: EmergencyEvent["data"] }) {
   );
 }
 
+function ReplyResult({ result, onFollowUp }: { result: FinalResult; onFollowUp: (q: string) => void }) {
+  return (
+    <div className="space-y-3">
+      <p className="leading-relaxed whitespace-pre-line text-ink-900">{result.reply}</p>
+
+      {result.suggest_help && (
+        <div className="flex flex-wrap items-center gap-3 rounded-2xl bg-brand-50/80 p-3.5">
+          <p className="flex-1 text-sm text-ink-800">This might be worth checking with a clinician.</p>
+          <GetHelpButton variant="outline" />
+        </div>
+      )}
+
+      {result.follow_up_questions.length > 0 && (
+        <div className="flex flex-wrap gap-2">
+          {result.follow_up_questions.map((q, i) => (
+            <button
+              key={i}
+              type="button"
+              onClick={() => onFollowUp(q)}
+              className="min-h-9 cursor-pointer rounded-full border border-brand-200 bg-white px-3.5 text-sm font-medium text-brand-700 transition-colors hover:bg-brand-50"
+            >
+              {q}
+            </button>
+          ))}
+        </div>
+      )}
+
+      <SourcesList sources={result.sources ?? []} />
+    </div>
+  );
+}
+
 function AssistantResult({ result, onFollowUp }: { result: FinalResult; onFollowUp: (q: string) => void }) {
   const riskLevel = result.risk_assessment?.risk_level ?? result.symptom_analysis?.risk_level;
 
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center gap-2">
-        <ConfidenceBadge confidence={result.confidence} />
+        {result.confidence !== null && <ConfidenceBadge confidence={result.confidence} />}
         {riskLevel && <RiskBadge level={riskLevel} />}
       </div>
 
       {result.symptom_analysis && (
         <div>
-          <p className="text-sm text-ink-900">{result.symptom_analysis.summary}</p>
+          <p className="leading-relaxed text-ink-900">{result.reply ?? result.symptom_analysis.summary}</p>
           {result.symptom_analysis.possible_factors.length > 0 && (
             <div className="mt-2">
               <p className="text-xs font-semibold tracking-wide text-ink-700/60 uppercase">May be associated with</p>
@@ -278,7 +311,16 @@ export function Chat() {
     setBusy(true);
 
     try {
-      await streamChat({ message: trimmed, healthProfile: profile ?? undefined }, (event) => {
+      const history = turns.slice(-6).flatMap((t) => {
+        const text = t.result?.reply ?? t.result?.symptom_analysis?.summary;
+        return text
+          ? [
+              { role: "user" as const, content: t.userMessage },
+              { role: "assistant" as const, content: text },
+            ]
+          : [{ role: "user" as const, content: t.userMessage }];
+      });
+      await streamChat({ message: trimmed, healthProfile: profile ?? undefined, history }, (event) => {
         setTurns((prev) => prev.map((t) => (t.id === id ? applyEvent(t, event) : t)));
         if (event.type === "final") {
           api
@@ -312,7 +354,7 @@ export function Chat() {
         </span>
         <div>
           <h1 className="font-display text-2xl font-semibold text-ink-900">Ask HERAI</h1>
-          <p className="text-sm text-ink-700/70">Specialist agents reason through it step by step.</p>
+          <p className="text-sm text-ink-700/70">Ask about your cycle, symptoms or lab reports.</p>
         </div>
       </div>
 
@@ -357,12 +399,25 @@ export function Chat() {
                 <Bot className="h-3.5 w-3.5" aria-hidden="true" />
               </span>
               <div className="w-full max-w-full rounded-3xl rounded-tl-md border border-neutral-200 bg-white p-4 shadow-soft sm:max-w-[90%] sm:p-5">
-                {turn.steps.length > 0 && (
-                  <div className="mb-4 space-y-1.5 border-b border-neutral-100 pb-4">
+                {turn.steps.length > 0 && turn.status === "streaming" && (
+                  <div className="space-y-1.5" aria-live="polite">
                     {turn.steps.map((step) => (
                       <StepRow key={step.agent} step={step} />
                     ))}
                   </div>
+                )}
+                {turn.steps.length > 0 && turn.status !== "streaming" && turn.result?.kind !== "reply" && (
+                  <details className="group mb-4 border-b border-neutral-100 pb-3">
+                    <summary className="flex cursor-pointer list-none items-center gap-1.5 text-xs font-medium text-neutral-500 hover:text-ink-900">
+                      <CheckCircle2 className="h-3.5 w-3.5 text-sage-500" aria-hidden="true" />
+                      How HERAI worked this out ({turn.steps.length} steps)
+                    </summary>
+                    <div className="mt-3 space-y-1.5">
+                      {turn.steps.map((step) => (
+                        <StepRow key={step.agent} step={step} />
+                      ))}
+                    </div>
+                  </details>
                 )}
 
                 {turn.emergency && <EmergencyBanner data={turn.emergency} />}
@@ -374,14 +429,21 @@ export function Chat() {
                   </div>
                 )}
 
-                {turn.result && !turn.result.emergency && (
-                  <AssistantResult result={turn.result} onFollowUp={(q) => setInput(q)} />
+                {turn.result && !turn.result.emergency && turn.result.kind === "reply" && (
+                  <ReplyResult result={turn.result} onFollowUp={(q) => send(q)} />
+                )}
+                {turn.result && !turn.result.emergency && turn.result.kind !== "reply" && (
+                  <AssistantResult result={turn.result} onFollowUp={(q) => send(q)} />
                 )}
 
                 {turn.status === "streaming" && turn.steps.length === 0 && (
                   <div className="flex items-center gap-2 text-sm text-ink-700/60">
-                    <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />
-                    Starting…
+                    <span className="flex gap-1" aria-hidden="true">
+                      <span className="h-2 w-2 animate-bounce rounded-full bg-brand-300 [animation-delay:-0.2s]" />
+                      <span className="h-2 w-2 animate-bounce rounded-full bg-brand-400 [animation-delay:-0.1s]" />
+                      <span className="h-2 w-2 animate-bounce rounded-full bg-brand-500" />
+                    </span>
+                    HERAI is typing…
                   </div>
                 )}
               </div>
@@ -391,7 +453,9 @@ export function Chat() {
         <div ref={bottomRef} />
       </div>
 
-      <div className="sticky bottom-20 z-10 mt-6 lg:bottom-4">
+      <div className="h-28" aria-hidden="true" />
+      <div className="fixed inset-x-0 bottom-16 z-20 bg-gradient-to-t from-neutral-50 from-70% to-transparent px-4 pt-6 pb-2 lg:bottom-0 lg:pb-4">
+        <div className="mx-auto max-w-5xl sm:px-2">
         <form
           onSubmit={handleSubmit}
           className="flex items-end gap-2 rounded-3xl border border-neutral-200 bg-white/95 p-2 shadow-lift backdrop-blur"
@@ -418,8 +482,9 @@ export function Chat() {
           </Button>
         </form>
         <p className="mt-2 text-center text-[11px] text-neutral-500">
-          HERAI shares health information, not diagnoses. In an emergency, contact local emergency services.
+          HERAI shares health information, not diagnoses. In an emergency, tap <span className="font-semibold">Get help</span>.
         </p>
+        </div>
       </div>
     </AppShell>
   );

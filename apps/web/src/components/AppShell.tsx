@@ -3,6 +3,7 @@ import { NavLink } from "react-router-dom";
 import { Bot, CalendarPlus, Droplet, FileText, HeartPulse, LayoutDashboard, ListPlus, LogOut } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button";
+import { GetHelpButton } from "@/components/GetHelp";
 import { cn } from "@/lib/utils";
 
 const DESKTOP_NAV = [
@@ -71,7 +72,8 @@ export function AppShell({ children }: { children: ReactNode }) {
               ))}
             </nav>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 sm:gap-2">
+            <GetHelpButton />
             <span
               aria-label={user?.name ? `Signed in as ${user.name}` : "Signed in"}
               className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-brand-100 to-violet-100 text-xs font-semibold text-brand-700"

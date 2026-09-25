@@ -1,4 +1,5 @@
 from app.agents.care_planner import CarePlannerAgent
+from app.agents.chat_reply import ChatReplyAgent
 from app.agents.document_intelligence import DocumentIntelligenceAgent
 from app.agents.intake import IntakeAgent
 from app.agents.knowledge_retrieval import KnowledgeRetrievalAgent
@@ -14,6 +15,7 @@ __all__ = [
     "RiskAssessmentAgent",
     "SafetyTriageAgent",
     "CarePlannerAgent",
+    "ChatReplyAgent",
     "DocumentIntelligenceAgent",
     "KnowledgeRetrievalAgent",
 ]

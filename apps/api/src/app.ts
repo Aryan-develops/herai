@@ -7,6 +7,7 @@ import { profileRouter } from "./routes/profile.js";
 import { logsRouter } from "./routes/logs.js";
 import { reportsRouter } from "./routes/reports.js";
 import { agentExecutionsRouter } from "./routes/agentExecutions.js";
+import { careRouter } from "./routes/care.js";
 import { errorHandler } from "./middleware/errorHandler.js";
 
 export function createApp() {
@@ -38,6 +39,7 @@ export function createApp() {
   app.use("/api/logs", logsRouter);
   app.use("/api/reports", reportsRouter);
   app.use("/api/agent-executions", agentExecutionsRouter);
+  app.use("/api/care", careRouter);
 
   app.use(errorHandler);
 

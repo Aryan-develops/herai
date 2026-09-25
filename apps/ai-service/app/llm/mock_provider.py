@@ -200,6 +200,18 @@ class MockLLMProvider(LLMProvider):
     # Per-agent mock generators
     # ------------------------------------------------------------------
 
+    def _mock_chat_reply(self, data: dict) -> dict:
+        message = (data.get("message") or "").strip()
+        if len(message) < 25 and not data.get("retrieved_knowledge"):
+            return {
+                "reply": "Hi, I'm here. Tell me how you're feeling today, or ask me anything about your cycle or health.",
+                "follow_up_suggestions": ["Why is my period late?", "What can help with cramps?"],
+                "suggest_help": False,
+            }
+        chunks = data.get("retrieved_knowledge") or []
+        reply = chunks[0]["text"][:280] + "..." if chunks else "Good question. Tell me a bit more so I can help properly."
+        return {"reply": reply, "follow_up_suggestions": [], "suggest_help": False}
+
     def _mock_intake(self, data: dict) -> dict:
         query = data.get("query", "")
         symptoms = ta.extract_symptoms(query)

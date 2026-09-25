@@ -19,6 +19,7 @@ function required(name: string): string {
 export const env = {
   nodeEnv: process.env.NODE_ENV ?? "development",
   isProduction,
+  showSampleProviders: process.env.SHOW_SAMPLE_PROVIDERS === "true",
   demoMode: (process.env.DEMO_MODE ?? "true") === "true",
   port: Number(process.env.PORT ?? 4000),
   // Comma-separated. Native apps (iOS/Android) never hit browser CORS at all

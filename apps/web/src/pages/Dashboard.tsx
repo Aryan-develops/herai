@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { Activity, Bot, CalendarPlus, Droplet, Fingerprint, FileText, ListPlus, ShieldAlert } from "lucide-react";
+import { Activity, Bot, CalendarPlus, Droplet, Fingerprint, FileText, ListPlus, MapPin, ShieldAlert } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { api, ApiError, type CycleInsights, type HealthReportRecord, type TimelineEvent } from "@/lib/api";
 import { getSession } from "@/lib/session";
@@ -132,6 +132,19 @@ export function Dashboard() {
               <div>
                 <h3 className="font-display font-semibold text-ink-900">Log an entry</h3>
                 <p className="text-sm text-ink-700/60">Symptom or cycle logging</p>
+              </div>
+            </CardContent>
+          </Card>
+        </Link>
+        <Link to="/care">
+          <Card className="group h-full transition-shadow hover:shadow-md">
+            <CardContent className="flex items-center gap-4 p-5">
+              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-peach-100 text-peach-600">
+                <MapPin className="h-5 w-5" aria-hidden="true" />
+              </span>
+              <div>
+                <h3 className="font-display font-semibold text-ink-900">Find care</h3>
+                <p className="text-sm text-ink-700/60">Labs and doctors near you</p>
               </div>
             </CardContent>
           </Card>

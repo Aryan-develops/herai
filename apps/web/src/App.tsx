@@ -13,6 +13,7 @@ import { Dashboard } from "@/pages/Dashboard";
 import { LogEntry } from "@/pages/LogEntry";
 import { Timeline } from "@/pages/Timeline";
 import { Cycle } from "@/pages/Cycle";
+import { Care } from "@/pages/Care";
 import { Chat } from "@/pages/Chat";
 import { ReportUpload } from "@/pages/ReportUpload";
 import { ReportDetail } from "@/pages/ReportDetail";
@@ -40,6 +41,7 @@ function App() {
                 <Route path="/log" element={<LogEntry />} />
                 <Route path="/timeline" element={<Timeline />} />
                 <Route path="/cycle" element={<Cycle />} />
+                <Route path="/care" element={<Care />} />
                 <Route path="/chat" element={<Chat />} />
                 <Route path="/reports" element={<ReportUpload />} />
                 <Route path="/reports/:id" element={<ReportDetail />} />

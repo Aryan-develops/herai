@@ -158,6 +158,27 @@ export interface CycleInsights {
   regularity: "regular" | "irregular" | "insufficient_data";
 }
 
+export type ProviderType = "lab" | "doctor" | "clinic";
+
+export interface CareProvider {
+  id: string;
+  name: string;
+  type: ProviderType;
+  specialties: string[];
+  services: string[];
+  address: string;
+  city: string;
+  pincode: string | null;
+  phone: string | null;
+  website: string | null;
+  hours: string | null;
+  homeCollection: boolean;
+  isSample: boolean;
+  lat: number | null;
+  lng: number | null;
+  distanceKm: number | null;
+}
+
 export type TimelineEvent =
   | { type: "symptom"; id: string; loggedAt: string; data: SymptomLog }
   | { type: "cycle"; id: string; loggedAt: string; data: CycleLog };
@@ -272,6 +293,21 @@ export const api = {
   getCycleInsights: () => request<{ insights: CycleInsights }>("/logs/cycles/insights"),
 
   getTimeline: () => request<{ events: TimelineEvent[] }>("/logs/timeline"),
+
+  listProviders: (q: { type?: ProviderType; lat?: number; lng?: number; radiusKm?: number; city?: string; homeCollection?: boolean }) => {
+    const p = new URLSearchParams();
+    if (q.type) p.set("type", q.type);
+    if (q.lat !== undefined && q.lng !== undefined) {
+      p.set("lat", String(q.lat));
+      p.set("lng", String(q.lng));
+    }
+    if (q.radiusKm) p.set("radiusKm", String(q.radiusKm));
+    if (q.city) p.set("city", q.city);
+    if (q.homeCollection) p.set("homeCollection", "true");
+    return request<{ providers: CareProvider[] }>(`/care/providers?${p.toString()}`);
+  },
+  applyAsProvider: (data: { orgName: string; type: ProviderType; contactName: string; email: string; phone?: string; city: string; notes?: string }) =>
+    request<{ ok: true }>("/care/applications", { method: "POST", body: JSON.stringify(data) }),
 
   uploadReport: (file: File, result: unknown) => {
     const form = new FormData();

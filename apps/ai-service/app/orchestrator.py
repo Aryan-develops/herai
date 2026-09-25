@@ -28,6 +28,7 @@ from typing import Any, AsyncIterator
 
 from app.agents import (
     CarePlannerAgent,
+    ChatReplyAgent,
     DocumentIntelligenceAgent,
     IntakeAgent,
     KnowledgeRetrievalAgent,
@@ -155,10 +156,43 @@ def _build_emergency_response(ctx: dict, safety: dict, trace: list[dict]) -> dic
     }
 
 
+OFF_TOPIC_REPLY = (
+    "I'm built to help with women's health, your cycle, symptoms, lab reports and wellbeing, so I can't help "
+    "with that one. Is there anything about your health I can help with?"
+)
+OFF_TOPIC_SUGGESTIONS = [
+    "Why is my period late?",
+    "What can help with cramps?",
+    "Explain my lab report",
+]
+# Intake classifications that should get a normal conversational answer
+# rather than the full symptom -> risk -> care-plan pipeline.
+CONVERSATIONAL = {"greeting", "informational", "general_question", "off_topic"}
+
+
+def _build_reply_response(
+    ctx: dict, reply: str, follow_ups: list[str], trace: list[dict], suggest_help: bool = False
+) -> dict:
+    return {
+        "kind": "reply",
+        "emergency": False,
+        "reply": reply,
+        "intake": ctx.get("intake"),
+        "follow_up_questions": follow_ups[:3],
+        "sources": _collect_sources(ctx),
+        "suggest_help": suggest_help,
+        "confidence": None,
+        "disclaimer": DISCLAIMER,
+        "agent_trace": trace,
+    }
+
+
 def _build_final_response(ctx: dict, care_plan: dict, trace: list[dict]) -> dict:
     confidence, reasons = _compute_confidence(ctx)
     return {
+        "kind": "assessment",
         "emergency": False,
+        "reply": (ctx.get("symptom_analysis") or {}).get("summary"),
         "intake": ctx.get("intake"),
         "symptom_analysis": ctx.get("symptom_analysis"),
         "womens_health": ctx.get("womens_health"),
@@ -401,6 +435,42 @@ async def run_pipeline(
             yield {"type": "emergency", "data": safety_pre}
             yield {"type": "final", "data": result}
             logger.info("[%s] pipeline=chat status=complete outcome=emergency_precheck", request_id)
+            return
+
+        # 3a. Conversational branch. Greetings, plain health questions and
+        # off-topic messages get a natural reply instead of the assessment
+        # pipeline. The safety pre-check above has already run for all of them.
+        classification = (intake_out.get("request_classification") or "").lower()
+        if classification in CONVERSATIONAL:
+            if classification == "off_topic":
+                yield {"type": "final", "data": _build_reply_response(ctx, OFF_TOPIC_REPLY, OFF_TOPIC_SUGGESTIONS, trace)}
+                logger.info("[%s] pipeline=chat status=complete outcome=off_topic", request_id)
+                return
+
+            if classification in ("informational", "general_question"):
+                knowledge_agent = KnowledgeRetrievalAgent(llm)
+                yield _step_event(knowledge_agent.name, knowledge_agent.label, "start")
+                knowledge_out, dt = await _run_stage(request_id, knowledge_agent.name, knowledge_agent.run(ctx))
+                ctx["knowledge_retrieval"] = knowledge_out
+                trace.append({"agent": knowledge_agent.name, "duration_ms": dt})
+                yield _step_event(knowledge_agent.name, knowledge_agent.label, "complete", knowledge_out, dt)
+
+            reply_agent = ChatReplyAgent(llm)
+            yield _step_event(reply_agent.name, reply_agent.label, "start")
+            reply_out, dt = await _run_stage(request_id, reply_agent.name, reply_agent.run(ctx))
+            trace.append({"agent": reply_agent.name, "duration_ms": dt})
+            yield _step_event(reply_agent.name, reply_agent.label, "complete", reply_out, dt)
+            yield {
+                "type": "final",
+                "data": _build_reply_response(
+                    ctx,
+                    reply_out["reply"],
+                    reply_out.get("follow_up_suggestions", []),
+                    trace,
+                    bool(reply_out.get("suggest_help")),
+                ),
+            }
+            logger.info("[%s] pipeline=chat status=complete outcome=conversational", request_id)
             return
 
         # 3. Knowledge Retrieval — semantic search over the curated knowledge

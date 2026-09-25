@@ -88,6 +88,10 @@ export interface Source {
 }
 
 export interface FinalResult {
+  /** "reply" = conversational answer; "assessment" = full symptom pipeline. */
+  kind?: "reply" | "assessment";
+  reply?: string | null;
+  suggest_help?: boolean;
   emergency: boolean;
   message?: string;
   recommended_action?: string;
@@ -97,7 +101,7 @@ export interface FinalResult {
   womens_health?: WomensHealthAnalysis;
   risk_assessment?: RiskAssessment;
   care_plan?: CarePlan;
-  confidence: number;
+  confidence: number | null;
   confidence_reasons?: string[];
   follow_up_questions: string[];
   sources?: Source[];
