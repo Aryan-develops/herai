@@ -248,7 +248,7 @@ const styles = StyleSheet.create({
   progressBox: { marginTop: 12, backgroundColor: colors.white, borderRadius: 12, borderWidth: 1, borderColor: colors.neutral200, padding: 12, gap: 6 },
   progressText: { fontSize: 13, color: colors.ink700 },
   stepRow: { flexDirection: "row", alignItems: "center", gap: 8 },
-  stepDone: { color: "#10b981", fontWeight: "700" },
+  stepDone: { color: colors.sage700, fontWeight: "700" },
   stepLabel: { fontSize: 13, color: colors.ink700 },
   sectionTitle: { marginTop: 20, fontSize: 16, fontWeight: "700", color: colors.ink900 },
   listContent: { paddingHorizontal: 20, paddingBottom: 40, gap: 8 },

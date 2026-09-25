@@ -252,7 +252,7 @@ const styles = StyleSheet.create({
   card: { backgroundColor: colors.white, borderRadius: 14, borderWidth: 1, borderColor: colors.neutral200, padding: 14, gap: 6 },
   cardHeaderRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
   cardHeading: { fontSize: 15, fontWeight: "700", color: colors.ink900 },
-  confidenceTag: { fontSize: 11, color: "#6d28d9", fontWeight: "600" },
+  confidenceTag: { fontSize: 11, color: colors.violet700, fontWeight: "600" },
   riskTag: { fontSize: 12, fontWeight: "700", color: colors.brand600, textTransform: "capitalize" },
   bodyText: { fontSize: 13, color: colors.ink900, lineHeight: 19 },
   caveat: { fontSize: 11, color: colors.ink700 },
