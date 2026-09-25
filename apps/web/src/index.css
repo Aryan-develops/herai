@@ -204,3 +204,7 @@ body {
   border-radius: 2px;
   animation: confetti-fall 1.3s ease-out forwards;
 }
+
+/* Horizontal chip rows scroll by touch; hide the bar so it doesn't look like a stray line. */
+.no-scrollbar { scrollbar-width: none; }
+.no-scrollbar::-webkit-scrollbar { display: none; }

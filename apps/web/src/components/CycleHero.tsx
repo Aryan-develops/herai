@@ -66,7 +66,11 @@ export function CycleHero({
       </div>
       <div className="min-w-0">
         <p className="text-xs font-medium tracking-wide text-white/80 uppercase">Right now</p>
-        <p className="font-display text-2xl font-semibold">{style.label}</p>
+        <p className="font-display text-2xl font-semibold">
+          {style.label}
+          {insights.subPhase === "pms" && <span className="ml-2 text-base font-normal text-white/85">· PMS window</span>}
+          {insights.subPhase === "cramps" && <span className="ml-2 text-base font-normal text-white/85">· cramp-prone days</span>}
+        </p>
         <p className="mt-1 text-sm text-white/90">{style.blurb}</p>
         {insights.predictedNextPeriodStart && (
           <p className="mt-2 text-xs text-white/80">Next period around {shortDate(insights.predictedNextPeriodStart)}</p>

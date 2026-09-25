@@ -43,7 +43,7 @@ export function Settings() {
         </Button>
       </div>
 
-      <nav aria-label="Settings sections" className="-mx-4 mt-5 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:flex-wrap sm:px-0">
+      <nav aria-label="Settings sections" className="no-scrollbar -mx-4 mt-5 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:flex-wrap sm:px-0">
         {SECTIONS.map(([id, label]) => (
           <a
             key={id}

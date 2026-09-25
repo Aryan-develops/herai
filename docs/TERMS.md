@@ -80,6 +80,23 @@ Do not:
 
 We may suspend accounts that do.
 
+## 5A. Partner features, gifts and subscriptions
+
+`[Placeholder text for legal review.]`
+
+- You can invite someone to see a summary of your cycle, or accept an invitation to follow
+  someone. You may only invite or follow people aged 18 or over, and only with their free agreement.
+  You must not pressure or coerce anyone into sharing or following.
+- The person whose data it is controls what is shared and can stop at any time. We may remove
+  access if we believe the feature is being used to control or harm someone.
+- Suggestions shown to partners are general support tips based on an estimate. They are not
+  medical advice and are not a substitute for talking with the person or a clinician.
+- Following may carry a fee after a free trial (currently a 14-day trial, then a monthly price shown
+  in the app). The person being followed always uses HERAI free. You can cancel at any time and
+  keep access until the period you paid for ends. `[Refund rules.]`
+- Gift codes give access for the period shown, are single-use, expire, and cannot be redeemed by
+  the person who bought them or exchanged for cash.
+
 ## 6. Availability
 
 We aim to keep HERAI running but do not guarantee uninterrupted availability. Features

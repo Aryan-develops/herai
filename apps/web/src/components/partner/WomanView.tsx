@@ -165,7 +165,7 @@ function GuidanceCards({ s, lang }: { s: WomanSummary; lang: Lang }) {
   ];
   return (
     <section aria-label={lang === "hi" ? "सुझाव" : "Suggestions"}>
-      <div className="-mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-2 sm:mx-0 sm:grid sm:grid-cols-3 sm:overflow-visible sm:px-0">
+      <div className="no-scrollbar -mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-2 sm:mx-0 sm:grid sm:grid-cols-3 sm:overflow-visible sm:px-0">
         {cards.map((c) => (
           <div key={c.id} className={cn("w-[82%] shrink-0 snap-center rounded-2xl border p-4 sm:w-auto", c.tone)}>
             <h3 className={cn("font-display text-lg font-semibold", c.head)}>{c.title}</h3>

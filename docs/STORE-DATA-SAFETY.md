@@ -25,6 +25,13 @@ what the app "probably" collects.
 | Chat messages | sent to `apps/ai-service`, not persisted server-side beyond the `agent_executions` summary below | message text, in-memory for the duration of one pipeline run |
 | Agent run metadata | `public.agent_executions` | trigger_type, agent names + durations, emergency flag, risk_level — **not** message content (see `LOG_HEALTH_DATA` in `docs/COMPLIANCE-NOTES.md`) |
 | Parental consent records (only if account is a minor) | `public.parental_consents` | guardian email/name, status, timestamps, IP, user-agent |
+| Mood check-ins | `public.mood_logs` | mood, energy, need, logged_at |
+| Comfort list | `public.comfort_lists` | items |
+| Notification preferences and push tokens | `public.notification_prefs`, `public.push_tokens` | flags, language, device token |
+| Partner invites and links | `public.partner_invites` (hashed codes only), `public.partner_links`, `public.partner_access_log` | who, relationship, status, per-item sharing choices, view times |
+| Follower activity | `public.partner_task_progress`, `public.partner_events`, `public.partner_feedback` | completed suggestion ids, plan titles/dates, helpful yes/no |
+| Subscription | `public.partner_subscriptions`, `public.gift_codes`, `public.payment_mandates` | status, dates, hashed gift codes. No card/bank/UPI details are stored |
+| Care requests | `public.care_requests` | what was asked, chosen time, ids of shared reports, consent time |
 | Crash/error reports | client-side (`apps/mobile/src/lib/errorReporting.ts`) | error message + stack trace, HTTP status + request path only — never request bodies |
 
 ## Apple App Privacy ("nutrition label")
@@ -45,9 +52,22 @@ Declare under **Diagnostics**:
   sent to a third party; if Sentry (or similar) is wired in later, this section must
   be updated to name that processor.
 
+Declare under **Identifiers**:
+- Device ID (the push notification token), only if the person turns on phone notifications,
+  linked to identity, used for App Functionality.
+
+Declare under **Location** (only if the shipped build asks for it):
+- Location is read on the device to sort nearby labs and doctors. It is sent to our server
+  as coordinates for that search and not stored. Declare it if it leaves the device, as it
+  does today.
+
+Declare under **Purchases / Financial Info** *once payments are switched on*:
+- Purchase history (subscription status). Card, bank and UPI details stay with the payment
+  provider; still name the provider.
+
 **Data NOT collected** (explicitly answer "No" / omit):
-- Location, Browsing History, Search History, Contacts, Financial Info, Advertising
-  Data. None of these are collected anywhere in the schema above.
+- Browsing History, Search History, Contacts, Advertising Data. None of these are
+  collected anywhere in the schema above.
 
 **"Used to track you"**: No. Nothing here is shared with a data broker or used to
 correlate the user across other companies' apps/websites.
@@ -64,6 +84,12 @@ correlate the user across other companies' apps/websites.
 | Photos (if a report is uploaded as an image) | Yes | Yes — see below | App functionality | Optional |
 | Crash logs | Yes | No (console-only today) | Analytics | Optional |
 
+**User-directed sharing (declare as "Shared")**: a person can choose to share a derived summary
+of their cycle with partners/family/friends, and their profile and chosen reports with a lab
+or doctor. This is disclosure to another user or a named third party at the user's request, so
+list "Health info" as shared, purpose "App functionality", and describe it as user-controlled
+and revocable.
+
 **"Shared" here means sent to a processor for the app's own functionality**, which
 Google's definitions generally distinguish from sharing with a third party for their
 own purposes — confirm this classification against Play's current guidance at
@@ -72,6 +98,8 @@ is exactly the kind of error that gets an app rejected:
 
 - **Anthropic / Google Gemini** (whichever `LLM_PROVIDER` is active) receives the
   message text or extracted report values needed to generate a response.
+- **Resend** (email) receives an address and message text for emails the user asked for.
+- **Expo push service** receives a device token and notification text.
 - **Supabase** stores everything in the inventory table above, encrypted at rest,
   hosted in `ap-south-1`.
 - Local, on-device knowledge-base search (`app/llm/embeddings.py`) sends nothing

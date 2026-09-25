@@ -146,7 +146,7 @@ export function PartnerHome() {
       {women && women.length > 0 && (
         <>
           {women.length > 1 && (
-            <div className="mt-5 flex gap-2 overflow-x-auto pb-1" role="tablist" aria-label="People you follow">
+            <div className="no-scrollbar mt-5 flex gap-2 overflow-x-auto pb-1" role="tablist" aria-label="People you follow">
               {women.map((w) => {
                 const active = w.linkId === selected;
                 const style = w.phaseKey ? PARTNER_PHASE_STYLE[w.phaseKey] : null;

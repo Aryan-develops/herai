@@ -59,6 +59,28 @@ websites.
 **Conversations**
 - The messages you send to the in-app assistant, and the analysis produced in response.
 
+**Mood check-ins and comfort list**
+- Mood, energy level and an optional "I need..." signal (space, a hug, food, to talk, rest)
+  when you choose to log them, and a short list of comfort items you write yourself.
+
+**Sharing with people you choose (Partner mode)**
+- Who you invited or accepted, the relationship you set (partner, family, friend), what you
+  allow them to see, and when they viewed your summary.
+- For someone who follows another person: the plans (title and date) they add, which of their
+  daily suggestions they completed, and their feedback on suggestions.
+- Subscription status, trial dates, and gift codes. Payment card, bank and UPI details are
+  handled by the payment provider and never reach our servers. `[Payments are not switched on
+  yet; update this line when a provider is connected.]`
+
+**Care referrals**
+- When you ask a lab or doctor for a test, appointment or call-back: your request, the time
+  you chose, and, only if you tick them, your health profile and the specific reports you
+  select.
+
+**Notifications**
+- Your notification and language preferences and, if you turn on phone notifications, a
+  device token used to deliver them.
+
 **Technical records**
 - A record of each AI pipeline run: which analysis stages ran, how long each took, the
   resulting risk level, and whether an emergency flag was raised. This record does not
@@ -101,6 +123,8 @@ data for their own purposes.
 | Processor | What it receives | Why | Where |
 |---|---|---|---|
 | Supabase | Account details, health profile, logs, uploaded report files and analysis results | Database, authentication and file storage | `ap-south-1` (India) |
+| Resend (email) | Your email address and the text of an email we send you (invites, guardian consent requests, daily support notes) | Delivers email you have asked for or that a person you invited needs | Provider infrastructure |
+| Expo push service | A device token and the short notification text | Delivers phone notifications you turned on | Provider infrastructure |
 | Anthropic | The text of your message or the text extracted from your uploaded report, plus relevant health-profile context | Generates the AI analysis | Anthropic's API infrastructure |
 
 Two points worth stating plainly:
@@ -111,6 +135,22 @@ Two points worth stating plainly:
 - **Anthropic does not train on this data.** Anthropic's commercial terms state that API
   inputs and outputs are not used to train their models. `[CONFIRM THIS AGAINST YOUR
   CURRENT ANTHROPIC COMMERCIAL TERMS BEFORE PUBLISHING.]`
+
+**People you choose to share with.** Sharing with a partner, family member, friend, lab or
+doctor is your decision and only happens when you set it up:
+
+- **Partners, family and friends** see a *derived summary* you control: your cycle phase and
+  day, and, only if you allow each one, predictions, your latest mood check-in, your comfort
+  list, symptom *names* from the last two days, and your fertile window. They never see your
+  notes, health conditions, medications, reports or exact logs. You can pause or remove
+  anyone instantly, and you can see when they viewed your summary. While paused, they are
+  not told that you paused.
+- **Labs and doctors** receive only the health profile and reports you tick when you send
+  a request, and lose access when you cancel or they decline.
+- The AI service that words partner tips is given only the phase, an optional mood label and
+  a language, never your data.
+
+Partner features are only for people aged 18 and over.
 
 We will also disclose data where legally required — for example a valid court order.
 
@@ -141,9 +181,11 @@ You can:
 
 - **Access** your data — view it in the app at any time.
 - **Correct** it — edit your health profile and logs directly.
-- **Delete individual records** — remove any symptom log, cycle log or uploaded report.
+- **Delete individual records** — remove any symptom log, cycle log, mood check-in or uploaded report.
+- **Download your data** — Settings > Privacy and your data exports everything we hold about you as a file.
+- **Control sharing** — Settings > Partner and support circle shows who sees what, when they looked, and lets you pause or stop sharing at once.
 - **Delete your account** — permanently erases your account, health profile, all logs,
-  all uploaded files and all analysis results. This is immediate and cannot be undone.
+  all uploaded files, all analysis results and every sharing connection. This is immediate and cannot be undone.
 - **Withdraw consent** — by deleting your account.
 - **Complain** — contact our Grievance Officer below, or the Data Protection Board of
   India.
@@ -175,6 +217,9 @@ How it works:
 - We record that consent was given, by which email address, when, and from what device
   and network, so there is a verifiable record. The account holder cannot view or alter
   that record.
+
+Partner and support-circle features (inviting, following, gifting) are not available to anyone
+under 18.
 
 A parent or guardian can contact `[CONTACT EMAIL]` at any time to withdraw consent or
 request deletion of their child's account and data.

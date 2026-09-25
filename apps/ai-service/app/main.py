@@ -8,6 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.config import settings
 from app.llm import embeddings
 from app.llm.factory import get_llm_provider
+from app.rate_limit import RateLimitMiddleware
 from app.routes.chat import router as chat_router
 from app.routes.documents import router as documents_router
 from app.routes.partner import router as partner_router
@@ -54,6 +55,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+app.add_middleware(RateLimitMiddleware)
 
 app.include_router(chat_router)
 app.include_router(documents_router)

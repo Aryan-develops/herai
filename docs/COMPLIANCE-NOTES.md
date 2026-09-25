@@ -137,7 +137,7 @@ white-screens on a render crash), but not yet real error *reporting* — nothing
 you once the app is in someone else's hands. Wire up a vendor before relying on this
 for production visibility; the call site (`reportError`) will not need to change.
 
-## 10. Care referrals share health data with third parties — OPEN
+## 10. Care referrals share health data with third parties — DOCS DONE, LEGAL OPEN
 
 Patients can send a lab or doctor a request and choose to share their health profile and
 specific reports. That is a new kind of disclosure the privacy documents don't cover yet.
@@ -148,9 +148,12 @@ withdraws access immediately (`/provider/requests/:id/shared` returns 403); prov
 only a patient's first name and only what was shared; only the caller's own reports can be
 shared; requests are gated by the same DOB and parental-consent checks as other health data.
 
+**Done:** `PRIVACY.md` and `STORE-DATA-SAFETY.md` now name providers as recipients and describe
+user-directed sharing. `docs/PROVIDER-VETTING.md` is the checklist to run before
+`scripts/approve-provider.mjs`; `docs/PROVIDER-DPA-TEMPLATE.md` is a draft agreement for a lawyer.
+
 **Still to do before real users:**
-- Update `PRIVACY.md` and `STORE-DATA-SAFETY.md`: providers are a new recipient; "shared"
-  now includes user-directed disclosure to a named third party.
+- Get the DPA template reviewed and signed by each provider.
 - Verify credentials before approving anyone (`scripts/approve-provider.mjs` does not check).
   Sample listings (`is_sample`) are hidden unless `SHOW_SAMPLE_PROVIDERS=true` — never set
   that in production.
@@ -159,3 +162,42 @@ shared; requests are gated by the same DOB and parental-consent checks as other 
 - Referral fees or any payment between a provider and HERAI must be disclosed to patients.
 - The helpline numbers in the Get help sheet are India-only and hand-entered; confirm them.
 - Reviews are limited to completed visits, but there is no moderation yet.
+
+## 11. Partner mode can be abused for control — MITIGATED, KEEP WATCHING
+
+Sharing a cycle with another person is useful and is also a coercive-control risk. Built in:
+- Only the person whose data it is can choose what is shared, and she has to accept any request
+  made by someone else before they see anything.
+- Codes are single-use, expire in 7 days, are stored only as hashes, and accepting is throttled;
+  wrong codes give one generic error.
+- Partners get a *derived* summary, never notes, conditions, medications, reports or raw logs.
+  Symptom names and the fertile window are opt-in and off by default.
+- She can pause or remove anyone instantly and pausing is silent (a paused partner is told
+  "Nothing to show right now", not that she paused).
+- She can see when each partner viewed her summary (`partner_access_log`).
+- Adults only (18+) on both sides; minors are blocked.
+- Guidance is worded, filtered and never medical: no diagnosis, medication, fertility promise or
+  suggestion that she is exaggerating (`lib/partnerContent.ts`, `passesSafetyFilter`).
+
+Still to do: consider a one-tap "hide everything" panic action, and review the in-app wording with
+a domestic-violence support organisation before launch.
+
+## 12. Payments — NOT CONNECTED (by design)
+
+Payment screens and the provider abstraction exist, but no provider is connected and
+`PARTNER_PAYWALL` is false, so everything is free. Before switching on:
+- Choose providers (Razorpay first, with Cashfree/PayU fallback; Stripe is international cards only).
+- UPI AutoPay and card mandates fall under RBI recurring-payment rules: e-mandate registration with
+  additional authentication, a pre-debit notification about 24 hours before each charge, and an easy
+  cancel. The design assumes these; the notification job must be added when a provider is connected.
+- Verify webhook signatures and make handlers idempotent (the interface has `verifyWebhook`).
+- Update the privacy policy, both store forms (Purchases) and the terms (refunds, cancellation,
+  the 14-day trial), and issue GST-compliant invoices if registered.
+- Gift codes are single-use, hashed, expire in 180 days and cannot be redeemed by their buyer.
+
+## 13. Email and push delivery
+
+Set `RESEND_API_KEY` (and a verified `EMAIL_FROM` domain) so guardian-consent and partner-invite
+emails actually send. Without it, guardian consent still fails closed in production (the request is
+not silently lost) and partner invites fall back to the in-app code and link. Daily support notes need
+`CRON_SECRET` set on the API project; Vercel Cron calls `/api/cron/partner-nudges` at 09:00 IST.

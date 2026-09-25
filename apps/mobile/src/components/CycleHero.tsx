@@ -40,7 +40,10 @@ export function CycleHero({
       style={({ pressed }) => [styles.hero, { backgroundColor: style.solid }, pressed && { opacity: 0.92 }]}
     >
       <Text style={styles.eyebrow}>RIGHT NOW</Text>
-      <Text style={styles.phase}>{style.label}</Text>
+      <Text style={styles.phase}>
+        {style.label}
+        {insights.subPhase === "pms" ? " · PMS window" : insights.subPhase === "cramps" ? " · cramp-prone days" : ""}
+      </Text>
       <Text style={styles.blurb}>{style.blurb}</Text>
 
       <View style={styles.trackRow}>
