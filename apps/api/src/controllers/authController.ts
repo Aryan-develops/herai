@@ -164,11 +164,11 @@ export async function login(req: AuthedRequest, res: Response) {
   res.json({ user, session });
 }
 
-// Starts the Supabase OAuth authorization-code flow: redirect the browser
-// straight to the provider's consent screen. Supabase's own callback
-// exchanges the provider code, then bounces the browser to `redirectTo` with
-// a *Supabase* code in the query string, which the client hands to
-// oauthCallback below to actually get a session.
+// Starts Supabase OAuth: redirect the browser straight to the provider's
+// consent screen. This uses the implicit flow on purpose — PKCE needs a code
+// verifier kept between this request and the callback, which a stateless
+// serverless gateway can't hold. Supabase returns the session in the URL hash
+// of `redirectTo`, which pages/OAuthCallback.tsx adopts client-side.
 export async function oauthStart(req: AuthedRequest, res: Response) {
   const provider = req.params.provider?.toLowerCase();
   if (!provider || !OAUTH_PROVIDERS.has(provider)) {
@@ -186,29 +186,6 @@ export async function oauthStart(req: AuthedRequest, res: Response) {
   }
 
   res.redirect(data.url);
-}
-
-const oauthCallbackSchema = z.object({ code: z.string().min(1) });
-
-export async function oauthCallback(req: AuthedRequest, res: Response) {
-  const parsed = oauthCallbackSchema.safeParse(req.body);
-  if (!parsed.success) {
-    throw new HttpError(400, "Missing authorization code");
-  }
-
-  const { data, error } = await createAuthClient().auth.exchangeCodeForSession(parsed.data.code);
-  if (error || !data.session || !data.user) {
-    throw new HttpError(401, "OAuth sign-in failed — please try again");
-  }
-
-  const user = await loadAuthPayload(data.user.id, data.user.email ?? "");
-  const session: SessionPayload = {
-    accessToken: data.session.access_token,
-    refreshToken: data.session.refresh_token,
-    expiresAt: data.session.expires_at ?? null,
-  };
-
-  res.json({ user, session });
 }
 
 // OAuth and passkey sign-in never ask for date of birth, so the account lands

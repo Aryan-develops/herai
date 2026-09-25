@@ -15,6 +15,9 @@ export const supabaseBrowser = createClient(
     auth: {
       autoRefreshToken: false,
       persistSession: false,
+      // Otherwise this client consumes and clears the OAuth tokens in the URL
+      // hash before pages/OAuthCallback.tsx can read them.
+      detectSessionInUrl: false,
       experimental: { passkey: true },
     },
   }

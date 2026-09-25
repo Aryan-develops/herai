@@ -4,7 +4,6 @@ import {
   login,
   logout,
   me,
-  oauthCallback,
   oauthStart,
   refresh,
   register,
@@ -23,5 +22,4 @@ authRouter.get("/me", requireAuth, asyncHandler(me));
 authRouter.delete("/account", requireAuth, asyncHandler(deleteAccount));
 
 authRouter.get("/oauth/:provider", asyncHandler(oauthStart));
-authRouter.post("/oauth/callback", asyncHandler(oauthCallback));
 authRouter.post("/date-of-birth", requireAuth, asyncHandler(submitDateOfBirth));

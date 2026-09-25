@@ -230,14 +230,6 @@ export const api = {
   // Full page navigation, not fetch — the gateway 302s straight to the
   // provider's consent screen, which fetch() can't follow cross-origin.
   oauthUrl: (provider: "google") => `/api/auth/oauth/${provider}`,
-  exchangeOAuthCode: (code: string) =>
-    request<{ user: AuthUser; session: Session }>("/auth/oauth/callback", {
-      method: "POST",
-      body: JSON.stringify({ code }),
-    }).then((res) => {
-      setSession(res.session);
-      return res;
-    }),
   submitDateOfBirth: (data: { dateOfBirth: string; name?: string; guardianEmail?: string; guardianName?: string }) =>
     request<{ user: AuthUser }>("/auth/date-of-birth", { method: "POST", body: JSON.stringify(data) }),
   // Passkey auth (lib/supabaseBrowser.ts) yields a Supabase session directly
