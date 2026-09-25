@@ -61,6 +61,20 @@ export async function registerPasskey(session: Session): Promise<void> {
   const { data: options, error: startError } = await supabaseBrowser.auth.passkey.startRegistration();
   if (startError || !options) throw new Error(startError?.message ?? "Could not start passkey registration");
 
+  // Supabase's default options leave the authenticator open, so some browsers offer only "scan QR
+  // code" / "security key". Asking for the built-in authenticator makes the device show Face ID,
+  // Touch ID or Windows Hello instead; the cross-device QR option stays reachable as a fallback.
+  const registrationOptions = options.options as unknown as {
+    authenticatorSelection?: Record<string, unknown>;
+  };
+  registrationOptions.authenticatorSelection = {
+    ...registrationOptions.authenticatorSelection,
+    authenticatorAttachment: "platform",
+    residentKey: "required",
+    requireResidentKey: true,
+    userVerification: "preferred",
+  };
+
   const credential = await startRegistration({ optionsJSON: options.options as never });
 
   const { error } = await supabaseBrowser.auth.passkey.verifyRegistration({
