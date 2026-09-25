@@ -9,7 +9,10 @@
  * it too — nothing calling `reportError` needs to change.
  */
 
+import { API_URL } from "../config";
+
 let initialized = false;
+const sent = new Set<string>();
 
 export function initErrorReporting(): void {
   if (initialized) return;
@@ -35,4 +38,26 @@ export function reportError(error: Error, context?: Record<string, unknown>): vo
   // caller-supplied context (screen name, HTTP status), never request bodies
   // or user-entered text. Callers are responsible for keeping context clean.
   console.error("[herai:error]", error.message, context ?? {}, error.stack);
+
+  // First-party reporting to the gateway (no vendor account needed). Fire and forget, once per distinct
+  // error per session, and never allowed to throw from inside an error handler.
+  try {
+    const key = `${error.message}|${(error.stack ?? "").slice(0, 120)}`;
+    if (sent.has(key) || sent.size > 20) return;
+    sent.add(key);
+    fetch(`${API_URL}/client-errors`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        source: "mobile",
+        message: error.message.slice(0, 500),
+        stack: error.stack?.slice(0, 4000),
+        route: typeof context?.path === "string" ? context.path : undefined,
+        status: typeof context?.status === "number" ? context.status : undefined,
+        fatal: context?.isFatal === true,
+      }),
+    }).catch(() => {});
+  } catch {
+    // Reporting must never make a crash worse.
+  }
 }
