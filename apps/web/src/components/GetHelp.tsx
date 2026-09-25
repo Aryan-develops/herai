@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { Link } from "react-router-dom";
 import { Ambulance, HeartHandshake, LifeBuoy, MapPin, Phone, ShieldAlert, Stethoscope, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -40,7 +41,9 @@ function HelpSheet({ onClose }: { onClose: () => void }) {
     };
   }, [onClose]);
 
-  return (
+  // Portalled to <body>: the header uses backdrop-blur, which would otherwise become the containing
+  // block for this fixed overlay and clip the sheet to the header strip.
+  return createPortal(
     <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center" role="presentation">
       <div className="absolute inset-0 bg-ink-900/50 backdrop-blur-sm" onClick={onClose} aria-hidden="true" />
       <div
@@ -107,6 +110,7 @@ function HelpSheet({ onClose }: { onClose: () => void }) {
           Numbers shown are for India. HERAI can't summon help for you and can't detect every emergency.
         </p>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
