@@ -21,6 +21,7 @@ knows about HTTP.
 from __future__ import annotations
 
 import asyncio
+import re
 import logging
 import time
 import uuid
@@ -168,6 +169,13 @@ OFF_TOPIC_SUGGESTIONS = [
 # Intake classifications that should get a normal conversational answer
 # rather than the full symptom -> risk -> care-plan pipeline.
 CONVERSATIONAL = {"greeting", "informational", "general_question", "off_topic"}
+
+# Small talk is never "off topic". The model occasionally mislabels a bare
+# "hey", so greetings and thanks are decided here, not left to the classifier.
+_SMALL_TALK = re.compile(
+    r"^\s*(h+i+|he+y+|hello+|hola|namaste|yo|sup|good\s+(morning|afternoon|evening|night)|thanks?( you)?|thank u|ok(ay)?|cool|great|bye|goodbye|how are you)[\s!.?,]*$",
+    re.IGNORECASE,
+)
 
 
 def _build_reply_response(
@@ -441,6 +449,8 @@ async def run_pipeline(
         # off-topic messages get a natural reply instead of the assessment
         # pipeline. The safety pre-check above has already run for all of them.
         classification = (intake_out.get("request_classification") or "").lower()
+        if _SMALL_TALK.match(message):
+            classification = "greeting"
         if classification in CONVERSATIONAL:
             if classification == "off_topic":
                 yield {"type": "final", "data": _build_reply_response(ctx, OFF_TOPIC_REPLY, OFF_TOPIC_SUGGESTIONS, trace)}

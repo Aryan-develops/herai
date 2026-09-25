@@ -8,6 +8,10 @@ export type AuthStackParamList = {
 export type AppStackParamList = {
   Tabs: undefined;
   LogEntry: undefined;
+  Care: { type?: "doctor" } | undefined;
+  CareProvider: { id: string };
+  MyRequests: undefined;
+  Provider: undefined;
 };
 
 export type MainTabsParamList = {

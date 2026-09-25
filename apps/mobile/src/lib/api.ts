@@ -115,6 +115,7 @@ export interface AuthUser {
   email: string;
   onboardingComplete: boolean;
   consentStatus: ConsentStatus;
+  isProvider?: boolean;
 }
 
 export interface ConsentRequest {
@@ -173,6 +174,123 @@ export interface CycleInsights {
   phase: "menstrual" | "follicular" | "ovulation" | "luteal" | null;
   cycleHistory: { start: string; lengthDays: number }[];
   regularity: "regular" | "irregular" | "insufficient_data";
+}
+
+export type ProviderType = "lab" | "doctor" | "clinic";
+export type ServiceCategory = "test" | "consultation" | "teleconsult";
+
+export interface ProviderService {
+  id: string;
+  name: string;
+  category: ServiceCategory;
+  priceInr: number | null;
+  turnaroundHours: number | null;
+}
+
+export interface CareProvider {
+  id: string;
+  name: string;
+  type: ProviderType;
+  specialties: string[];
+  address: string;
+  city: string;
+  pincode: string | null;
+  phone: string | null;
+  website: string | null;
+  hours: string | null;
+  homeCollection: boolean;
+  isSample: boolean;
+  available: boolean;
+  availabilityNote: string | null;
+  offersTeleconsult: boolean;
+  ratingAvg: number;
+  ratingCount: number;
+  priceFromInr: number | null;
+  services: ProviderService[];
+  lat: number | null;
+  lng: number | null;
+  distanceKm: number | null;
+}
+
+export interface CareSlot {
+  id: string;
+  startsAt: string;
+  durationMin: number;
+}
+
+export interface CareReview {
+  rating: number;
+  comment: string | null;
+  createdAt: string;
+}
+
+export type RequestKind = "test" | "appointment" | "callback" | "teleconsult";
+export type RequestStatus = "new" | "accepted" | "declined" | "completed" | "cancelled";
+
+export interface CareRequest {
+  id: string;
+  kind: RequestKind;
+  serviceName: string | null;
+  status: RequestStatus;
+  message: string | null;
+  slotStartsAt: string | null;
+  preferredTime: string | null;
+  sharedProfile: boolean;
+  sharedReportCount: number;
+  providerNote: string | null;
+  meetingUrl: string | null;
+  createdAt: string;
+  reviewed: boolean;
+  provider: { id: string; name: string; type: ProviderType; phone: string | null } | null;
+}
+
+export interface TestSuggestion {
+  test: string;
+  because: string[];
+  providers: (CareProvider & { matchedService: { id: string; name: string; priceInr: number | null; turnaroundHours: number | null } })[];
+}
+
+export interface ProviderInboxItem {
+  id: string;
+  patientFirstName: string;
+  kind: RequestKind;
+  serviceName: string | null;
+  status: RequestStatus;
+  message: string | null;
+  slotStartsAt: string | null;
+  preferredTime: string | null;
+  sharesProfile: boolean;
+  sharedReportCount: number;
+  providerNote: string | null;
+  meetingUrl: string | null;
+  createdAt: string;
+}
+
+export interface ProviderDashboardData {
+  provider: {
+    id: string;
+    name: string;
+    type: ProviderType;
+    address: string;
+    city: string;
+    phone: string | null;
+    hours: string | null;
+    home_collection: boolean;
+    available: boolean;
+    availability_note: string | null;
+    offers_teleconsult: boolean;
+    rating_avg: number;
+    rating_count: number;
+    verified: boolean;
+  };
+  services: (ProviderService & { active: boolean })[];
+  slots: { id: string; startsAt: string; durationMin: number; status: "open" | "booked" }[];
+  requestCounts: Record<string, number>;
+}
+
+export interface SharedData {
+  profile: { ageRange?: string; conditions?: string[]; medications?: string[]; allergies?: string[]; cycleLengthDays?: number } | null;
+  reports: { id: string; fileName: string; uploadedAt: string; values: { parameter: string; value: number | null; unit?: string | null; reference_range?: string | null; status: string }[]; explanation: string | null }[];
 }
 
 export type TimelineEvent =
@@ -276,6 +394,58 @@ export const api = {
   getCycleInsights: () => request<{ insights: CycleInsights }>("/logs/cycles/insights"),
 
   getTimeline: () => request<{ events: TimelineEvent[] }>("/logs/timeline"),
+
+  listProviders: (q: { type?: ProviderType; lat?: number; lng?: number; radiusKm?: number; city?: string; homeCollection?: boolean; teleconsult?: boolean; available?: boolean }) => {
+    const p = new URLSearchParams();
+    if (q.type) p.set("type", q.type);
+    if (q.lat !== undefined && q.lng !== undefined) {
+      p.set("lat", String(q.lat));
+      p.set("lng", String(q.lng));
+    }
+    if (q.radiusKm) p.set("radiusKm", String(q.radiusKm));
+    if (q.city) p.set("city", q.city);
+    if (q.homeCollection) p.set("homeCollection", "true");
+    if (q.teleconsult) p.set("teleconsult", "true");
+    if (q.available) p.set("available", "true");
+    return request<{ providers: CareProvider[] }>(`/care/providers?${p.toString()}`);
+  },
+  getProvider: (id: string) => request<{ provider: CareProvider; slots: CareSlot[]; reviews: CareReview[] }>(`/care/providers/${id}`),
+  createCareRequest: (data: {
+    providerId: string;
+    kind: RequestKind;
+    serviceId?: string;
+    slotId?: string;
+    preferredTime?: string;
+    message?: string;
+    shareProfile: boolean;
+    shareReportIds: string[];
+    consent: true;
+  }) => request<{ request: { id: string; status: RequestStatus } }>("/care/requests", { method: "POST", body: JSON.stringify(data) }),
+  listCareRequests: () => request<{ requests: CareRequest[] }>("/care/requests"),
+  cancelCareRequest: (id: string) => request<void>(`/care/requests/${id}/cancel`, { method: "POST" }),
+  reviewCareRequest: (id: string, data: { rating: number; comment?: string }) =>
+    request<{ ok: true }>(`/care/requests/${id}/review`, { method: "POST", body: JSON.stringify(data) }),
+  suggestTests: (reportId: string, coords?: { lat: number; lng: number }) =>
+    request<{ suggestions: TestSuggestion[] }>(`/care/suggest/${reportId}${coords ? `?lat=${coords.lat}&lng=${coords.lng}` : ""}`),
+  applyAsProvider: (data: { orgName: string; type: ProviderType; contactName: string; email: string; phone?: string; city: string; notes?: string }) =>
+    request<{ ok: true }>("/care/applications", { method: "POST", body: JSON.stringify(data) }),
+
+  providerMe: () => request<ProviderDashboardData>("/provider/me"),
+  providerUpdateMe: (data: { available?: boolean; availabilityNote?: string | null; hours?: string | null; phone?: string | null; homeCollection?: boolean; offersTeleconsult?: boolean }) =>
+    request<{ ok: true }>("/provider/me", { method: "PATCH", body: JSON.stringify(data) }),
+  providerAddService: (data: { name: string; category: ServiceCategory; priceInr?: number | null; turnaroundHours?: number | null }) =>
+    request<{ id: string }>("/provider/services", { method: "POST", body: JSON.stringify(data) }),
+  providerUpdateService: (id: string, data: { active?: boolean; priceInr?: number | null; turnaroundHours?: number | null }) =>
+    request<void>(`/provider/services/${id}`, { method: "PATCH", body: JSON.stringify(data) }),
+  providerDeleteService: (id: string) => request<void>(`/provider/services/${id}`, { method: "DELETE" }),
+  providerAddSlots: (data: { startsAt: string[]; durationMin: number }) =>
+    request<{ added: number }>("/provider/slots", { method: "POST", body: JSON.stringify(data) }),
+  providerDeleteSlot: (id: string) => request<void>(`/provider/slots/${id}`, { method: "DELETE" }),
+  providerRequests: () => request<{ requests: ProviderInboxItem[] }>("/provider/requests"),
+  providerUpdateRequest: (id: string, data: { status: "accepted" | "declined" | "completed"; note?: string; meetingUrl?: string }) =>
+    request<void>(`/provider/requests/${id}`, { method: "PATCH", body: JSON.stringify(data) }),
+  providerShared: (id: string) => request<SharedData>(`/provider/requests/${id}/shared`),
+
 
   // Full implementation (expo-document-picker/-image-picker wiring) lands in
   // Phase 4; the contract is settled now so screens can be built against it.

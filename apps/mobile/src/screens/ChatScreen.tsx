@@ -13,6 +13,10 @@ import {
 import { api, type HealthProfile } from "../lib/api";
 import { streamChat, type EmergencyEvent, type FinalResult, type PipelineEvent } from "../lib/aiChat";
 import { SourcesList } from "../components/SourcesList";
+import { GetHelpButton } from "../components/GetHelp";
+import { useNavigation } from "@react-navigation/native";
+import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import type { AppStackParamList } from "../navigation/types";
 import { colors } from "../theme";
 
 /** Ported from apps/web/src/pages/Chat.tsx — same Turn/StepState model and
@@ -127,21 +131,52 @@ function EmergencyBanner({ data }: { data: EmergencyEvent["data"] }) {
   );
 }
 
+function ReplyResult({ result, onFollowUp, onFindCare }: { result: FinalResult; onFollowUp: (q: string) => void; onFindCare: () => void }) {
+  return (
+    <View style={{ gap: 10 }}>
+      <Text style={styles.bodyText}>{result.reply}</Text>
+
+      {result.suggest_help && (
+        <View style={styles.helpNudge}>
+          <Text style={[styles.bodyText, { flex: 1 }]}>This might be worth checking with a clinician.</Text>
+          <GetHelpButton onFindCare={onFindCare} />
+        </View>
+      )}
+
+      {result.follow_up_questions.length > 0 && (
+        <View style={styles.chipRow}>
+          {result.follow_up_questions.map((q, i) => (
+            <Pressable key={i} onPress={() => onFollowUp(q)} accessibilityRole="button" style={({ pressed }) => [styles.followUpChip, pressed && { opacity: 0.7 }]}>
+              <Text style={styles.followUpText}>{q}</Text>
+            </Pressable>
+          ))}
+        </View>
+      )}
+
+      <SourcesList sources={result.sources ?? []} />
+    </View>
+  );
+}
+
 function AssistantResult({ result, onFollowUp }: { result: FinalResult; onFollowUp: (q: string) => void }) {
   const riskLevel = result.risk_assessment?.risk_level ?? result.symptom_analysis?.risk_level;
 
   return (
     <View style={{ gap: 12 }}>
       <View style={styles.badgeRow}>
-        <View style={styles.confidenceBadge}>
-          <Text style={styles.confidenceText}>{Math.round(result.confidence * 100)}% confidence</Text>
-        </View>
+        {result.confidence !== null && (
+          <View style={styles.confidenceBadge}>
+            <Text style={styles.confidenceText}>{Math.round(result.confidence * 100)}% confidence</Text>
+          </View>
+        )}
         {riskLevel && (
           <View style={[styles.riskBadge, { backgroundColor: (RISK_COLORS[riskLevel] ?? "#737373") + "22" }]}>
             <Text style={[styles.riskText, { color: RISK_COLORS[riskLevel] ?? colors.ink700 }]}>{riskLevel} risk</Text>
           </View>
         )}
       </View>
+
+      {result.reply ? <Text style={styles.bodyText}>{result.reply}</Text> : null}
 
       {result.symptom_analysis && (
         <View>
@@ -207,6 +242,7 @@ function AssistantResult({ result, onFollowUp }: { result: FinalResult; onFollow
 }
 
 export function ChatScreen() {
+  const navigation = useNavigation<NativeStackNavigationProp<AppStackParamList>>();
   const [profile, setProfile] = useState<HealthProfile | null>(null);
   const [turns, setTurns] = useState<Turn[]>([]);
   const [input, setInput] = useState("");
@@ -233,7 +269,16 @@ export function ChatScreen() {
     setBusy(true);
 
     try {
-      await streamChat({ message: trimmed, healthProfile: profile ?? undefined }, (event) => {
+      const history = turns.slice(-6).flatMap((t) => {
+        const text = t.result?.reply ?? t.result?.symptom_analysis?.summary;
+        return text
+          ? [
+              { role: "user" as const, content: t.userMessage },
+              { role: "assistant" as const, content: text },
+            ]
+          : [{ role: "user" as const, content: t.userMessage }];
+      });
+      await streamChat({ message: trimmed, healthProfile: profile ?? undefined, history }, (event) => {
         setTurns((prev) => prev.map((t) => (t.id === id ? applyEvent(t, event) : t)));
         if (event.type === "final") {
           api
@@ -264,11 +309,11 @@ export function ChatScreen() {
         keyExtractor={(t) => t.id}
         ListHeaderComponent={
           <View style={styles.intro}>
-            <Text style={styles.title}>Ask HERAI</Text>
-            <Text style={styles.subtitle}>
-              Describe how you're feeling. A pipeline of specialist agents reasons over it step by
-              step.
-            </Text>
+            <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
+              <Text style={styles.title} accessibilityRole="header">Ask HERAI</Text>
+              <GetHelpButton onFindCare={(type) => navigation.navigate("Care", type ? { type } : undefined)} />
+            </View>
+            <Text style={styles.subtitle}>Ask about your cycle, symptoms or lab reports.</Text>
             {turns.length === 0 && (
               <View style={styles.suggestions}>
                 {SUGGESTIONS.map((s) => (
@@ -289,7 +334,7 @@ export function ChatScreen() {
             </View>
 
             <View style={styles.assistantBubble}>
-              {turn.steps.length > 0 && (
+              {turn.steps.length > 0 && turn.status === "streaming" && (
                 <View style={styles.stepsBox}>
                   {turn.steps.map((step) => (
                     <StepRow key={step.agent} step={step} />
@@ -301,14 +346,17 @@ export function ChatScreen() {
 
               {turn.status === "error" && <Text style={styles.errorText}>⚠ {turn.error}</Text>}
 
-              {turn.result && !turn.result.emergency && (
-                <AssistantResult result={turn.result} onFollowUp={(q) => setInput(q)} />
+              {turn.result && !turn.result.emergency && turn.result.kind === "reply" && (
+                <ReplyResult result={turn.result} onFollowUp={(q) => send(q)} onFindCare={() => navigation.navigate("Care")} />
+              )}
+              {turn.result && !turn.result.emergency && turn.result.kind !== "reply" && (
+                <AssistantResult result={turn.result} onFollowUp={(q) => send(q)} />
               )}
 
               {turn.status === "streaming" && turn.steps.length === 0 && (
                 <View style={styles.stepRow}>
                   <ActivityIndicator size="small" color={colors.ink700} />
-                  <Text style={styles.stepLabel}>Starting pipeline…</Text>
+                  <Text style={styles.stepLabel}>HERAI is typing…</Text>
                 </View>
               )}
             </View>
@@ -322,7 +370,7 @@ export function ChatScreen() {
           value={input}
           onChangeText={setInput}
           placeholder="e.g. I've been tired for two weeks"
-          placeholderTextColor="#9ca3af"
+          placeholderTextColor={colors.muted}
           accessibilityLabel="Message to HERAI"
           multiline
           onSubmitEditing={() => send(input)}
@@ -362,7 +410,7 @@ const styles = StyleSheet.create({
   suggestionText: { fontSize: 12, color: colors.ink700 },
   turn: { marginBottom: 16, gap: 8 },
   userRow: { alignItems: "flex-end" },
-  userBubble: { maxWidth: "82%", backgroundColor: colors.ink900, borderRadius: 16, borderTopRightRadius: 4, paddingHorizontal: 14, paddingVertical: 10 },
+  userBubble: { maxWidth: "82%", backgroundColor: colors.brand600, borderRadius: 18, borderTopRightRadius: 4, paddingHorizontal: 14, paddingVertical: 10 },
   userText: { color: colors.white, fontSize: 14 },
   assistantBubble: {
     maxWidth: "90%",
@@ -399,6 +447,7 @@ const styles = StyleSheet.create({
   planItem: { fontSize: 13, color: colors.ink900, marginBottom: 2 },
   followUpChip: { borderWidth: 1, borderColor: colors.brand100, backgroundColor: colors.white, borderRadius: 999, paddingHorizontal: 10, paddingVertical: 6 },
   followUpText: { fontSize: 12, color: colors.brand600, fontWeight: "600" },
+  helpNudge: { flexDirection: "row", alignItems: "center", gap: 10, backgroundColor: colors.brand50, borderRadius: 14, padding: 12 },
   disclaimer: { fontSize: 11, color: "#9ca3af", fontStyle: "italic" },
   emergencyBox: { backgroundColor: colors.red50, borderRadius: 12, borderWidth: 1, borderColor: "#fecaca", padding: 12, gap: 4 },
   emergencyTitle: { fontWeight: "700", color: "#991b1b" },
@@ -425,7 +474,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: colors.ink900,
   },
-  sendButton: { height: 40, width: 40, borderRadius: 12, backgroundColor: colors.ink900, alignItems: "center", justifyContent: "center" },
+  sendButton: { height: 44, width: 44, borderRadius: 14, backgroundColor: colors.brand600, alignItems: "center", justifyContent: "center" },
   sendButtonDisabled: { opacity: 0.4 },
   sendText: { color: colors.white, fontSize: 16 },
 });

@@ -77,7 +77,7 @@ export interface IntakeResult {
   missing_info: string[];
   request_classification: string;
   invoke_agents: { symptom_analysis: boolean; womens_health: boolean };
-  confidence: number;
+  confidence: number | null;
 }
 
 export interface AgentTraceEntry {
@@ -93,6 +93,9 @@ export interface Source {
 }
 
 export interface FinalResult {
+  kind?: "reply" | "assessment";
+  reply?: string | null;
+  suggest_help?: boolean;
   emergency: boolean;
   message?: string;
   recommended_action?: string;
@@ -102,7 +105,7 @@ export interface FinalResult {
   womens_health?: WomensHealthAnalysis;
   risk_assessment?: RiskAssessment;
   care_plan?: CarePlan;
-  confidence: number;
+  confidence: number | null;
   confidence_reasons?: string[];
   follow_up_questions: string[];
   sources?: Source[];

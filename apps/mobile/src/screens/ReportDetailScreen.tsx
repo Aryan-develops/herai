@@ -4,6 +4,8 @@ import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { api, type HealthReportRecord } from "../lib/api";
 import { SourcesList } from "../components/SourcesList";
+import { SuggestedTests } from "../components/SuggestedTests";
+import { useNavigation } from "@react-navigation/native";
 import { colors } from "../theme";
 import type { ReportsStackParamList } from "../navigation/types";
 
@@ -31,6 +33,7 @@ type Props = NativeStackScreenProps<ReportsStackParamList, "ReportDetail">;
  * trend chart is summarized as first→last text here rather than pulling in
  * an SVG dependency for a scaffold-stage screen — same underlying data. */
 export function ReportDetailScreen({ route, navigation }: Props) {
+  const rootNav = useNavigation();
   const { id } = route.params;
   const [report, setReport] = useState<HealthReportRecord | null>(null);
   const [allReports, setAllReports] = useState<HealthReportRecord[]>([]);
@@ -99,6 +102,7 @@ export function ReportDetailScreen({ route, navigation }: Props) {
 
   const risk = report.riskAssessment;
   const care = report.carePlan;
+  const hasFlagged = report.extractedValues.some((v) => v.status !== "in_range" && v.status !== "unparseable");
 
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
@@ -182,6 +186,17 @@ export function ReportDetailScreen({ route, navigation }: Props) {
             </Text>
           ))}
         </View>
+      )}
+
+      {hasFlagged && !report.emergency && (
+        <SuggestedTests
+          reportId={report._id}
+          onOpenProvider={(id) => {
+            // Reports live in a tab's nested stack; the care screens live on the app stack above the tabs.
+            const app = rootNav.getParent()?.getParent() as { navigate: (n: string, p: object) => void } | undefined;
+            app?.navigate("CareProvider", { id });
+          }}
+        />
       )}
 
       {care && (

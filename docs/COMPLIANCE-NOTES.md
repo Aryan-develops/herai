@@ -136,3 +136,26 @@ or similar) is configured. This is real error *handling* (the app no longer
 white-screens on a render crash), but not yet real error *reporting* — nothing reaches
 you once the app is in someone else's hands. Wire up a vendor before relying on this
 for production visibility; the call site (`reportError`) will not need to change.
+
+## 10. Care referrals share health data with third parties — OPEN
+
+Patients can send a lab or doctor a request and choose to share their health profile and
+specific reports. That is a new kind of disclosure the privacy documents don't cover yet.
+
+**Built in:** nothing is shared by default; the consent step lists exactly what will be sent;
+consent time is recorded (`care_requests.consent_at`); cancelling or a provider declining
+withdraws access immediately (`/provider/requests/:id/shared` returns 403); providers see
+only a patient's first name and only what was shared; only the caller's own reports can be
+shared; requests are gated by the same DOB and parental-consent checks as other health data.
+
+**Still to do before real users:**
+- Update `PRIVACY.md` and `STORE-DATA-SAFETY.md`: providers are a new recipient; "shared"
+  now includes user-directed disclosure to a named third party.
+- Verify credentials before approving anyone (`scripts/approve-provider.mjs` does not check).
+  Sample listings (`is_sample`) are hidden unless `SHOW_SAMPLE_PROVIDERS=true` — never set
+  that in production.
+- Providers become data recipients of medical information: a data-processing agreement,
+  and a deletion/retention rule for what they viewed, need a lawyer.
+- Referral fees or any payment between a provider and HERAI must be disclosed to patients.
+- The helpline numbers in the Get help sheet are India-only and hand-entered; confirm them.
+- Reviews are limited to completed visits, but there is no moderation yet.
