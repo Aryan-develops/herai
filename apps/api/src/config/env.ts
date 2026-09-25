@@ -31,6 +31,17 @@ export const env = {
   // Where guardian-facing consent links point. Defaults to the web app's dev
   // origin; must be the public app URL in production.
   appBaseUrl: process.env.APP_BASE_URL ?? process.env.CORS_ORIGIN ?? "http://localhost:5173",
+  // Partner Mode is free while this is false (testing phase); flip to enforce trial/subscription.
+  partnerPaywall: process.env.PARTNER_PAYWALL === "true",
+  partnerTrialDays: Number(process.env.PARTNER_TRIAL_DAYS ?? 14),
+  partnerPriceInr: Number(process.env.PARTNER_PRICE_INR ?? 100),
+  // Shared secret for scheduled jobs (Vercel Cron sends it as a Bearer token).
+  cronSecret: process.env.CRON_SECRET,
+  // Optional transactional email (Resend). Without it, non-critical email is skipped.
+  resendApiKey: process.env.RESEND_API_KEY,
+  emailFrom: process.env.EMAIL_FROM ?? "HERAI <onboarding@resend.dev>",
+  // Optional: personalises partner wording. Falls back to the curated bank when unset or slow.
+  aiServiceUrl: process.env.AI_SERVICE_URL,
   supabaseUrl: required("SUPABASE_URL"),
   supabaseServiceRoleKey: required("SUPABASE_SERVICE_ROLE_KEY"),
   // Used only to sign users in (see createAuthClient) — no elevated privileges.

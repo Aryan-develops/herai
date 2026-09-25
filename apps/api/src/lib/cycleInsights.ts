@@ -16,6 +16,11 @@ export interface CycleInsights {
   ovulationDate: string | null;
   fertileWindow: { start: string; end: string } | null;
   phase: "menstrual" | "follicular" | "ovulation" | "luteal" | null;
+  /** Finer-grained overlay on `phase`: PMS window before a period, or cramp-prone days. */
+  subPhase: "pms" | "cramps" | null;
+  daysUntilNextPeriod: number | null;
+  /** How much history backs the prediction; drives the "estimated" label in the UI. */
+  confidence: "high" | "medium" | "low";
   cycleHistory: { start: string; lengthDays: number }[];
   regularity: "regular" | "irregular" | "insufficient_data";
 }
@@ -52,9 +57,19 @@ function derivePeriodsFromLogs(logs: CycleLogInput[]): { start: Date; end: Date 
   return periods;
 }
 
+export interface CycleInsightsOptions {
+  /** Injected for tests; defaults to now. */
+  today?: Date;
+  /** True when a cramp-like symptom was logged in the last two days. */
+  crampsRecent?: boolean;
+}
+
+const PMS_WINDOW_DAYS = 6;
+
 export function computeCycleInsights(
   logs: CycleLogInput[],
   profile: { cycleLengthDays?: number | null; lastPeriodStart?: string | null } | null,
+  options: CycleInsightsOptions = {},
 ): CycleInsights {
   const periods = derivePeriodsFromLogs(logs);
   const cycleHistory = periods.slice(1).map((period, i) => ({
@@ -93,12 +108,15 @@ export function computeCycleInsights(
       ovulationDate: null,
       fertileWindow: null,
       phase: null,
+      subPhase: null,
+      daysUntilNextPeriod: null,
+      confidence: "low",
       cycleHistory,
       regularity: "insufficient_data",
     };
   }
 
-  const today = toDateOnly(new Date().toISOString());
+  const today = toDateOnly((options.today ?? new Date()).toISOString());
   const daysSinceStart = Math.round((today.getTime() - lastPeriodStartDate.getTime()) / DAY_MS);
   const currentCycleDay = ((daysSinceStart % cycleLengthDays) + cycleLengthDays) % cycleLengthDays;
 
@@ -117,11 +135,20 @@ export function computeCycleInsights(
   else if (today.getTime() < ovulationDate.getTime()) phase = "follicular";
   else phase = "luteal";
 
+  const daysUntilNextPeriod = Math.round((predictedNextPeriodStart.getTime() - today.getTime()) / DAY_MS);
+  let subPhase: CycleInsights["subPhase"] = null;
+  if (phase === "menstrual" && (currentCycleDay < 2 || options.crampsRecent)) subPhase = "cramps";
+  else if (phase === "luteal" && daysUntilNextPeriod > 0 && daysUntilNextPeriod <= PMS_WINDOW_DAYS) subPhase = "pms";
+  else if (options.crampsRecent && daysUntilNextPeriod <= 1) subPhase = "cramps";
+
   let regularity: CycleInsights["regularity"] = "insufficient_data";
   if (observedLengths.length >= 2) {
     const spread = Math.max(...observedLengths) - Math.min(...observedLengths);
     regularity = spread <= 7 ? "regular" : "irregular";
   }
+
+  const confidence: CycleInsights["confidence"] =
+    observedLengths.length >= 3 && regularity === "regular" ? "high" : observedLengths.length >= 1 ? "medium" : "low";
 
   return {
     cycleLengthDays,
@@ -132,7 +159,27 @@ export function computeCycleInsights(
     ovulationDate: isoDate(ovulationDate),
     fertileWindow: { start: isoDate(fertileWindowStart), end: isoDate(fertileWindowEnd) },
     phase,
+    subPhase,
+    daysUntilNextPeriod,
+    confidence,
     cycleHistory,
     regularity,
   };
+}
+
+export type DayPhase = "menstrual" | "follicular" | "ovulation" | "luteal" | "pms";
+
+/** Predicted phase for any date, projected from the last period start. Used for calendar strips and plan clashes. */
+export function phaseForDate(insights: CycleInsights, date: Date): DayPhase | null {
+  if (!insights.lastPeriodStart) return null;
+  const L = insights.cycleLengthDays;
+  const start = toDateOnly(insights.lastPeriodStart);
+  const day = toDateOnly(date.toISOString());
+  const diff = Math.round((day.getTime() - start.getTime()) / DAY_MS);
+  const idx = ((diff % L) + L) % L; // 0-based day in cycle
+  const ovulationIdx = L - LUTEAL_PHASE_LENGTH;
+  if (idx < insights.periodLengthDays) return "menstrual";
+  if (idx >= ovulationIdx - 5 && idx <= ovulationIdx + 1) return "ovulation";
+  if (idx >= L - PMS_WINDOW_DAYS) return "pms";
+  return idx < ovulationIdx ? "follicular" : "luteal";
 }

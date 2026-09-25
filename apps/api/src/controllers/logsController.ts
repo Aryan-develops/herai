@@ -3,7 +3,7 @@ import { z } from "zod";
 import { supabaseAdmin } from "../config/supabase.js";
 import { HttpError } from "../middleware/errorHandler.js";
 import type { AuthedRequest } from "../middleware/auth.js";
-import { computeCycleInsights } from "../lib/cycleInsights.js";
+import { loadCycleInsights } from "../lib/cycleService.js";
 
 const symptomLogSchema = z.object({
   symptoms: z
@@ -112,32 +112,7 @@ export async function deleteCycleLog(req: AuthedRequest, res: Response) {
 }
 
 export async function getCycleInsights(req: AuthedRequest, res: Response) {
-  const [logsResult, profileResult] = await Promise.all([
-    supabaseAdmin
-      .from("cycle_logs")
-      .select("logged_at")
-      .eq("user_id", req.userId)
-      .order("logged_at", { ascending: true })
-      .limit(500),
-    supabaseAdmin
-      .from("health_profiles")
-      .select("cycle_length_days, last_period_start")
-      .eq("user_id", req.userId)
-      .maybeSingle(),
-  ]);
-
-  if (logsResult.error) throw new HttpError(500, "Failed to load cycle logs");
-
-  const profile = profileResult.data
-    ? { cycleLengthDays: profileResult.data.cycle_length_days, lastPeriodStart: profileResult.data.last_period_start }
-    : null;
-
-  const insights = computeCycleInsights(
-    (logsResult.data ?? []).map((l) => ({ loggedAt: l.logged_at })),
-    profile,
-  );
-
-  res.json({ insights });
+  res.json({ insights: await loadCycleInsights(req.userId!) });
 }
 
 export async function getTimeline(req: AuthedRequest, res: Response) {

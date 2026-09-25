@@ -8,6 +8,11 @@ import { logsRouter } from "./routes/logs.js";
 import { reportsRouter } from "./routes/reports.js";
 import { agentExecutionsRouter } from "./routes/agentExecutions.js";
 import { careRouter, providerRouter } from "./routes/care.js";
+import { partnerRouter } from "./routes/partner.js";
+import { paymentsRouter } from "./routes/payments.js";
+import { settingsRouter } from "./routes/settings.js";
+import { runPartnerNudges } from "./controllers/nudgeController.js";
+import { asyncHandler } from "./utils/asyncHandler.js";
 import { errorHandler } from "./middleware/errorHandler.js";
 
 export function createApp() {
@@ -41,6 +46,10 @@ export function createApp() {
   app.use("/api/agent-executions", agentExecutionsRouter);
   app.use("/api/care", careRouter);
   app.use("/api/provider", providerRouter);
+  app.use("/api/partner", partnerRouter);
+  app.use("/api/payments", paymentsRouter);
+  app.use("/api/settings", settingsRouter);
+  app.get("/api/cron/partner-nudges", asyncHandler(runPartnerNudges));
 
   app.use(errorHandler);
 

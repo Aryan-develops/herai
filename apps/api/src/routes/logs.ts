@@ -13,6 +13,7 @@ import {
   listCycleLogs,
   listSymptomLogs,
 } from "../controllers/logsController.js";
+import { createMoodLog, deleteMoodLog, listMoodLogs, moodInsights } from "../controllers/settingsController.js";
 
 export const logsRouter = Router();
 
@@ -30,3 +31,8 @@ logsRouter.get("/cycles/insights", asyncHandler(getCycleInsights));
 logsRouter.delete("/cycles/:id", asyncHandler(deleteCycleLog));
 
 logsRouter.get("/timeline", asyncHandler(getTimeline));
+
+logsRouter.post("/moods", asyncHandler(createMoodLog));
+logsRouter.get("/moods", asyncHandler(listMoodLogs));
+logsRouter.get("/moods/insights", asyncHandler(moodInsights));
+logsRouter.delete("/moods/:id", asyncHandler(deleteMoodLog));
