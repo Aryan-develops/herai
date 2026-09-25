@@ -9,6 +9,7 @@ import { api, type CycleInsights, type TimelineEvent } from "../lib/api";
 import { Card } from "../components/ui";
 import { CycleHero } from "../components/CycleHero";
 import { GetHelpButton } from "../components/GetHelp";
+import { MoodCheckIn } from "../components/MoodCheckIn";
 import { colors, radius, shadow } from "../theme";
 import type { AppStackParamList, MainTabsParamList } from "../navigation/types";
 
@@ -45,8 +46,29 @@ export function DashboardScreen({ navigation }: Props) {
     navigation.getParent<NativeStackNavigationProp<AppStackParamList>>()?.navigate("LogEntry");
   }
 
+  function openSettings() {
+    navigation.getParent<NativeStackNavigationProp<AppStackParamList>>()?.navigate("Settings");
+  }
+
+  function openTimeline() {
+    if (user?.isPartner) navigation.getParent<NativeStackNavigationProp<AppStackParamList>>()?.navigate("TimelinePage");
+    else navigation.navigate("Timeline");
+  }
+
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
+      <View style={styles.topBar}>
+        <Pressable onPress={openSettings} accessibilityRole="button" accessibilityLabel="HERAI settings" style={({ pressed }) => [styles.brand, pressed && { opacity: 0.7 }]}>
+          <View style={styles.logo}>
+            <Ionicons name="heart" size={16} color={colors.onBrand} />
+          </View>
+          <Text style={styles.brandText}>HERAI</Text>
+          <Ionicons name="settings-outline" size={14} color={colors.muted} />
+        </Pressable>
+        <Pressable onPress={openSettings} accessibilityRole="button" accessibilityLabel="Settings" style={styles.avatar}>
+          <Text style={styles.avatarText}>{(user?.name ?? "?").split(" ").map((p) => p[0]).slice(0, 2).join("").toUpperCase()}</Text>
+        </Pressable>
+      </View>
       <View style={styles.headerRow}>
         <View style={{ flex: 1 }}>
           <Text style={styles.greeting} accessibilityRole="header">
@@ -59,11 +81,26 @@ export function DashboardScreen({ navigation }: Props) {
 
       <CycleHero insights={insights} loading={insightsLoading} onPress={() => navigation.navigate("Cycle")} />
 
+      <MoodCheckIn />
+
+      {user?.isPartner ? (
+        <Pressable onPress={() => navigation.navigate("Partner")} accessibilityRole="button" accessibilityLabel="Partner home" style={({ pressed }) => [styles.partnerCard, pressed && { opacity: 0.9 }]}>
+          <View style={[styles.quickIcon, { backgroundColor: colors.brand600 }]}>
+            <Ionicons name="heart-circle" size={24} color={colors.onBrand} />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.careTitle}>Partner home</Text>
+            <Text style={styles.careSub}>See how she's doing today and small ways to help</Text>
+          </View>
+          <Ionicons name="chevron-forward" size={20} color={colors.muted} />
+        </Pressable>
+      ) : null}
+
       <View style={styles.quickLinks}>
         <QuickLink icon="chatbubble-ellipses" tint={colors.brand100} fg={colors.brand600} label="Ask HERAI" onPress={() => navigation.navigate("Chat")} />
         <QuickLink icon="add-circle" tint={colors.violet50} fg={colors.violet700} label="Log entry" onPress={openLogEntry} />
         <QuickLink icon="document-text" tint={colors.sage100} fg={colors.sage700} label="Reports" onPress={() => navigation.navigate("Reports")} />
-        <QuickLink icon="time" tint={colors.peach100} fg={colors.peach600} label="Timeline" onPress={() => navigation.navigate("Timeline")} />
+        <QuickLink icon="time" tint={colors.peach100} fg={colors.peach600} label="Timeline" onPress={() => openTimeline()} />
       </View>
 
       <Pressable
@@ -150,6 +187,13 @@ function QuickLink({
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.neutral50 },
   content: { padding: 20, paddingBottom: 40, gap: 16 },
+  topBar: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
+  brand: { flexDirection: "row", alignItems: "center", gap: 8, minHeight: 44 },
+  logo: { width: 30, height: 30, borderRadius: 10, backgroundColor: colors.brand600, alignItems: "center", justifyContent: "center" },
+  brandText: { fontSize: 18, fontWeight: "700", color: colors.ink900 },
+  avatar: { width: 40, height: 40, borderRadius: 20, backgroundColor: colors.brand100, alignItems: "center", justifyContent: "center" },
+  avatarText: { fontSize: 13, fontWeight: "700", color: colors.brand700 },
+  partnerCard: { flexDirection: "row", alignItems: "center", gap: 12, backgroundColor: colors.brand50, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.brand100, padding: 14 },
   headerRow: { flexDirection: "row", alignItems: "flex-start", gap: 10 },
   careCard: { flexDirection: "row", alignItems: "center", gap: 12, backgroundColor: colors.white, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.neutral200, padding: 14, ...shadow.soft },
   careTitle: { fontSize: 15, fontWeight: "700", color: colors.ink900 },

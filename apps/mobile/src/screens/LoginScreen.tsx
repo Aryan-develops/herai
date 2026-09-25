@@ -35,7 +35,7 @@ export function LoginScreen({ navigation }: Props) {
     <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === "ios" ? "padding" : undefined}>
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
         <View style={styles.brandMark} accessibilityElementsHidden importantForAccessibility="no">
-          <Ionicons name="heart" size={26} color={colors.white} />
+          <Ionicons name="heart" size={26} color={colors.onBrand} />
         </View>
         <Text style={styles.title} accessibilityRole="header">
           Welcome back

@@ -6,7 +6,7 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "userInterfaceStyle": "light",
+    "userInterfaceStyle": "automatic",
     "backgroundColor": "#fdf2f8",
     "splash": {
       "backgroundColor": "#fdf2f8",
@@ -17,7 +17,8 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.herai.app",
       "infoPlist": {
-        "ITSAppUsesNonExemptEncryption": false
+        "ITSAppUsesNonExemptEncryption": false,
+        "NSFaceIDUsageDescription": "HERAI uses Face ID to unlock the app and keep your health data private."
       }
     },
     "android": {
@@ -35,7 +36,24 @@
     },
     "plugins": [
       "expo-secure-store",
-      ["expo-location", { "locationWhenInUsePermission": "HERAI uses your location to show labs and doctors near you." }]
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "HERAI uses your location to show labs and doctors near you."
+        }
+      ],
+      [
+        "expo-local-authentication",
+        {
+          "faceIDPermission": "HERAI uses Face ID to unlock the app and keep your health data private."
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "color": "#d12468"
+        }
+      ]
     ]
   }
 }

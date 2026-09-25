@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useNavigation } from "@react-navigation/native";
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Switch, Text, View } from "react-native";
 import { useAuth } from "../context/AuthContext";
 import { api, ApiError, type HealthProfile } from "../lib/api";
@@ -26,7 +27,10 @@ const DISCLAIMER =
  * Known/medications/allergies are comma-separated text here rather than the
  * web's tag-input widget — same data shape, simpler native control. */
 export function OnboardingScreen() {
-  const { refreshUser } = useAuth();
+  const { user, refreshUser } = useAuth();
+  const navigation = useNavigation();
+  // Someone who already finished onboarding is editing their profile from Settings: prefill it and skip the disclaimer.
+  const editing = !!user?.onboardingComplete;
   const [ageRange, setAgeRange] = useState<HealthProfile["ageRange"]>(undefined);
   const [heightCm, setHeightCm] = useState("");
   const [weightKg, setWeightKg] = useState("");
@@ -40,7 +44,27 @@ export function OnboardingScreen() {
   const [allergies, setAllergies] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
-  const [acknowledged, setAcknowledged] = useState(false);
+  const [acknowledged, setAcknowledged] = useState(editing);
+
+  useEffect(() => {
+    if (!editing) return;
+    api
+      .getProfile()
+      .then(({ profile: p }) => {
+        setAgeRange(p.ageRange);
+        setHeightCm(p.heightCm ? String(p.heightCm) : "");
+        setWeightKg(p.weightKg ? String(p.weightKg) : "");
+        setCycleLengthDays(p.cycleLengthDays ? String(p.cycleLengthDays) : "");
+        setExerciseFrequency(p.lifestyle?.exerciseFrequency ?? "none");
+        setAlcohol(p.lifestyle?.alcohol ?? "none");
+        setSmoker(p.lifestyle?.smoker ?? false);
+        setSleepHoursAvg(p.lifestyle?.sleepHoursAvg ? String(p.lifestyle.sleepHoursAvg) : "");
+        setKnownConditions((p.knownConditions ?? []).join(", "));
+        setMedications((p.medications ?? []).join(", "));
+        setAllergies((p.allergies ?? []).join(", "));
+      })
+      .catch(() => {});
+  }, [editing]);
 
   function splitTags(value: string): string[] {
     return value
@@ -73,8 +97,9 @@ export function OnboardingScreen() {
         },
       });
       await refreshUser();
-      // RootNavigator swaps to MainTabs once onboardingComplete is true —
-      // no explicit navigation call needed here.
+      // First run: RootNavigator swaps to MainTabs once onboardingComplete is true.
+      // Editing from Settings: just go back.
+      if (editing && navigation.canGoBack()) navigation.goBack();
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Something went wrong");
     } finally {
@@ -85,7 +110,7 @@ export function OnboardingScreen() {
   return (
     <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === "ios" ? "padding" : undefined}>
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-        <Text style={styles.title}>Tell us about you</Text>
+        <Text style={styles.title}>{editing ? "Your health profile" : "Tell us about you"}</Text>
         <Text style={styles.subtitle}>Helps personalize insight to your body. Everything here is optional.</Text>
 
         <PillSelect label="Age range" value={ageRange ?? ""} options={["", ...AGE_RANGES] as const} onChange={(v) => setAgeRange(v || undefined)} />
@@ -138,7 +163,7 @@ export function OnboardingScreen() {
         </View>
 
         <ErrorText>{error}</ErrorText>
-        <Button title={submitting ? "Saving…" : "Finish"} onPress={finish} loading={submitting} disabled={!acknowledged} />
+        <Button title={submitting ? "Saving…" : editing ? "Save changes" : "Finish"} onPress={finish} loading={submitting} disabled={!acknowledged} />
       </ScrollView>
     </KeyboardAvoidingView>
   );
@@ -158,6 +183,6 @@ const styles = StyleSheet.create({
   ackRow: { flexDirection: "row", alignItems: "center", gap: 10 },
   checkbox: { width: 20, height: 20, borderRadius: 5, borderWidth: 1.5, borderColor: colors.neutral300, alignItems: "center", justifyContent: "center", backgroundColor: colors.white },
   checkboxChecked: { backgroundColor: colors.brand600, borderColor: colors.brand600 },
-  checkboxMark: { color: colors.white, fontSize: 13, fontWeight: "700" },
+  checkboxMark: { color: colors.onBrand, fontSize: 13, fontWeight: "700" },
   ackText: { flex: 1, fontSize: 13, color: colors.ink900, fontWeight: "500" },
 });

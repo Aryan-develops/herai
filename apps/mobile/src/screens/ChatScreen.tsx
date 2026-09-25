@@ -383,7 +383,7 @@ export function ChatScreen() {
           accessibilityState={{ disabled: busy || !input.trim(), busy }}
           style={[styles.sendButton, (busy || !input.trim()) && styles.sendButtonDisabled]}
         >
-          {busy ? <ActivityIndicator size="small" color={colors.white} /> : <Text style={styles.sendText}>➤</Text>}
+          {busy ? <ActivityIndicator size="small" color={colors.onBrand} /> : <Text style={styles.sendText}>➤</Text>}
         </Pressable>
       </View>
     </KeyboardAvoidingView>
@@ -411,7 +411,7 @@ const styles = StyleSheet.create({
   turn: { marginBottom: 16, gap: 8 },
   userRow: { alignItems: "flex-end" },
   userBubble: { maxWidth: "82%", backgroundColor: colors.brand600, borderRadius: 18, borderTopRightRadius: 4, paddingHorizontal: 14, paddingVertical: 10 },
-  userText: { color: colors.white, fontSize: 14 },
+  userText: { color: colors.onBrand, fontSize: 14 },
   assistantBubble: {
     maxWidth: "90%",
     backgroundColor: colors.white,
@@ -476,5 +476,5 @@ const styles = StyleSheet.create({
   },
   sendButton: { height: 44, width: 44, borderRadius: 14, backgroundColor: colors.brand600, alignItems: "center", justifyContent: "center" },
   sendButtonDisabled: { opacity: 0.4 },
-  sendText: { color: colors.white, fontSize: 16 },
+  sendText: { color: colors.onBrand, fontSize: 16 },
 });

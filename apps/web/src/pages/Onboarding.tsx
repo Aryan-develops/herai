@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, ArrowRight, Check, HeartPulse, ShieldCheck } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
@@ -52,13 +52,38 @@ const initialState: FormState = {
 };
 
 export function Onboarding() {
-  const { refreshUser } = useAuth();
+  const { user, refreshUser } = useAuth();
   const navigate = useNavigate();
+  // Someone who already finished onboarding is editing their profile from Settings: prefill it and skip the disclaimer.
+  const editing = !!user?.onboardingComplete;
   const [step, setStep] = useState(0);
   const [form, setForm] = useState<FormState>(initialState);
-  const [acknowledged, setAcknowledged] = useState(false);
+  const [acknowledged, setAcknowledged] = useState(editing);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (!editing) return;
+    api
+      .getProfile()
+      .then(({ profile: p }) =>
+        setForm({
+          ageRange: p.ageRange ?? "",
+          heightCm: p.heightCm ? String(p.heightCm) : "",
+          weightKg: p.weightKg ? String(p.weightKg) : "",
+          cycleLengthDays: p.cycleLengthDays ? String(p.cycleLengthDays) : "",
+          lastPeriodStart: p.lastPeriodStart ? p.lastPeriodStart.slice(0, 10) : "",
+          exerciseFrequency: p.lifestyle?.exerciseFrequency ?? "none",
+          alcohol: p.lifestyle?.alcohol ?? "none",
+          smoker: p.lifestyle?.smoker ?? false,
+          sleepHoursAvg: p.lifestyle?.sleepHoursAvg ? String(p.lifestyle.sleepHoursAvg) : "",
+          knownConditions: p.knownConditions ?? [],
+          medications: p.medications ?? [],
+          allergies: p.allergies ?? [],
+        }),
+      )
+      .catch(() => {});
+  }, [editing]);
 
   function update<K extends keyof FormState>(key: K, value: FormState[K]) {
     setForm((f) => ({ ...f, [key]: value }));
@@ -85,7 +110,7 @@ export function Onboarding() {
         },
       });
       await refreshUser();
-      navigate("/dashboard");
+      navigate(editing ? "/settings" : "/dashboard");
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Something went wrong. Please try again.");
     } finally {
@@ -249,7 +274,7 @@ export function Onboarding() {
             {isLastStep ? (
               <Button onClick={finish} disabled={submitting || !acknowledged}>
                 {submitting && <Spinner />}
-                {submitting ? "Saving…" : "Finish"}
+                {submitting ? "Saving…" : editing ? "Save changes" : "Finish"}
               </Button>
             ) : (
               <Button onClick={() => setStep((s) => s + 1)}>

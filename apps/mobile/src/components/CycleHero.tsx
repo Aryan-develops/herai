@@ -60,10 +60,10 @@ export function CycleHero({
 const styles = StyleSheet.create({
   hero: { borderRadius: radius.xl, padding: 20, ...shadow.soft },
   eyebrow: { color: "rgba(255,255,255,0.8)", fontSize: 11, fontWeight: "700", letterSpacing: 1 },
-  phase: { color: colors.white, fontSize: 28, fontWeight: "700", marginTop: 2 },
+  phase: { color: colors.onBrand, fontSize: 28, fontWeight: "700", marginTop: 2 },
   blurb: { color: "rgba(255,255,255,0.92)", fontSize: 14, marginTop: 4, lineHeight: 20 },
   trackRow: { flexDirection: "row", alignItems: "baseline", gap: 6, marginTop: 16 },
-  dayText: { color: colors.white, fontSize: 18, fontWeight: "700" },
+  dayText: { color: colors.onBrand, fontSize: 18, fontWeight: "700" },
   dayOf: { color: "rgba(255,255,255,0.8)", fontSize: 13 },
   track: { height: 8, borderRadius: 4, backgroundColor: "rgba(255,255,255,0.28)", marginTop: 8, overflow: "hidden" },
   fill: { height: 8, borderRadius: 4, backgroundColor: colors.white },

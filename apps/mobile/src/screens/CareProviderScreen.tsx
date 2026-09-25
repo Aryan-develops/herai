@@ -259,7 +259,7 @@ const styles = StyleSheet.create({
   day: { fontSize: 11, fontWeight: "700", color: colors.muted, letterSpacing: 0.5, marginBottom: 6 },
   chips: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
   review: { backgroundColor: colors.neutral50, borderRadius: radius.md, padding: 12, gap: 6 },
-  scrim: { flex: 1, backgroundColor: "rgba(42,31,45,0.5)", justifyContent: "flex-end" },
+  scrim: { flex: 1, backgroundColor: colors.scrim, justifyContent: "flex-end" },
   sheet: { backgroundColor: colors.white, borderTopLeftRadius: radius.xl, borderTopRightRadius: radius.xl, maxHeight: "92%" },
   label: { fontSize: 13, fontWeight: "700", color: colors.ink900, marginTop: 4 },
   input: { minHeight: 70, borderWidth: 1, borderColor: colors.neutral300, borderRadius: radius.md, padding: 12, fontSize: 15, color: colors.ink900, textAlignVertical: "top" },

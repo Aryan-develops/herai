@@ -52,5 +52,5 @@ const styles = StyleSheet.create({
   },
   pillActive: { backgroundColor: colors.ink900, borderColor: colors.ink900 },
   pillText: { fontSize: 13, color: colors.ink700, fontWeight: "500" },
-  pillTextActive: { color: colors.white },
+  pillTextActive: { color: colors.onBrand },
 });

@@ -95,7 +95,7 @@ export function GetHelpButton({ onFindCare }: { onFindCare?: (type?: "doctor") =
 const styles = StyleSheet.create({
   pill: { flexDirection: "row", alignItems: "center", gap: 6, minHeight: 36, paddingHorizontal: 12, borderRadius: 999, backgroundColor: colors.brand50 },
   pillText: { fontSize: 13, fontWeight: "700", color: colors.brand700 },
-  scrim: { flex: 1, backgroundColor: "rgba(42,31,45,0.5)", justifyContent: "flex-end" },
+  scrim: { flex: 1, backgroundColor: colors.scrim, justifyContent: "flex-end" },
   sheet: { backgroundColor: colors.white, borderTopLeftRadius: radius.xl, borderTopRightRadius: radius.xl, padding: 20, maxHeight: "88%" },
   header: { flexDirection: "row", alignItems: "flex-start", gap: 12, marginBottom: 12 },
   title: { fontSize: 22, fontWeight: "700", color: colors.ink900 },
@@ -108,6 +108,6 @@ const styles = StyleSheet.create({
   careSub: { fontSize: 13, color: colors.ink700, marginTop: 2 },
   careBtn: { minHeight: 44, paddingHorizontal: 16, borderRadius: radius.md, backgroundColor: colors.brand600, alignItems: "center", justifyContent: "center" },
   careBtnOutline: { backgroundColor: colors.white, borderWidth: 1, borderColor: colors.neutral300 },
-  careBtnText: { fontSize: 14, fontWeight: "700", color: colors.white },
+  careBtnText: { fontSize: 14, fontWeight: "700", color: colors.onBrand },
   note: { fontSize: 11, color: colors.muted, marginTop: 14, marginBottom: 8 },
 });

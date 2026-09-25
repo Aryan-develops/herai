@@ -34,7 +34,7 @@ export function Button({
       ]}
     >
       {loading ? (
-        <ActivityIndicator color={variant === "primary" ? colors.white : colors.ink900} />
+        <ActivityIndicator color={variant === "primary" ? colors.onBrand : colors.ink900} />
       ) : (
         <Text
           style={[
@@ -131,7 +131,7 @@ const styles = StyleSheet.create({
   buttonDisabled: { opacity: 0.5 },
   buttonPressed: { opacity: 0.85 },
   buttonText: { fontSize: 15, fontWeight: "600" },
-  buttonTextPrimary: { color: colors.white },
+  buttonTextPrimary: { color: colors.onBrand },
   buttonTextOutline: { color: colors.ink900 },
   field: { marginBottom: 16 },
   label: { fontSize: 13, fontWeight: "600", color: colors.ink700, marginBottom: 6 },
@@ -169,7 +169,7 @@ const styles = StyleSheet.create({
   },
   chipSelected: { backgroundColor: colors.brand600, borderColor: colors.brand600 },
   chipText: { fontSize: 14, fontWeight: "600", color: colors.ink900 },
-  chipTextSelected: { color: colors.white },
+  chipTextSelected: { color: colors.onBrand },
   screenTitle: { fontSize: 26, fontWeight: "700", color: colors.ink900 },
   screenSubtitle: { fontSize: 14, color: colors.muted, marginTop: 4, lineHeight: 20 },
 });

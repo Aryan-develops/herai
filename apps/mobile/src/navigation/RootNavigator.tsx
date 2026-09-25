@@ -4,6 +4,7 @@ import { AuthStack } from "./AuthStack";
 import { AppStack } from "./AppStack";
 import { ConsentPendingScreen } from "../screens/ConsentPendingScreen";
 import { OnboardingScreen } from "../screens/OnboardingScreen";
+import { BiometricGate } from "../components/BiometricGate";
 import { colors } from "../theme";
 
 /**
@@ -33,5 +34,9 @@ export function RootNavigator() {
 
   if (!user.onboardingComplete) return <OnboardingScreen />;
 
-  return <AppStack />;
+  return (
+    <BiometricGate>
+      <AppStack />
+    </BiometricGate>
+  );
 }

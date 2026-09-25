@@ -12,11 +12,18 @@ export type AppStackParamList = {
   CareProvider: { id: string };
   MyRequests: undefined;
   Provider: undefined;
+  Settings: undefined;
+  TimelinePage: undefined;
+  Onboarding: undefined;
+  PartnerSettings: undefined;
+  PartnerUpgrade: undefined;
+  Join: { token: string };
 };
 
 export type MainTabsParamList = {
   Dashboard: undefined;
   Timeline: undefined;
+  Partner: undefined;
   Cycle: undefined;
   Chat: undefined;
   Reports: undefined;
