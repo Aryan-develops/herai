@@ -44,8 +44,28 @@ async function signedUrlFor(storagePath: string): Promise<string | null> {
   return data?.signedUrl ?? null;
 }
 
-async function withSignedUrl<T extends { storage_path: string }>(report: T) {
-  return { ...report, fileUrl: await signedUrlFor(report.storage_path) };
+// Clients (web + mobile) speak camelCase with `_id`; the database speaks
+// snake_case. Map once here so every report endpoint returns the client shape.
+async function withSignedUrl(report: Record<string, any>) {
+  return {
+    _id: report.id,
+    fileName: report.file_name,
+    mimeType: report.mime_type,
+    fileSize: report.file_size,
+    extractedValues: report.extracted_values ?? [],
+    ocr: report.ocr,
+    documentIntelligence: report.document_intelligence,
+    womensHealth: report.womens_health,
+    riskAssessment: report.risk_assessment,
+    carePlan: report.care_plan,
+    questionsToAsk: report.questions_to_ask ?? [],
+    sources: report.sources ?? [],
+    emergency: report.emergency ?? false,
+    confidence: report.confidence,
+    agentTrace: report.agent_trace,
+    uploadedAt: report.uploaded_at,
+    fileUrl: await signedUrlFor(report.storage_path),
+  };
 }
 
 export async function uploadReport(req: AuthedRequest, res: Response) {

@@ -14,6 +14,9 @@ import { LogEntry } from "@/pages/LogEntry";
 import { Timeline } from "@/pages/Timeline";
 import { Cycle } from "@/pages/Cycle";
 import { Care } from "@/pages/Care";
+import { CareProviderPage } from "@/pages/CareProviderPage";
+import { MyRequests } from "@/pages/MyRequests";
+import { ProviderDashboard } from "@/pages/ProviderDashboard";
 import { Chat } from "@/pages/Chat";
 import { ReportUpload } from "@/pages/ReportUpload";
 import { ReportDetail } from "@/pages/ReportDetail";
@@ -42,6 +45,9 @@ function App() {
                 <Route path="/timeline" element={<Timeline />} />
                 <Route path="/cycle" element={<Cycle />} />
                 <Route path="/care" element={<Care />} />
+                <Route path="/care/requests" element={<MyRequests />} />
+                <Route path="/care/:id" element={<CareProviderPage />} />
+                <Route path="/provider" element={<ProviderDashboard />} />
                 <Route path="/chat" element={<Chat />} />
                 <Route path="/reports" element={<ReportUpload />} />
                 <Route path="/reports/:id" element={<ReportDetail />} />

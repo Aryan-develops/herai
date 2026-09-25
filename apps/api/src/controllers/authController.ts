@@ -48,6 +48,8 @@ interface AuthPayload {
   // OAuth and passkey sign-in create the account without ever asking for
   // this — see requireDateOfBirth for why the gateway can't skip it.
   needsDateOfBirth: boolean;
+  // True when this account owns a partner lab/doctor listing (shows the provider dashboard).
+  isProvider: boolean;
 }
 
 interface SessionPayload {
@@ -67,6 +69,8 @@ async function loadAuthPayload(userId: string, email: string): Promise<AuthPaylo
     throw new HttpError(500, "Failed to load profile");
   }
 
+  const { data: owned } = await supabaseAdmin.from("care_providers").select("id").eq("owner_id", userId).maybeSingle();
+
   return {
     id: userId,
     name: profile.name,
@@ -74,6 +78,7 @@ async function loadAuthPayload(userId: string, email: string): Promise<AuthPaylo
     onboardingComplete: profile.onboarding_complete,
     consentStatus: profile.consent_status,
     needsDateOfBirth: !profile.date_of_birth,
+    isProvider: !!owned,
   };
 }
 

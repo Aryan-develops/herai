@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { NavLink } from "react-router-dom";
-import { Bot, CalendarPlus, Droplet, FileText, HeartPulse, LayoutDashboard, ListPlus, LogOut } from "lucide-react";
+import { Bot, CalendarPlus, Droplet, FileText, HeartPulse, LayoutDashboard, ListPlus, LogOut, Store } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button";
 import { GetHelpButton } from "@/components/GetHelp";
@@ -73,6 +73,12 @@ export function AppShell({ children }: { children: ReactNode }) {
             </nav>
           </div>
           <div className="flex items-center gap-1.5 sm:gap-2">
+            {user?.isProvider && (
+              <NavLink to="/provider" className="hidden items-center gap-1.5 rounded-xl px-3 py-2 text-sm font-medium text-brand-700 hover:bg-brand-50 sm:flex">
+                <Store className="h-4 w-4" aria-hidden="true" />
+                Provider
+              </NavLink>
+            )}
             <GetHelpButton />
             <span
               aria-label={user?.name ? `Signed in as ${user.name}` : "Signed in"}

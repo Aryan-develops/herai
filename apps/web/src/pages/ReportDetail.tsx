@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { AlertTriangle, ArrowLeft, FileText, Sparkles, Trash2, TrendingUp } from "lucide-react";
 import { api, type HealthReportRecord } from "@/lib/api";
+import { SuggestedTests } from "@/components/SuggestedTests";
 import { AppShell } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
 import { Alert } from "@/components/ui/alert";
@@ -303,6 +304,8 @@ export function ReportDetail() {
           </ul>
         </section>
       )}
+
+      {attention > 0 && report.emergency === false && <SuggestedTests reportId={report._id} />}
 
       {care && (
         <div className="mt-6 grid gap-3 sm:grid-cols-3">

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState, type FormEvent } from "react";
-import { useSearchParams } from "react-router-dom";
-import { Clock, FlaskConical, Home, LocateFixed, MapPin, Navigation, Phone, Search, Stethoscope, Building2 } from "lucide-react";
+import { Link, useSearchParams } from "react-router-dom";
+import { CalendarCheck, Clock, FlaskConical, Home, LocateFixed, MapPin, Navigation, Phone, Search, Stethoscope, Building2, Video } from "lucide-react";
 import { api, ApiError, type CareProvider, type ProviderType } from "@/lib/api";
 import { AppShell } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
@@ -10,6 +10,7 @@ import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Alert } from "@/components/ui/alert";
 import { Spinner } from "@/components/ui/spinner";
+import { Rating, rupees } from "@/components/care-bits";
 import { cn } from "@/lib/utils";
 
 const TABS: { value: ProviderType | "all"; label: string }[] = [
@@ -34,6 +35,8 @@ export function Care() {
   const [coords, setCoords] = useState<Coords | null>(null);
   const [city, setCity] = useState("");
   const [homeOnly, setHomeOnly] = useState(false);
+  const [teleOnly, setTeleOnly] = useState(false);
+  const [availOnly, setAvailOnly] = useState(false);
   const [providers, setProviders] = useState<CareProvider[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [locating, setLocating] = useState(false);
@@ -49,10 +52,12 @@ export function Care() {
         radiusKm: 50,
         city: coords ? undefined : city.trim() || undefined,
         homeCollection: homeOnly,
+        teleconsult: teleOnly,
+        available: availOnly,
       })
       .then(({ providers }) => setProviders(providers))
       .catch((err) => setError(err instanceof ApiError ? err.message : "Couldn't load providers."));
-  }, [type, coords, city, homeOnly]);
+  }, [type, coords, city, homeOnly, teleOnly, availOnly]);
 
   useEffect(load, [load]);
 
@@ -83,8 +88,13 @@ export function Care() {
 
   return (
     <AppShell>
-      <h1 className="font-display text-2xl font-semibold text-ink-900 sm:text-3xl">Find care near you</h1>
-      <p className="mt-1.5 max-w-xl text-ink-700/75">Labs and doctors in the HERAI partner network.</p>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h1 className="font-display text-2xl font-semibold text-ink-900 sm:text-3xl">Find care near you</h1>
+          <p className="mt-1.5 max-w-xl text-ink-700/75">Labs and doctors in the HERAI partner network.</p>
+        </div>
+        <Link to="/care/requests"><Button variant="outline" size="sm"><CalendarCheck className="h-4 w-4" aria-hidden="true" /> My requests</Button></Link>
+      </div>
 
       <div className="mt-6 flex flex-wrap items-center gap-2">
         <Button type="button" variant={coords ? "soft" : "default"} onClick={useMyLocation} disabled={locating}>
@@ -133,18 +143,9 @@ export function Care() {
             </button>
           ))}
         </div>
-        <button
-          type="button"
-          aria-pressed={homeOnly}
-          onClick={() => setHomeOnly((v) => !v)}
-          className={cn(
-            "flex min-h-10 cursor-pointer items-center gap-1.5 rounded-full border px-3.5 text-sm font-medium transition-colors",
-            homeOnly ? "border-brand-500 bg-brand-500 text-white" : "border-neutral-200 bg-white text-ink-800 hover:border-brand-300"
-          )}
-        >
-          <Home className="h-4 w-4" aria-hidden="true" />
-          Home sample collection
-        </button>
+        <FilterChip on={homeOnly} onClick={() => setHomeOnly((v) => !v)} icon={<Home className="h-4 w-4" aria-hidden="true" />} label="Home collection" />
+        <FilterChip on={teleOnly} onClick={() => setTeleOnly((v) => !v)} icon={<Video className="h-4 w-4" aria-hidden="true" />} label="Video consult" />
+        <FilterChip on={availOnly} onClick={() => setAvailOnly((v) => !v)} icon={<CalendarCheck className="h-4 w-4" aria-hidden="true" />} label="Available now" />
       </div>
 
       {error && <Alert tone="error" className="mt-5">{error}</Alert>}
@@ -181,6 +182,23 @@ export function Care() {
   );
 }
 
+function FilterChip({ on, onClick, icon, label }: { on: boolean; onClick: () => void; icon: React.ReactNode; label: string }) {
+  return (
+    <button
+      type="button"
+      aria-pressed={on}
+      onClick={onClick}
+      className={cn(
+        "flex min-h-10 cursor-pointer items-center gap-1.5 rounded-full border px-3.5 text-sm font-medium transition-colors",
+        on ? "border-brand-500 bg-brand-500 text-white" : "border-neutral-200 bg-white text-ink-800 hover:border-brand-300"
+      )}
+    >
+      {icon}
+      {label}
+    </button>
+  );
+}
+
 function ProviderCard({ p }: { p: CareProvider }) {
   const t = TYPE_STYLE[p.type];
   const Icon = t.icon;
@@ -190,69 +208,43 @@ function ProviderCard({ p }: { p: CareProvider }) {
       : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${p.name} ${p.address}`)}`;
 
   return (
-    <li className="rounded-3xl border border-neutral-200 bg-white p-5 shadow-soft">
+    <li className={cn("rounded-3xl border border-neutral-200 bg-white p-5 shadow-soft", !p.available && "opacity-80")}>
       <div className="flex items-start gap-3">
         <span className={cn("flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl", t.tone)}>
           <Icon className="h-5 w-5" aria-hidden="true" />
         </span>
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
-            <h2 className="font-display text-lg font-semibold text-ink-900">{p.name}</h2>
-            {p.isSample && (
-              <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-semibold text-amber-700">Sample listing</span>
-            )}
+            <h2 className="font-display text-lg font-semibold text-ink-900">
+              <Link to={`/care/${p.id}`} className="hover:underline">{p.name}</Link>
+            </h2>
+            {p.isSample && <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-semibold text-amber-700">Sample listing</span>}
           </div>
-          <p className="mt-0.5 text-sm text-ink-700/75">
-            {t.label}
-            {p.specialties.length > 0 && ` · ${p.specialties.join(", ")}`}
-          </p>
+          <div className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-ink-700/75">
+            <span>{t.label}{p.specialties.length > 0 && ` · ${p.specialties.join(", ")}`}</span>
+            <Rating avg={p.ratingAvg} count={p.ratingCount} />
+          </div>
         </div>
-        {p.distanceKm !== null && (
-          <span className="tabular shrink-0 rounded-full bg-neutral-100 px-2.5 py-1 text-xs font-semibold text-ink-800">
-            {p.distanceKm} km
-          </span>
-        )}
+        {p.distanceKm !== null && <span className="tabular shrink-0 rounded-full bg-neutral-100 px-2.5 py-1 text-xs font-semibold text-ink-800">{p.distanceKm} km</span>}
       </div>
 
-      <p className="mt-3 flex items-start gap-2 text-sm text-ink-800">
-        <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-neutral-400" aria-hidden="true" />
-        {p.address}
-      </p>
-      {p.hours && (
-        <p className="mt-1.5 flex items-center gap-2 text-sm text-ink-700/75">
-          <Clock className="h-4 w-4 shrink-0 text-neutral-400" aria-hidden="true" />
-          {p.hours}
-        </p>
-      )}
+      <p className="mt-3 flex items-start gap-2 text-sm text-ink-800"><MapPin className="mt-0.5 h-4 w-4 shrink-0 text-neutral-400" aria-hidden="true" />{p.address}</p>
+      {p.hours && <p className="mt-1.5 flex items-center gap-2 text-sm text-ink-700/75"><Clock className="h-4 w-4 shrink-0 text-neutral-400" aria-hidden="true" />{p.hours}</p>}
 
-      {(p.services.length > 0 || p.homeCollection) && (
-        <div className="mt-3 flex flex-wrap gap-1.5">
-          {p.homeCollection && (
-            <span className="inline-flex items-center gap-1 rounded-full bg-sage-100 px-2.5 py-1 text-xs font-medium text-sage-700">
-              <Home className="h-3 w-3" aria-hidden="true" /> Home collection
-            </span>
-          )}
-          {p.services.map((s) => (
-            <span key={s} className="rounded-full bg-neutral-100 px-2.5 py-1 text-xs font-medium text-ink-800">
-              {s}
-            </span>
-          ))}
-        </div>
-      )}
+      <div className="mt-3 flex flex-wrap gap-1.5">
+        <span className={cn("rounded-full px-2.5 py-1 text-xs font-semibold", p.available ? "bg-sage-100 text-sage-700" : "bg-neutral-200 text-neutral-700")}>
+          {p.available ? "Available" : "Unavailable"}
+        </span>
+        {p.priceFromInr !== null && <span className="tabular rounded-full bg-neutral-100 px-2.5 py-1 text-xs font-medium text-ink-800">From {rupees(p.priceFromInr)}</span>}
+        {p.homeCollection && <span className="inline-flex items-center gap-1 rounded-full bg-sage-100 px-2.5 py-1 text-xs font-medium text-sage-700"><Home className="h-3 w-3" aria-hidden="true" /> Home collection</span>}
+        {p.offersTeleconsult && <span className="inline-flex items-center gap-1 rounded-full bg-violet-100 px-2.5 py-1 text-xs font-medium text-violet-700"><Video className="h-3 w-3" aria-hidden="true" /> Video consult</span>}
+      </div>
+      {p.availabilityNote && <p className="mt-2 text-xs text-neutral-500">{p.availabilityNote}</p>}
 
       <div className="mt-4 flex flex-wrap gap-2">
-        {p.phone && (
-          <a href={`tel:${p.phone}`}>
-            <Button size="sm">
-              <Phone className="h-4 w-4" aria-hidden="true" /> Call
-            </Button>
-          </a>
-        )}
-        <a href={directions} target="_blank" rel="noreferrer">
-          <Button size="sm" variant="outline">
-            <Navigation className="h-4 w-4" aria-hidden="true" /> Directions
-          </Button>
-        </a>
+        <Link to={`/care/${p.id}`}><Button size="sm">View & book</Button></Link>
+        {p.phone && <a href={`tel:${p.phone}`}><Button size="sm" variant="outline"><Phone className="h-4 w-4" aria-hidden="true" /> Call</Button></a>}
+        <a href={directions} target="_blank" rel="noreferrer"><Button size="sm" variant="outline"><Navigation className="h-4 w-4" aria-hidden="true" /> Directions</Button></a>
       </div>
     </li>
   );
