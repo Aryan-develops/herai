@@ -1,5 +1,5 @@
 import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput, View, type TextInputProps } from "react-native";
-import { colors } from "../theme";
+import { colors, radius, shadow } from "../theme";
 
 /** A handful of shared primitives — not a design system, just enough that
  * every screen doesn't re-declare the same button/input styles. */
@@ -65,8 +65,50 @@ export function Field({
 export function ErrorText({ children }: { children: string | null }) {
   if (!children) return null;
   return (
-    <View style={styles.errorBox}>
+    <View style={styles.errorBox} accessibilityRole="alert">
       <Text style={styles.errorText}>{children}</Text>
+    </View>
+  );
+}
+
+const ALERT_TONES = {
+  info: { bg: colors.violet50, fg: colors.violet700 },
+  success: { bg: colors.emerald50, fg: colors.emerald700 },
+  warning: { bg: colors.amber50, fg: colors.amber900 },
+};
+
+/** Tinted notice; always text, never colour alone. */
+export function Notice({ tone = "info", children }: { tone?: keyof typeof ALERT_TONES; children: React.ReactNode }) {
+  const t = ALERT_TONES[tone];
+  return (
+    <View style={[styles.notice, { backgroundColor: t.bg }]} accessibilityRole="text">
+      <Text style={[styles.noticeText, { color: t.fg }]}>{children}</Text>
+    </View>
+  );
+}
+
+/** Selectable pill; 44pt min height, announces selected state. */
+export function Chip({ label, selected, onPress }: { label: string; selected?: boolean; onPress: () => void }) {
+  return (
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityState={{ selected: !!selected }}
+      accessibilityLabel={label}
+      style={({ pressed }) => [styles.chip, selected && styles.chipSelected, pressed && { opacity: 0.8 }]}
+    >
+      <Text style={[styles.chipText, selected && styles.chipTextSelected]}>{label}</Text>
+    </Pressable>
+  );
+}
+
+export function ScreenTitle({ title, subtitle }: { title: string; subtitle?: string }) {
+  return (
+    <View style={{ marginBottom: 8 }}>
+      <Text style={styles.screenTitle} accessibilityRole="header">
+        {title}
+      </Text>
+      {subtitle ? <Text style={styles.screenSubtitle}>{subtitle}</Text> : null}
     </View>
   );
 }
@@ -77,7 +119,7 @@ export function Card({ children }: { children: React.ReactNode }) {
 
 const styles = StyleSheet.create({
   button: {
-    height: 48,
+    minHeight: 52,
     borderRadius: 14,
     alignItems: "center",
     justifyContent: "center",
@@ -107,9 +149,27 @@ const styles = StyleSheet.create({
   errorText: { color: colors.red600, fontSize: 13 },
   card: {
     backgroundColor: colors.white,
-    borderRadius: 20,
+    borderRadius: radius.lg,
     borderWidth: 1,
     borderColor: colors.neutral200,
     padding: 16,
+    ...shadow.soft,
   },
+  notice: { borderRadius: radius.md, padding: 12 },
+  noticeText: { fontSize: 13, lineHeight: 19 },
+  chip: {
+    minHeight: 44,
+    paddingHorizontal: 16,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: colors.neutral300,
+    backgroundColor: colors.white,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  chipSelected: { backgroundColor: colors.brand600, borderColor: colors.brand600 },
+  chipText: { fontSize: 14, fontWeight: "600", color: colors.ink900 },
+  chipTextSelected: { color: colors.white },
+  screenTitle: { fontSize: 26, fontWeight: "700", color: colors.ink900 },
+  screenSubtitle: { fontSize: 14, color: colors.muted, marginTop: 4, lineHeight: 20 },
 });

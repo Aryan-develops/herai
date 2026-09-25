@@ -2,139 +2,119 @@ import { useCallback, useState } from "react";
 import { useFocusEffect } from "@react-navigation/native";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { api, type CycleInsights } from "../lib/api";
-import { colors } from "../theme";
+import { PHASE_STYLE, shortDate } from "../lib/phases";
+import { Card, Notice, ScreenTitle } from "../components/ui";
+import { CycleHero } from "../components/CycleHero";
+import { colors, radius } from "../theme";
 
-const PHASE_LABEL: Record<NonNullable<CycleInsights["phase"]>, string> = {
-  menstrual: "Menstrual",
-  follicular: "Follicular",
-  ovulation: "Ovulation window",
-  luteal: "Luteal",
+const REGULARITY: Record<CycleInsights["regularity"], { label: string; bg: string; fg: string }> = {
+  regular: { label: "Regular", bg: colors.sage100, fg: colors.sage700 },
+  irregular: { label: "Irregular", bg: colors.amber50, fg: colors.amber900 },
+  insufficient_data: { label: "Still learning", bg: colors.neutral200, fg: colors.ink700 },
 };
 
-const PHASE_COLORS: Record<NonNullable<CycleInsights["phase"]>, { bg: string; text: string }> = {
-  menstrual: { bg: colors.brand100, text: colors.brand600 },
-  follicular: { bg: colors.emerald50, text: colors.emerald700 },
-  ovulation: { bg: colors.violet50, text: colors.violet700 },
-  luteal: { bg: colors.amber50, text: colors.amber900 },
-};
-
-function formatDate(iso: string): string {
-  return new Date(`${iso}T00:00:00`).toLocaleDateString(undefined, { month: "short", day: "numeric" });
-}
-
-/** Ported from apps/web/src/pages/Cycle.tsx. */
 export function CycleScreen() {
   const [insights, setInsights] = useState<CycleInsights | null>(null);
+  const [loading, setLoading] = useState(true);
 
   const load = useCallback(() => {
-    api.getCycleInsights().then(({ insights }) => setInsights(insights));
+    api
+      .getCycleInsights()
+      .then(({ insights }) => setInsights(insights))
+      .catch(() => {})
+      .finally(() => setLoading(false));
   }, []);
 
   useFocusEffect(load);
 
+  const ready = insights && insights.lastPeriodStart && insights.phase && insights.currentCycleDay;
+
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
-      <Text style={styles.title}>Cycle</Text>
-      <Text style={styles.subtitle}>Predictions estimated from your logged periods — not a diagnosis.</Text>
+      <ScreenTitle title="Your cycle" subtitle="Estimates from your logged periods. Not a diagnosis." />
 
-      {insights === null && <Text style={styles.muted}>Loading…</Text>}
+      <CycleHero insights={insights} loading={loading} />
 
-      {insights && !insights.lastPeriodStart && (
-        <View style={styles.emptyCard}>
-          <Text style={styles.muted}>
-            Log a period entry (or set your last period date in your profile) to see cycle predictions.
-          </Text>
-        </View>
-      )}
+      {ready && insights.phase && (
+        <>
+          <Notice tone="warning">{PHASE_STYLE[insights.phase].tip}</Notice>
 
-      {insights && insights.lastPeriodStart && (
-        <View style={styles.cards}>
-          <View style={styles.card}>
-            <Text style={styles.cardLabel}>Current phase</Text>
-            {insights.phase && (
-              <View style={[styles.badge, { backgroundColor: PHASE_COLORS[insights.phase].bg }]}>
-                <Text style={[styles.badgeText, { color: PHASE_COLORS[insights.phase].text }]}>
-                  {PHASE_LABEL[insights.phase]}
-                </Text>
-              </View>
-            )}
-            <Text style={styles.bigNumber}>
-              Day {insights.currentCycleDay}
-              <Text style={styles.bigNumberSuffix}> of {insights.cycleLengthDays}</Text>
-            </Text>
+          <View style={styles.dates}>
+            <DateCard label="Next period" value={insights.predictedNextPeriodStart ? shortDate(insights.predictedNextPeriodStart) : "—"} />
+            <DateCard
+              label="Fertile window"
+              value={insights.fertileWindow ? `${shortDate(insights.fertileWindow.start)} – ${shortDate(insights.fertileWindow.end)}` : "—"}
+            />
+            <DateCard label="Est. ovulation" value={insights.ovulationDate ? shortDate(insights.ovulationDate) : "—"} />
           </View>
 
-          <View style={styles.card}>
-            <Text style={styles.cardLabel}>Predicted next period</Text>
-            <Text style={styles.bigDate}>
-              {insights.predictedNextPeriodStart ? formatDate(insights.predictedNextPeriodStart) : "—"}
-            </Text>
-            {insights.fertileWindow && (
-              <Text style={styles.fertile}>
-                Fertile window: {formatDate(insights.fertileWindow.start)} – {formatDate(insights.fertileWindow.end)}
+          <Card>
+            <View style={styles.histHeader}>
+              <Text style={styles.cardTitle} accessibilityRole="header">
+                Cycle history
               </Text>
-            )}
-          </View>
-
-          <View style={styles.card}>
-            <View style={styles.cardHeaderRow}>
-              <Text style={styles.cardLabel}>Cycle regularity</Text>
-              <Text style={styles.regularity}>{insights.regularity.replace("_", " ")}</Text>
+              <View style={[styles.pill, { backgroundColor: REGULARITY[insights.regularity].bg }]}>
+                <Text style={[styles.pillText, { color: REGULARITY[insights.regularity].fg }]}>{REGULARITY[insights.regularity].label}</Text>
+              </View>
             </View>
             {insights.cycleHistory.length > 0 ? (
-              <View style={{ marginTop: 10, gap: 6 }}>
+              <View style={{ marginTop: 12, gap: 12 }}>
                 {insights.cycleHistory
                   .slice(-6)
                   .reverse()
                   .map((c) => (
-                    <View key={c.start} style={styles.historyRow}>
-                      <Text style={styles.historyText}>Started {formatDate(c.start)}</Text>
-                      <Text style={styles.historyLength}>{c.lengthDays}-day cycle</Text>
+                    <View key={c.start}>
+                      <View style={styles.histRow}>
+                        <Text style={styles.histText}>Started {shortDate(c.start)}</Text>
+                        <Text style={styles.histLength}>{c.lengthDays} days</Text>
+                      </View>
+                      <View style={styles.bar}>
+                        <View style={[styles.barFill, { width: `${Math.min(100, (c.lengthDays / 45) * 100)}%` }]} />
+                      </View>
                     </View>
                   ))}
               </View>
             ) : (
-              <Text style={styles.muted}>Log at least two periods to see your cycle-length history.</Text>
+              <Text style={styles.muted}>Log at least two periods to see how your cycle length varies.</Text>
             )}
-          </View>
-        </View>
+          </Card>
+        </>
       )}
     </ScrollView>
   );
 }
 
+function DateCard({ label, value }: { label: string; value: string }) {
+  return (
+    <View style={styles.dateCard}>
+      <Text style={styles.dateLabel}>{label}</Text>
+      <Text style={styles.dateValue}>{value}</Text>
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.neutral50 },
-  content: { padding: 20, paddingBottom: 40 },
-  title: { fontSize: 22, fontWeight: "700", color: colors.ink900 },
-  subtitle: { fontSize: 14, color: colors.ink700, marginTop: 4 },
-  muted: { color: colors.ink700, fontSize: 13, marginTop: 12 },
-  emptyCard: {
-    marginTop: 16,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderStyle: "dashed",
-    borderColor: colors.neutral300,
-    padding: 24,
-  },
-  cards: { marginTop: 16, gap: 12 },
-  card: {
+  content: { padding: 20, paddingBottom: 40, gap: 14 },
+  muted: { color: colors.muted, fontSize: 13, marginTop: 10 },
+  dates: { flexDirection: "row", gap: 10 },
+  dateCard: {
+    flex: 1,
     backgroundColor: colors.white,
-    borderRadius: 14,
+    borderRadius: radius.md,
     borderWidth: 1,
     borderColor: colors.neutral200,
-    padding: 16,
+    padding: 12,
   },
-  cardLabel: { fontSize: 12, fontWeight: "600", color: colors.ink700 },
-  badge: { alignSelf: "flex-start", borderRadius: 999, paddingHorizontal: 12, paddingVertical: 4, marginTop: 8 },
-  badgeText: { fontSize: 13, fontWeight: "700" },
-  bigNumber: { fontSize: 26, fontWeight: "700", color: colors.ink900, marginTop: 10 },
-  bigNumberSuffix: { fontSize: 15, fontWeight: "400", color: colors.ink700 },
-  bigDate: { fontSize: 22, fontWeight: "700", color: colors.ink900, marginTop: 8 },
-  fertile: { marginTop: 8, fontSize: 13, color: colors.ink700 },
-  cardHeaderRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
-  regularity: { fontSize: 12, fontWeight: "600", color: colors.ink700, textTransform: "capitalize" },
-  historyRow: { flexDirection: "row", justifyContent: "space-between" },
-  historyText: { fontSize: 13, color: colors.ink700 },
-  historyLength: { fontSize: 13, fontWeight: "600", color: colors.ink900 },
+  dateLabel: { fontSize: 11, color: colors.muted, fontWeight: "600" },
+  dateValue: { fontSize: 15, fontWeight: "700", color: colors.ink900, marginTop: 4 },
+  histHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
+  cardTitle: { fontSize: 17, fontWeight: "700", color: colors.ink900 },
+  pill: { borderRadius: 999, paddingHorizontal: 10, paddingVertical: 4 },
+  pillText: { fontSize: 12, fontWeight: "700" },
+  histRow: { flexDirection: "row", justifyContent: "space-between" },
+  histText: { fontSize: 13, color: colors.ink700 },
+  histLength: { fontSize: 13, fontWeight: "700", color: colors.ink900 },
+  bar: { height: 8, borderRadius: 4, backgroundColor: colors.neutral200, marginTop: 6, overflow: "hidden" },
+  barFill: { height: 8, borderRadius: 4, backgroundColor: colors.brand500 },
 });
