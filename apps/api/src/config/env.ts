@@ -42,6 +42,7 @@ export const env = {
   emailFrom: process.env.EMAIL_FROM ?? "HERAI <onboarding@resend.dev>",
   // Optional: personalises partner wording. Falls back to the curated bank when unset or slow.
   aiServiceUrl: process.env.AI_SERVICE_URL,
+  internalApiToken: process.env.INTERNAL_API_TOKEN,
   supabaseUrl: required("SUPABASE_URL"),
   supabaseServiceRoleKey: required("SUPABASE_SERVICE_ROLE_KEY"),
   // Used only to sign users in (see createAuthClient) — no elevated privileges.

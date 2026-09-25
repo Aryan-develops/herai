@@ -80,7 +80,10 @@ async function aiSuggestion(phaseKey: PhaseKey, mood: Mood | null, lang: Lang): 
   try {
     const response = await fetch(`${env.aiServiceUrl.replace(/\/$/, "")}/partner/guidance`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        ...(env.internalApiToken ? { "X-Internal-Token": env.internalApiToken } : {}),
+      },
       body: JSON.stringify({ phase: phaseKey, mood, language: lang }),
       signal: AbortSignal.timeout(4000),
     });

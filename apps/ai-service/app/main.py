@@ -10,6 +10,7 @@ from app.llm import embeddings
 from app.llm.factory import get_llm_provider
 from app.routes.chat import router as chat_router
 from app.routes.documents import router as documents_router
+from app.routes.partner import router as partner_router
 
 # Every pipeline stage (app/orchestrator.py) and every mock-provider prompt
 # (app/llm/mock_provider.py) logs through the "herai.*" logger tree, tagged
@@ -56,6 +57,7 @@ app.add_middleware(
 
 app.include_router(chat_router)
 app.include_router(documents_router)
+app.include_router(partner_router)
 
 
 @app.get("/health")
