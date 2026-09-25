@@ -21,10 +21,18 @@ Use `apps/mobile/src/theme.ts` warm tokens + `components/ui.tsx`. Typecheck with
 Order: (1) DB schema + code/link invites + partner links + mood log -> (2) cycle sub-phases + PartnerGuidanceAgent + partner home -> (3) payment UI (Rs100/mo, 14-day trial, gift, UPI/cards, provider fallback, AutoPay UI; unconnected) -> (4) nudges, mood cards, comfort list, feedback, lessons, localisation -> (5) privacy docs, audit log, rate limits, tests -> (6) real payment keys later.
 Full spec: `C:\Users\Aryan\.claude\plans\am-thinking-of-making-starry-coral.md` (Part B).
 
-## 4. Polish
+## 4. Settings tab (build next, after item 1)
+Opens when the user taps the HERAI logo/name (web header + mobile Home header); also reachable from the account menu. Web `/settings`, mobile `SettingsScreen`. Sections:
+- **Sign-in and security**: list passkeys (`supabaseBrowser.auth.passkey.list()`), "Add a passkey" (Face ID / Touch ID / Windows Hello; the registration code already asks for the platform authenticator in `apps/web/src/lib/passkey.ts`), rename/remove a passkey, active sign-in methods (password, Google), change password. On the Dashboard, keep the one-time passkey nudge but link it to Settings.
+- **Mobile biometric unlock**: "Unlock with Face ID" using `expo-local-authentication`, session kept in SecureStore. Real passkeys on native need a dev/production build, not Expo Go.
+- **Profile**: name, date of birth (locked for minors), health profile edit.
+- **Privacy and data**: consent status, data sharing with providers (active requests, revoke), export my data, delete account (removes the pending "account deletion UI" TODO).
+- **Notifications** (ready for Partner Mode nudges), **appearance** (dark mode toggle), **about/help** (Get help numbers, privacy policy, terms).
+- Later: Partner section (invite code, scopes, pause/revoke) once Partner Mode lands.
+
+## 4b. Polish
 - Dark mode (web + mobile)
 - Mobile provider service/slot editing
-- Settings page + account deletion UI
 
 ## 5. Before real users (compliance, `docs/COMPLIANCE-NOTES.md`)
 - Update PRIVACY + store data-safety for provider sharing
