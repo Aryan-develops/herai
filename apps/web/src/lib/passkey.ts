@@ -8,6 +8,22 @@ import type { Session } from "@/lib/session";
 // library for that half, and its optionsJSON shape matches what
 // startRegistration/startAuthentication return.
 
+// True only if the account definitely has a passkey. Any failure resolves to
+// null (unknown) so callers can avoid nagging on a check that didn't complete.
+export async function hasPasskey(session: Session): Promise<boolean | null> {
+  try {
+    await supabaseBrowser.auth.setSession({
+      access_token: session.accessToken,
+      refresh_token: session.refreshToken,
+    });
+    const { data, error } = await supabaseBrowser.auth.passkey.list();
+    if (error || !data) return null;
+    return data.length > 0;
+  } catch {
+    return null;
+  }
+}
+
 export async function loginWithPasskey(): Promise<{ session: Session }> {
   const { data: options, error: startError } = await supabaseBrowser.auth.passkey.startAuthentication();
   if (startError || !options) throw new Error(startError?.message ?? "Could not start passkey sign-in");

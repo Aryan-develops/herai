@@ -4,7 +4,7 @@ import { Activity, Bot, CalendarPlus, Droplet, Fingerprint, FileText, ListPlus, 
 import { useAuth } from "@/context/AuthContext";
 import { api, ApiError, type HealthReportRecord, type TimelineEvent } from "@/lib/api";
 import { getSession } from "@/lib/session";
-import { registerPasskey } from "@/lib/passkey";
+import { hasPasskey, registerPasskey } from "@/lib/passkey";
 import { AppShell } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -13,12 +13,17 @@ export function Dashboard() {
   const { user } = useAuth();
   const [events, setEvents] = useState<TimelineEvent[] | null>(null);
   const [reports, setReports] = useState<HealthReportRecord[]>([]);
-  const [passkeyStatus, setPasskeyStatus] = useState<"idle" | "working" | "done" | "error">("idle");
+  // "checking" until we know; the prompt only shows for "idle"/"working"/"error".
+  const [passkeyStatus, setPasskeyStatus] = useState<"checking" | "idle" | "working" | "done" | "error">("checking");
   const [passkeyError, setPasskeyError] = useState<string | null>(null);
 
   useEffect(() => {
     api.getTimeline().then(({ events }) => setEvents(events.slice(0, 4)));
     api.listReports().then(({ reports }) => setReports(reports)).catch(() => {});
+
+    const session = getSession();
+    if (!session) return;
+    hasPasskey(session).then((has) => setPasskeyStatus(has === false ? "idle" : "done"));
   }, []);
 
   async function onSetUpPasskey() {
@@ -54,7 +59,7 @@ export function Dashboard() {
         specialist agents reasons over it step by step.
       </p>
 
-      {passkeyStatus !== "done" && (
+      {passkeyStatus !== "done" && passkeyStatus !== "checking" && (
         <div className="mt-6 flex items-center justify-between gap-3 rounded-2xl border border-neutral-200 bg-white p-4">
           <div className="flex items-center gap-3">
             <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-violet-100 text-violet-600">
