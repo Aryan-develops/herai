@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
-import { Droplet, HeartPulse, ShieldCheck, Sparkles } from "lucide-react";
+import { LogoMark } from "@/components/LogoMark";
+import { Droplet, ShieldCheck, Sparkles } from "lucide-react";
 import type { ReactNode } from "react";
 
 export function AuthLayout({
@@ -23,7 +24,7 @@ export function AuthLayout({
 
         <Link to="/" className="relative z-10 flex items-center gap-2 font-display text-xl font-semibold text-white">
           <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/20 backdrop-blur">
-            <HeartPulse className="h-5 w-5" aria-hidden="true" />
+            <LogoMark className="h-5 w-5" />
           </span>
           Lunee
         </Link>
@@ -53,7 +54,7 @@ export function AuthLayout({
         <div className="w-full max-w-sm">
           <Link to="/" className="mb-8 flex items-center gap-2 font-display text-xl font-semibold text-ink-900 lg:hidden">
             <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-brand-500 to-violet-500 text-white shadow-soft">
-              <HeartPulse className="h-4 w-4" aria-hidden="true" />
+              <LogoMark className="h-4 w-4" />
             </span>
             Lunee
           </Link>

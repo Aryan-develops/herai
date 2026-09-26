@@ -2,7 +2,7 @@ import { useCallback, useState } from "react";
 import { useFocusEffect } from "@react-navigation/native";
 import type { BottomTabScreenProps } from "@react-navigation/bottom-tabs";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Image, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useAuth } from "../context/AuthContext";
 import { api, type CycleInsights, type TimelineEvent } from "../lib/api";
@@ -59,9 +59,7 @@ export function DashboardScreen({ navigation }: Props) {
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
       <View style={styles.topBar}>
         <Pressable onPress={openSettings} accessibilityRole="button" accessibilityLabel="Lunee settings" style={({ pressed }) => [styles.brand, pressed && { opacity: 0.7 }]}>
-          <View style={styles.logo}>
-            <Ionicons name="heart" size={16} color={colors.onBrand} />
-          </View>
+          <Image source={require("../../assets/icon.png")} style={styles.logo} accessibilityIgnoresInvertColors />
           <Text style={styles.brandText}>Lunee</Text>
           <Ionicons name="settings-outline" size={14} color={colors.muted} />
         </Pressable>
@@ -189,7 +187,7 @@ const styles = StyleSheet.create({
   content: { padding: 20, paddingBottom: 40, gap: 16 },
   topBar: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
   brand: { flexDirection: "row", alignItems: "center", gap: 8, minHeight: 44 },
-  logo: { width: 30, height: 30, borderRadius: 10, backgroundColor: colors.brand600, alignItems: "center", justifyContent: "center" },
+  logo: { width: 30, height: 30, borderRadius: 9 },
   brandText: { fontSize: 18, fontWeight: "700", color: colors.ink900 },
   avatar: { width: 40, height: 40, borderRadius: 20, backgroundColor: colors.brand100, alignItems: "center", justifyContent: "center" },
   avatarText: { fontSize: 13, fontWeight: "700", color: colors.brand700 },

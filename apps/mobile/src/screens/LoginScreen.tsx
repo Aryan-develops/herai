@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Image, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View } from "react-native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { useAuth } from "../context/AuthContext";
 import { ApiError } from "../lib/api";
@@ -34,9 +34,7 @@ export function LoginScreen({ navigation }: Props) {
   return (
     <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === "ios" ? "padding" : undefined}>
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-        <View style={styles.brandMark} accessibilityElementsHidden importantForAccessibility="no">
-          <Ionicons name="heart" size={26} color={colors.onBrand} />
-        </View>
+        <Image source={require("../../assets/icon.png")} style={styles.brandMark} accessibilityElementsHidden importantForAccessibility="no" />
         <Text style={styles.title} accessibilityRole="header">
           Welcome back
         </Text>
@@ -80,7 +78,7 @@ export function LoginScreen({ navigation }: Props) {
 const styles = StyleSheet.create({
   flex: { flex: 1, backgroundColor: colors.neutral50 },
   content: { flexGrow: 1, justifyContent: "center", padding: 24 },
-  brandMark: { width: 56, height: 56, borderRadius: radius.lg, backgroundColor: colors.brand600, alignItems: "center", justifyContent: "center", marginBottom: 20 },
+  brandMark: { width: 56, height: 56, borderRadius: radius.lg, marginBottom: 20 },
   title: { fontSize: 30, fontWeight: "700", color: colors.ink900 },
   subtitle: { marginTop: 6, fontSize: 15, color: colors.muted },
   form: { marginTop: 28 },

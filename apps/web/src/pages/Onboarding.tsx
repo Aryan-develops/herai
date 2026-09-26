@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
+import { LogoMark } from "@/components/LogoMark";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, ArrowRight, Check, HeartPulse, ShieldCheck } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, ShieldCheck } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { api, ApiError, type HealthProfile } from "@/lib/api";
 import { Button } from "@/components/ui/button";
@@ -131,7 +132,7 @@ export function Onboarding() {
       <div className="relative mx-auto max-w-lg">
         <div className="mb-8 flex items-center gap-2 font-display text-xl font-semibold text-ink-900">
           <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-brand-500 to-violet-500 text-white shadow-soft">
-            <HeartPulse className="h-4.5 w-4.5" aria-hidden="true" />
+            <LogoMark className="h-4.5 w-4.5" />
           </span>
           Lunee
         </div>

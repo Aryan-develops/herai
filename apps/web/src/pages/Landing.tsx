@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
-import { ArrowRight, Droplet, HeartPulse, MessageCircleHeart, ShieldCheck, Sparkles } from "lucide-react";
+import { LogoMark } from "@/components/LogoMark";
+import { ArrowRight, Droplet, MessageCircleHeart, ShieldCheck, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PartnerShowcase } from "@/components/PartnerShowcase";
 
@@ -22,7 +23,7 @@ export function Landing() {
         <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3 sm:px-6 sm:py-4">
           <div className="flex items-center gap-2 font-display text-xl font-semibold text-ink-900">
             <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-brand-500 to-violet-500 text-white shadow-soft">
-              <HeartPulse className="h-4.5 w-4.5" aria-hidden="true" />
+              <LogoMark className="h-4.5 w-4.5" />
             </span>
             Lunee
           </div>

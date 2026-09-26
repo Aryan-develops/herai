@@ -15,7 +15,7 @@ export function PartnerShowcase() {
       <div className="mx-auto max-w-2xl text-center">
         <span className="inline-flex items-center gap-2 rounded-full bg-brand-100 px-3.5 py-1.5 text-xs font-semibold text-brand-700">
           <Users className="h-3.5 w-3.5" aria-hidden="true" />
-          For couples · coming soon
+          For couples · available now
         </span>
         <h2 id="couples-heading" className="mt-4 font-display text-3xl font-medium text-ink-900 sm:text-4xl">
           Better together
@@ -82,7 +82,7 @@ export function PartnerShowcase() {
             <ArrowRight className="h-4 w-4" aria-hidden="true" />
           </Button>
         </Link>
-        <p className="text-sm text-neutral-500">Partner invites open soon. Join now and be first.</p>
+        <p className="text-sm text-neutral-500">Partner sharing is live. Create your account and invite someone in a minute.</p>
       </div>
     </section>
   );
