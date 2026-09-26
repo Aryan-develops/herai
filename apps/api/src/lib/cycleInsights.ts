@@ -71,7 +71,9 @@ export function computeCycleInsights(
   profile: { cycleLengthDays?: number | null; lastPeriodStart?: string | null } | null,
   options: CycleInsightsOptions = {},
 ): CycleInsights {
-  const periods = derivePeriodsFromLogs(logs);
+  // Planned (future) period days don't count as history: they haven't happened yet.
+  const endOfToday = toDateOnly((options.today ?? new Date()).toISOString()).getTime() + DAY_MS;
+  const periods = derivePeriodsFromLogs(logs.filter((l) => toDateOnly(l.loggedAt).getTime() < endOfToday));
   const cycleHistory = periods.slice(1).map((period, i) => ({
     start: isoDate(period.start),
     lengthDays: Math.round((period.start.getTime() - periods[i].start.getTime()) / DAY_MS),

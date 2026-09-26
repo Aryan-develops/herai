@@ -34,13 +34,13 @@ export function CycleScreen() {
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
       <ScreenTitle title="Your cycle" subtitle="Estimates from your logged periods. Not a diagnosis." />
 
+      {insights && <CycleCalendar insights={insights} onChanged={load} />}
+
       <CycleHero insights={insights} loading={loading} />
 
       {ready && insights.phase && (
         <>
           <Notice tone="warning">{PHASE_STYLE[insights.phase].tip}</Notice>
-
-          <CycleCalendar insights={insights} />
 
           <View style={styles.dates}>
             <DateCard label="Next period" value={insights.predictedNextPeriodStart ? shortDate(insights.predictedNextPeriodStart) : "—"} />

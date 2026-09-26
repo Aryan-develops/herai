@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { Droplet, Plus, Activity, Smile, X } from "lucide-react";
 import { api, ApiError, type CycleLog, type SymptomEntry } from "@/lib/api";
@@ -262,8 +262,13 @@ function CycleForm({ onDone }: { onDone: () => void }) {
   const [start, setStart] = useState(today);
   const [end, setEnd] = useState(today);
   const [flows, setFlows] = useState<Record<string, CycleLog["flow"]>>({});
+  const [plen, setPlen] = useState(5);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    api.getCycleInsights().then(({ insights }) => setPlen(Math.max(1, Math.min(insights.periodLengthDays || 5, 10)))).catch(() => {});
+  }, []);
 
   const days = useMemo(() => (start <= end ? daysBetween(start, end) : []), [start, end]);
   const flowFor = (d: string): CycleLog["flow"] => flows[d] ?? "medium";
@@ -290,11 +295,11 @@ function CycleForm({ onDone }: { onDone: () => void }) {
       <div className="grid grid-cols-2 gap-3">
         <div className="space-y-1.5">
           <Label htmlFor="p-start">First day</Label>
-          <input id="p-start" type="date" max={today} value={start} onChange={(e) => e.target.value && (setStart(e.target.value), e.target.value > end && setEnd(e.target.value))} className="h-11 w-full rounded-xl border border-neutral-300 bg-white px-3 text-sm" />
+          <input id="p-start" type="date" value={start} onChange={(e) => { const v = e.target.value; if (!v) return; setStart(v); setEnd(localDay(new Date(Date.parse(`${v}T12:00:00`) + (plen - 1) * 86400000))); setFlows({}); }} className="h-11 w-full rounded-xl border border-neutral-300 bg-white px-3 text-sm" />
         </div>
         <div className="space-y-1.5">
           <Label htmlFor="p-end">Last day</Label>
-          <input id="p-end" type="date" min={start} max={today} value={end} onChange={(e) => e.target.value && setEnd(e.target.value)} className="h-11 w-full rounded-xl border border-neutral-300 bg-white px-3 text-sm" />
+          <input id="p-end" type="date" min={start} value={end} onChange={(e) => e.target.value && setEnd(e.target.value)} className="h-11 w-full rounded-xl border border-neutral-300 bg-white px-3 text-sm" />
         </div>
       </div>
 

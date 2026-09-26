@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { CalendarPlus, Droplet, Lightbulb, Sparkles } from "lucide-react";
 import { api, type CycleInsights } from "@/lib/api";
@@ -22,12 +22,13 @@ export function Cycle() {
   const [insights, setInsights] = useState<CycleInsights | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
+  const reload = useCallback(() => {
     api
       .getCycleInsights()
       .then(({ insights }) => setInsights(insights))
       .catch(() => setError("Couldn't load your cycle. Please refresh."));
   }, []);
+  useEffect(reload, [reload]);
 
   const ready = insights && insights.lastPeriodStart && insights.phase && insights.currentCycleDay;
 
@@ -55,6 +56,8 @@ export function Cycle() {
         </div>
       )}
 
+      {insights && <CycleCalendar insights={insights} onChanged={reload} />}
+
       {insights && !ready && (
         <EmptyState
           className="mt-8 max-w-xl"
@@ -75,8 +78,6 @@ export function Cycle() {
             </span>
             <p className="text-sm text-ink-800">{PHASE_STYLE[insights.phase].tip}</p>
           </div>
-
-          <CycleCalendar insights={insights} />
 
           <PhaseTimeline insights={insights} />
 

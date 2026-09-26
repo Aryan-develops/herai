@@ -1,7 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { api, type CycleInsights, type CycleLog, type SymptomLog } from "@/lib/api";
-import { dayKey, KIND_STYLE, makeClassifier, type DayKind } from "@/lib/cycleCalendar";
+import { api, ApiError, type CycleInsights, type CycleLog, type SymptomLog } from "@/lib/api";
+import { addDaysKey, dayKey, KIND_STYLE, makeClassifier, type DayKind } from "@/lib/cycleCalendar";
+import { useToast } from "@/components/ui/toast";
+import { Button } from "@/components/ui/button";
+import { Pencil } from "lucide-react";
 import { DaySheet } from "@/components/DaySheet";
 import { cn } from "@/lib/utils";
 
@@ -9,13 +12,19 @@ const WEEKDAYS = ["M", "T", "W", "T", "F", "S", "S"];
 const LEGEND: DayKind[] = ["period", "predicted-period", "fertile", "ovulation", "pms"];
 
 /** Month and year calendar over every phase and period day. Tap a day to open its log window. */
-export function CycleCalendar({ insights }: { insights: CycleInsights }) {
+export function CycleCalendar({ insights, onChanged }: { insights: CycleInsights; onChanged?: () => void }) {
   const now = new Date();
   const [view, setView] = useState<"month" | "year">("month");
   const [cursor, setCursor] = useState({ y: now.getFullYear(), m: now.getMonth() });
   const [cycleLogs, setCycleLogs] = useState<CycleLog[]>([]);
   const [symptomLogs, setSymptomLogs] = useState<SymptomLog[]>([]);
   const [selected, setSelected] = useState<string | null>(null);
+  const toast = useToast();
+  const [draft, setDraft] = useState<Set<string> | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [editError, setEditError] = useState<string | null>(null);
+  const editing = draft !== null;
+  const plen = Math.max(1, Math.min(insights.periodLengthDays || 5, 10));
 
   const load = useCallback(() => {
     api.listCycleLogs().then(({ logs }) => setCycleLogs(logs)).catch(() => {});
@@ -25,8 +34,54 @@ export function CycleCalendar({ insights }: { insights: CycleInsights }) {
 
   const cycleByDay = useMemo(() => group(cycleLogs), [cycleLogs]);
   const symByDay = useMemo(() => group(symptomLogs), [symptomLogs]);
-  const classify = useMemo(() => makeClassifier(insights, new Set(cycleByDay.keys())), [insights, cycleByDay]);
+  const classify = useMemo(() => makeClassifier(insights, draft ?? new Set(cycleByDay.keys())), [insights, cycleByDay, draft]);
   const todayKey = dayKey(now);
+
+  function startEdit() {
+    setView("month");
+    setEditError(null);
+    setDraft(new Set(cycleByDay.keys()));
+  }
+
+  /** Tap a day to add or remove it. A new period (not next to an existing one) fills your usual period length. */
+  function toggleDraft(key: string) {
+    setDraft((prev) => {
+      if (!prev) return prev;
+      const next = new Set(prev);
+      if (next.has(key)) {
+        next.delete(key);
+      } else {
+        const adjacent = next.has(addDaysKey(key, -1)) || next.has(addDaysKey(key, 1));
+        next.add(key);
+        if (!adjacent) for (let i = 1; i < plen; i++) next.add(addDaysKey(key, i));
+      }
+      return next;
+    });
+  }
+
+  async function saveEdit() {
+    if (!draft) return;
+    const before = new Set(cycleByDay.keys());
+    const add = [...draft].filter((k) => !before.has(k)).map((date) => ({ date, flow: "medium" as const }));
+    const remove = [...before].filter((k) => !draft.has(k));
+    if (add.length === 0 && remove.length === 0) {
+      setDraft(null);
+      return;
+    }
+    setSaving(true);
+    setEditError(null);
+    try {
+      await api.createPeriodRange(add, remove);
+      toast("Period days saved");
+      setDraft(null);
+      load();
+      onChanged?.();
+    } catch (err) {
+      setEditError(err instanceof ApiError ? err.message : "Couldn't save. Please try again.");
+    } finally {
+      setSaving(false);
+    }
+  }
 
   function shift(delta: number) {
     setCursor((c) => (view === "month" ? { y: c.y + Math.floor((c.m + delta) / 12), m: (c.m + delta + 120) % 12 } : { y: c.y + delta, m: c.m }));
@@ -39,7 +94,13 @@ export function CycleCalendar({ insights }: { insights: CycleInsights }) {
     <section className="mt-4 rounded-3xl border border-neutral-200 bg-white p-4 shadow-soft sm:p-6" aria-labelledby="cal-h">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h2 id="cal-h" className="font-display text-lg font-semibold text-ink-900">Calendar</h2>
-        <div role="tablist" aria-label="Calendar view" className="flex rounded-full bg-neutral-100 p-1 text-sm font-medium">
+        {!editing && (
+          <Button size="sm" variant="outline" onClick={startEdit}>
+            <Pencil className="h-3.5 w-3.5" aria-hidden="true" />
+            Edit period dates
+          </Button>
+        )}
+        <div role="tablist" aria-label="Calendar view" className={cn(editing && "hidden", "flex rounded-full bg-neutral-100 p-1 text-sm font-medium")}>
           {(["month", "year"] as const).map((v) => (
             <button key={v} role="tab" aria-selected={view === v} onClick={() => setView(v)} className={cn("min-h-9 cursor-pointer rounded-full px-4 capitalize", view === v ? "bg-white text-ink-900 shadow-soft" : "text-neutral-500")}>
               {v}
@@ -58,8 +119,22 @@ export function CycleCalendar({ insights }: { insights: CycleInsights }) {
         </button>
       </div>
 
+      {editing && (
+        <div className="mt-3 rounded-2xl border border-brand-200 bg-brand-50 p-3 text-sm text-ink-800" role="status">
+          <p className="font-medium">Tap days to add or remove period days. Past and future both work.</p>
+          <p className="mt-0.5 text-xs text-ink-700/75">
+            Tap the first day of a new period and we fill your usual {plen} days. Then adjust any day.
+          </p>
+          {editError && <p role="alert" className="mt-1 text-xs text-red-700">{editError}</p>}
+          <div className="mt-2 flex gap-2">
+            <Button size="sm" onClick={saveEdit} disabled={saving}>{saving ? "Saving…" : "Save period days"}</Button>
+            <Button size="sm" variant="outline" onClick={() => setDraft(null)} disabled={saving}>Cancel</Button>
+          </div>
+        </div>
+      )}
+
       {view === "month" ? (
-        <MonthGrid y={cursor.y} m={cursor.m} classify={classify} todayKey={todayKey} symDays={symByDay} onPick={setSelected} />
+        <MonthGrid y={cursor.y} m={cursor.m} classify={classify} todayKey={todayKey} symDays={symByDay} onPick={editing ? toggleDraft : setSelected} />
       ) : (
         <div className="mt-2 grid grid-cols-2 gap-4 sm:grid-cols-3">
           {Array.from({ length: 12 }, (_, m) => (
@@ -102,7 +177,10 @@ export function CycleCalendar({ insights }: { insights: CycleInsights }) {
           cycleLogs={cycleByDay.get(selected) ?? []}
           symptomLogs={symByDay.get(selected) ?? []}
           onClose={() => setSelected(null)}
-          onChanged={load}
+          onChanged={() => {
+            load();
+            onChanged?.();
+          }}
         />
       )}
     </section>

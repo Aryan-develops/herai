@@ -12,13 +12,30 @@ function utcDay(key: string): number {
   return Date.parse(`${key}T00:00:00Z`) / DAY;
 }
 
+function latestRunStart(days: Set<string>): number | null {
+  const sorted = [...days].sort();
+  if (sorted.length === 0) return null;
+  let start = utcDay(sorted[sorted.length - 1]);
+  for (let i = sorted.length - 2; i >= 0 && utcDay(sorted[i]) === start - 1; i--) start -= 1;
+  return start;
+}
+
+export function addDaysKey(key: string, n: number): string {
+  const d = new Date(`${key}T12:00:00`);
+  d.setDate(d.getDate() + n);
+  return dayKey(d);
+}
+
 /**
  * Classifies any calendar day. Days logged as flow are always "period". Every other day is projected by
  * repeating the average cycle forwards and backwards from the last period start, so months and years
  * both before and after today are filled in. Projections are estimates.
  */
 export function makeClassifier(insights: CycleInsights | null, loggedPeriodDays: Set<string>) {
-  const anchor = insights?.lastPeriodStart ? utcDay(insights.lastPeriodStart.slice(0, 10)) : null;
+  const insightAnchor = insights?.lastPeriodStart ? utcDay(insights.lastPeriodStart.slice(0, 10)) : null;
+  const runStart = latestRunStart(loggedPeriodDays);
+  // A period the person logged (even a planned one in the future) is the newest fact, so projections follow it.
+  const anchor = runStart !== null && (insightAnchor === null || runStart > insightAnchor) ? runStart : insightAnchor;
   const len = insights?.cycleLengthDays ?? 28;
   const plen = Math.min(insights?.periodLengthDays ?? 5, len);
   const today = utcDay(dayKey(new Date()));

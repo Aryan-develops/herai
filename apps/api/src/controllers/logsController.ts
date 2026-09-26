@@ -82,18 +82,25 @@ async function clearCycleDays(userId: string, days: string[]) {
 const periodRangeSchema = z.object({
   days: z
     .array(z.object({ date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/), flow: z.enum(["spotting", "light", "medium", "heavy"]) }))
-    .min(1)
-    .max(31),
+    .max(62)
+    .default([]),
+  /** Days whose period entry should be removed (editing a period). */
+  removeDates: z.array(z.string().regex(/^\d{4}-\d{2}-\d{2}$/)).max(62).default([]),
 });
 
-/** Log a whole period in one go: one flow per day, replacing anything already logged on those days. */
+/**
+ * Log or edit period days in one go: one flow per day, replacing anything already logged on those days, and
+ * optionally removing days. Future days are allowed, so a coming period can be planned ahead.
+ */
 export async function createPeriodRange(req: AuthedRequest, res: Response) {
   const parsed = periodRangeSchema.safeParse(req.body);
   if (!parsed.success) throw new HttpError(400, parsed.error.issues[0]?.message ?? "Invalid input");
-  const today = new Date().toISOString().slice(0, 10);
+  if (parsed.data.days.length === 0 && parsed.data.removeDates.length === 0) throw new HttpError(400, "Nothing to save.");
+  const limit = new Date(Date.now() + 366 * 86400000).toISOString().slice(0, 10);
   const days = [...new Map(parsed.data.days.map((d) => [d.date, d])).values()];
-  if (days.some((d) => d.date > today)) throw new HttpError(400, "Periods can't be logged for future days.");
-  await clearCycleDays(req.userId!, days.map((d) => d.date));
+  if (days.some((d) => d.date > limit)) throw new HttpError(400, "That's too far ahead.");
+  await clearCycleDays(req.userId!, [...new Set([...days.map((d) => d.date), ...parsed.data.removeDates])]);
+  if (days.length === 0) return res.status(200).json({ logs: [] });
   const { data, error } = await supabaseAdmin
     .from("cycle_logs")
     .insert(days.map((d) => ({ user_id: req.userId, flow: d.flow, symptoms: [], logged_at: `${d.date}T12:00:00.000Z` })))

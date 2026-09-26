@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { api, ApiError, type CycleLog, type SymptomEntry } from "../lib/api";
@@ -181,8 +181,13 @@ function CycleForm({ onDone }: { onDone: () => void }) {
   const [start, setStart] = useState(today);
   const [end, setEnd] = useState(today);
   const [flows, setFlows] = useState<Record<string, CycleLog["flow"]>>({});
+  const [plen, setPlen] = useState(5);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    api.getCycleInsights().then(({ insights }) => setPlen(Math.max(1, Math.min(insights.periodLengthDays || 5, 10)))).catch(() => {});
+  }, []);
 
   const days = start <= end ? daysBetween(start, end) : [];
   const flowFor = (d: string): CycleLog["flow"] => flows[d] ?? "medium";
@@ -207,8 +212,8 @@ function CycleForm({ onDone }: { onDone: () => void }) {
   return (
     <View style={styles.card}>
       <View style={{ flexDirection: "row", gap: 10 }}>
-        <DateField label="First day" value={start} max={today} onChange={(d) => { setStart(d); if (d > end) setEnd(d); }} />
-        <DateField label="Last day" value={end} min={start} max={today} onChange={setEnd} />
+        <DateField label="First day" value={start} onChange={(d) => { setStart(d); setEnd(localDay(new Date(Date.parse(`${d}T12:00:00`) + (plen - 1) * 86400000))); setFlows({}); }} />
+        <DateField label="Last day" value={end} min={start} onChange={setEnd} />
       </View>
 
       <Text style={[styles.label, { marginTop: 18 }]}>Flow each day ({days.length})</Text>

@@ -246,7 +246,14 @@ try {
   const onD0 = cl.json.logs.filter((l) => l.loggedAt?.slice(0, 10) === d0 || l.logged_at?.slice(0, 10) === d0);
   check("one flow per day (replaced)", onD0.length === 1 && onD0[0].flow === "medium");
   const fut = await call(she.token, "POST", "/logs/cycles/range", { days: [{ date: "2999-01-01", flow: "light" }] });
-  check("future period days rejected", fut.status === 400);
+  check("absurdly far future rejected", fut.status === 400);
+  const soon = new Date(Date.now() + 10 * 86400000).toISOString().slice(0, 10);
+  const plan = await call(she.token, "POST", "/logs/cycles/range", { days: [{ date: soon, flow: "medium" }] });
+  check("future period day can be planned", plan.status === 201);
+  const ins2 = await call(she.token, "GET", "/logs/cycles/insights");
+  check("planned day does not change today's cycle state", ins2.json.insights.lastPeriodStart !== soon);
+  const rm = await call(she.token, "POST", "/logs/cycles/range", { removeDates: [soon] });
+  check("period day can be removed", rm.status === 200);
 
   // ---- support
   const sup = await call(she.token, "POST", "/support", { topic: "bug", message: "The calendar does not open on my phone." });
