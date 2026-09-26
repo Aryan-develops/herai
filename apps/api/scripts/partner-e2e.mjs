@@ -263,6 +263,34 @@ try {
   const supRow = await admin.from("support_requests").select("id").eq("user_id", she.id);
   check("support request stored for her", (supRow.data?.length ?? 0) === 1);
 
+  // ---- partner messages
+  const m1 = await call(she.token, "POST", `/partner/links/${linkId}/messages`, { body: "Hi from her" });
+  check("she can send a message", m1.status === 201 && m1.json.message.mine === true);
+  const m2 = await call(he.token, "POST", `/partner/links/${linkId}/messages`, { body: "Hi back" });
+  check("partner can reply", m2.status === 201);
+  const th = await call(he.token, "GET", `/partner/links/${linkId}/messages`);
+  check("both messages in thread, sides marked", th.json.messages.length === 2 && th.json.messages[0].mine === false && th.json.messages[1].mine === true);
+  const intr = await call(other.token, "GET", `/partner/links/${linkId}/messages`);
+  check("outsider cannot read messages", intr.status === 404);
+
+  // ---- admin
+  const na = await call(she.token, "GET", "/admin/overview");
+  check("non-admin gets 404 on admin", na.status === 404);
+  const meNa = await call(she.token, "GET", "/auth/me");
+  check("non-admin isAdmin false", meNa.json.user.isAdmin === false);
+  await admin.from("app_admins").insert({ email: other.email.toLowerCase() });
+  await new Promise((r) => setTimeout(r, 100));
+  const ov = await call(other.token, "GET", "/admin/overview");
+  check("admin sees overview", ov.status === 200 && ov.json.users.total > 0 && ov.json.signups.length === 14);
+  const us = await call(other.token, "GET", "/admin/users?page=0");
+  check("admin lists users", us.status === 200 && Array.isArray(us.json.users));
+  const gr = await call(other.token, "POST", `/admin/users/${he.id}/premium`, { action: "grant", months: 1 });
+  check("admin grants premium", gr.status === 200 && gr.json.subscription.status === "active");
+  const au = await call(other.token, "GET", "/admin/audit");
+  check("grant is audited", au.json.entries.some((e) => e.action === "premium.grant" && e.target === he.id));
+  await admin.from("app_admins").delete().eq("email", other.email.toLowerCase());
+  await admin.from("admin_audit").delete().eq("admin_email", other.email.toLowerCase());
+
   // ---- cascade
   const linkBefore = await admin.from("partner_links").select("id").eq("partner_id", he.id);
   await admin.auth.admin.deleteUser(he.id);

@@ -4,7 +4,7 @@ import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button";
 import { useLocation } from "react-router-dom";
 import { Link } from "react-router-dom";
-import { CalendarCheck, ChevronRight, FileText, History, MapPin } from "lucide-react";
+import { CalendarCheck, ChevronRight, ShieldCheck, FileText, History, MapPin } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { ProfileSection } from "@/components/settings/ProfileSection";
 import { SecuritySection } from "@/components/settings/SecuritySection";
@@ -30,7 +30,7 @@ const MORE = [
 
 export function Settings() {
   const { hash } = useLocation();
-  const { logout } = useAuth();
+  const { logout, user } = useAuth();
 
   // Deep links like /settings#partner scroll to the section once it has rendered.
   useEffect(() => {
@@ -66,7 +66,7 @@ export function Settings() {
       <section aria-labelledby="more-h" className="mt-5 rounded-3xl border border-neutral-200 bg-white p-2 shadow-soft">
         <h2 id="more-h" className="sr-only">More</h2>
         <ul className="divide-y divide-neutral-100">
-          {MORE.map(({ to, label, hint, icon: Icon }) => (
+          {[...MORE, ...(user?.isAdmin ? [{ to: "/admin", label: "Admin", hint: "Dashboard, users, premium, services", icon: ShieldCheck }] : [])].map(({ to, label, hint, icon: Icon }) => (
             <li key={to}>
               <Link to={to} className="flex min-h-14 items-center gap-3 rounded-2xl px-3 py-2 transition-colors hover:bg-neutral-50">
                 <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-50 text-brand-600" aria-hidden="true">

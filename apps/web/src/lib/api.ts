@@ -41,7 +41,7 @@ function authHeaders(): Record<string, string> {
   return session ? { Authorization: `Bearer ${session.accessToken}` } : {};
 }
 
-async function request<T>(path: string, options: RequestInit = {}, _retried = false): Promise<T> {
+export async function request<T>(path: string, options: RequestInit = {}, _retried = false): Promise<T> {
   const res = await fetch(`/api${path}`, {
     ...options,
     headers: {
@@ -100,6 +100,7 @@ export interface AuthUser {
   needsDateOfBirth: boolean;
   isProvider?: boolean;
   isPartner?: boolean;
+  isAdmin?: boolean;
 }
 
 export interface ConsentRequest {
@@ -353,6 +354,13 @@ export interface SharedScopes {
 
 export type SupportTopic = "account" | "cycle_tracking" | "partner" | "payments" | "bug" | "other";
 
+export interface PartnerMessage {
+  id: string;
+  mine: boolean;
+  body: string;
+  createdAt: string;
+}
+
 export interface PartnerLink {
   id: string;
   firstName: string;
@@ -580,6 +588,9 @@ export const api = {
   supportInfo: () => request<{ email: string | null }>("/support/info"),
   sendSupport: (data: { topic: SupportTopic; message: string }) =>
     request<{ ok: true; id: string; forwarded: boolean }>("/support", { method: "POST", body: JSON.stringify(data) }),
+  listMessages: (linkId: string) => request<{ messages: PartnerMessage[] }>(`/partner/links/${linkId}/messages`),
+  sendMessage: (linkId: string, body: string) =>
+    request<{ message: PartnerMessage }>(`/partner/links/${linkId}/messages`, { method: "POST", body: JSON.stringify({ body }) }),
   listMyPartners: () => request<{ partners: PartnerLink[] }>("/partner/links"),
   updatePartnerLink: (id: string, data: { status?: "active" | "paused"; scopes?: Partial<SharedScopes>; nickname?: string | null }) =>
     request<{ partner: PartnerLink }>(`/partner/links/${id}`, { method: "PATCH", body: JSON.stringify(data) }),

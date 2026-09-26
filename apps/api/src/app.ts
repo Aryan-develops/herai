@@ -11,6 +11,7 @@ import { careRouter, providerRouter } from "./routes/care.js";
 import { partnerRouter } from "./routes/partner.js";
 import { paymentsRouter } from "./routes/payments.js";
 import { settingsRouter } from "./routes/settings.js";
+import { adminRouter } from "./routes/admin.js";
 import { createSupportRequest, supportInfo } from "./controllers/supportController.js";
 import { requireAuth } from "./middleware/auth.js";
 import { reportClientError } from "./controllers/clientErrorsController.js";
@@ -52,6 +53,7 @@ export function createApp() {
   app.use("/api/partner", partnerRouter);
   app.use("/api/payments", paymentsRouter);
   app.use("/api/settings", settingsRouter);
+  app.use("/api/admin", adminRouter);
   app.get("/api/support/info", supportInfo);
   app.post("/api/support", requireAuth, asyncHandler(createSupportRequest));
   app.post("/api/client-errors", asyncHandler(reportClientError));

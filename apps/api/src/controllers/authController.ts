@@ -1,4 +1,5 @@
 import type { Response } from "express";
+import { isAdminEmail } from "../lib/admin.js";
 import { z } from "zod";
 import { REPORTS_BUCKET, createAuthClient, supabaseAdmin } from "../config/supabase.js";
 import { HttpError } from "../middleware/errorHandler.js";
@@ -52,6 +53,8 @@ interface AuthPayload {
   isProvider: boolean;
   // True when someone shares their cycle with this account (shows the Partner home).
   isPartner: boolean;
+  // Only for emails listed in app_admins. Shows the admin area link.
+  isAdmin: boolean;
 }
 
 interface SessionPayload {
@@ -88,6 +91,7 @@ async function loadAuthPayload(userId: string, email: string): Promise<AuthPaylo
     needsDateOfBirth: !profile.date_of_birth,
     isProvider: !!owned,
     isPartner: (following?.length ?? 0) > 0,
+    isAdmin: await isAdminEmail(email),
   };
 }
 

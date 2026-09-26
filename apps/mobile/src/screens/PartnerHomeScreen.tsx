@@ -9,6 +9,7 @@ import { api, ApiError, type Lang, type PartnerLink, type SubscriptionView, type
 import { DAY_PHASE_COLOR, PARTNER_PHASE_LOOK, shortDate } from "../lib/phases";
 import { Button, ErrorText, Notice, ScreenTitle } from "../components/ui";
 import { usePrefs } from "../context/PrefsContext";
+import { MessagesPane } from "../components/MessagesPane";
 import { CircleCard } from "../components/CircleCard";
 import { InsightCards } from "../components/InsightCards";
 import { moodOption } from "../components/moodOptions";
@@ -480,6 +481,13 @@ export function PartnerHomeScreen() {
           <Button title="Invite or enter a code" onPress={() => navigation.navigate("PartnerSettings")} />
         </View>
       ) : null}
+
+      <MessagesPane
+        threads={[
+          ...(women ?? []).map((w) => ({ linkId: w.linkId, name: w.firstName })),
+          ...(supporters ?? []).filter((p) => p.status !== "revoked").map((p) => ({ linkId: p.id, name: p.nickname ?? p.firstName })),
+        ]}
+      />
 
       <CircleCard supporters={supporters} following={women} selected={selected} onSelect={setSelected} onManage={() => navigation.navigate("PartnerSettings")} />
 

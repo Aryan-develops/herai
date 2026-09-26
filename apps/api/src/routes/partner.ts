@@ -22,6 +22,7 @@ import {
   updateLink,
   womanSummary,
 } from "../controllers/partnerController.js";
+import { listMessages, sendMessage } from "../controllers/messagesController.js";
 
 export const partnerRouter = Router();
 
@@ -40,6 +41,8 @@ partnerRouter.delete("/invites/:id", asyncHandler(cancelInvite));
 partnerRouter.get("/links", asyncHandler(listMyPartners));
 partnerRouter.patch("/links/:id", asyncHandler(updateLink));
 partnerRouter.delete("/links/:id", asyncHandler(revokeLink));
+partnerRouter.get("/links/:linkId/messages", asyncHandler(listMessages));
+partnerRouter.post("/links/:linkId/messages", asyncHandler(sendMessage));
 partnerRouter.get("/links/:id/access-log", asyncHandler(accessLog));
 
 // Partner side: everyone who shares with them

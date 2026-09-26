@@ -5,6 +5,7 @@ import { api, ApiError, type Lang, type PartnerLink, type SubscriptionView, type
 import { PARTNER_PHASE_STYLE } from "@/lib/phases";
 import { AppShell } from "@/components/AppShell";
 import { usePrefs } from "@/context/PrefsContext";
+import { MessagesPane } from "@/components/partner/MessagesPane";
 import { CircleCard } from "@/components/partner/CircleCard";
 import { WomanView } from "@/components/partner/WomanView";
 import { Alert } from "@/components/ui/alert";
@@ -212,6 +213,13 @@ export function PartnerHome() {
           </div>
         </>
       )}
+
+      <MessagesPane
+        threads={[
+          ...(women ?? []).map((w) => ({ linkId: w.linkId, name: w.firstName })),
+          ...(supporters ?? []).filter((p) => p.status !== "revoked").map((p) => ({ linkId: p.id, name: p.nickname ?? p.firstName })),
+        ]}
+      />
 
       <CircleCard supporters={supporters} following={women} selected={selected} onSelect={(id) => setParams({ w: id })} />
 

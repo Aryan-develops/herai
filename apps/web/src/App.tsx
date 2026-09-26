@@ -26,6 +26,7 @@ const ReportDetail = lazy(() => import("@/pages/ReportDetail").then((m) => ({ de
 const Settings = lazy(() => import("@/pages/Settings").then((m) => ({ default: m.Settings })));
 const PartnerHome = lazy(() => import("@/pages/PartnerHome").then((m) => ({ default: m.PartnerHome })));
 const PartnerUpgrade = lazy(() => import("@/pages/PartnerUpgrade").then((m) => ({ default: m.PartnerUpgrade })));
+const Admin = lazy(() => import("@/pages/Admin").then((m) => ({ default: m.Admin })));
 const Join = lazy(() => import("@/pages/Join").then((m) => ({ default: m.Join })));
 
 /** Shape of a page while its code loads, so the screen never flashes blank text. */
@@ -92,6 +93,7 @@ function App() {
                 <Route path="/provider" element={<ProviderDashboard />} />
                 <Route path="/chat" element={<Chat />} />
                 <Route path="/settings" element={<Settings />} />
+                <Route path="/admin" element={<Admin />} />
                 <Route path="/partner" element={<PartnerHome />} />
                 <Route path="/partner/upgrade" element={<PartnerUpgrade />} />
                 <Route path="/reports" element={<ReportUpload />} />
