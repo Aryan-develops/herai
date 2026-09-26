@@ -1,3 +1,4 @@
+import { Badge } from "@/components/ui/badge";
 import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Check, Clock, Copy, Eye, HeartHandshake, Link2, PauseCircle, PlayCircle, Send, Share2, Trash2, UserPlus } from "lucide-react";
@@ -142,9 +143,9 @@ function PartnerCard({ p, onChanged }: { p: PartnerLink; onChanged: () => void }
             {RELATIONSHIPS.find((r) => r.id === p.relationship)?.label} · since {niceDate(p.createdAt)}
           </p>
         </div>
-        <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${paused ? "bg-amber-100 text-amber-700" : "bg-sage-100 text-sage-700"}`}>
+        <Badge tone={paused ? "amber" : "sage"}>
           {paused ? "Paused" : "Sharing"}
-        </span>
+        </Badge>
       </div>
 
       <div className="mt-3 flex flex-wrap gap-2">

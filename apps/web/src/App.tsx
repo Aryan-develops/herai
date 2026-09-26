@@ -1,6 +1,7 @@
 import { Suspense, lazy } from "react";
 import { Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/context/AuthContext";
+import { ToastProvider } from "@/components/ui/toast";
 import { PrefsProvider } from "@/context/PrefsContext";
 import { ProtectedRoute, RequireConsent, RequireDateOfBirth, RequireOnboarding } from "@/components/ProtectedRoute";
 const GuardianConsent = lazy(() => import("@/pages/GuardianConsent").then((m) => ({ default: m.GuardianConsent })));
@@ -31,6 +32,7 @@ function App() {
   return (
     <AuthProvider>
       <PrefsProvider>
+      <ToastProvider>
       <Suspense fallback={<div className="flex min-h-dvh items-center justify-center bg-neutral-50 text-neutral-500">Loading…</div>}>
       <Routes>
         <Route path="/" element={<Landing />} />
@@ -70,6 +72,7 @@ function App() {
         </Route>
       </Routes>
       </Suspense>
+      </ToastProvider>
       </PrefsProvider>
     </AuthProvider>
   );

@@ -6,14 +6,16 @@ import { PHASE_STYLE, shortDate } from "@/lib/phases";
 import { AppShell } from "@/components/AppShell";
 import { CycleCalendar } from "@/components/CycleCalendar";
 import { CycleHero } from "@/components/CycleHero";
+import { Badge } from "@/components/ui/badge";
+import { EmptyState } from "@/components/ui/empty-state";
 import { Button } from "@/components/ui/button";
 import { Alert } from "@/components/ui/alert";
 import { cn } from "@/lib/utils";
 
-const REGULARITY: Record<CycleInsights["regularity"], { label: string; tone: string }> = {
-  regular: { label: "Regular", tone: "bg-sage-100 text-sage-700" },
-  irregular: { label: "Irregular", tone: "bg-amber-100 text-amber-700" },
-  insufficient_data: { label: "Still learning", tone: "bg-neutral-100 text-neutral-600" },
+const REGULARITY: Record<CycleInsights["regularity"], { label: string; tone: "sage" | "amber" | "neutral" }> = {
+  regular: { label: "Regular", tone: "sage" },
+  irregular: { label: "Irregular", tone: "amber" },
+  insufficient_data: { label: "Still learning", tone: "neutral" },
 };
 
 export function Cycle() {
@@ -54,18 +56,13 @@ export function Cycle() {
       )}
 
       {insights && !ready && (
-        <div className="mt-8 max-w-xl rounded-3xl border border-dashed border-brand-200 bg-white/70 p-10 text-center">
-          <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-brand-100 text-brand-600">
-            <Droplet className="h-5 w-5" aria-hidden="true" />
-          </span>
-          <p className="mt-4 font-display text-lg font-semibold text-ink-900">Let's map your cycle</p>
-          <p className="mt-1 text-sm text-ink-700/70">
-            Log the days of your last period and Lunee will start predicting your phase, fertile window and next period.
-          </p>
-          <Link to="/log" className="mt-5 inline-block">
-            <Button>Log your first period</Button>
-          </Link>
-        </div>
+        <EmptyState
+          className="mt-8 max-w-xl"
+          icon={<Droplet className="h-5 w-5" />}
+          title="Let's map your cycle"
+          body="Log the days of your last period and Lunee will start predicting your phase, fertile window and next period."
+          action={<Link to="/log"><Button>Log your first period</Button></Link>}
+        />
       )}
 
       {insights && ready && insights.phase && insights.currentCycleDay && (
@@ -111,9 +108,7 @@ export function Cycle() {
           <section className="mt-4 rounded-3xl border border-neutral-200 bg-white p-5 shadow-soft sm:p-6" aria-labelledby="hist-h">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <h2 id="hist-h" className="font-display text-lg font-semibold text-ink-900">Cycle history</h2>
-              <span className={cn("rounded-full px-2.5 py-1 text-xs font-semibold", REGULARITY[insights.regularity].tone)}>
-                {REGULARITY[insights.regularity].label}
-              </span>
+              <Badge tone={REGULARITY[insights.regularity].tone}>{REGULARITY[insights.regularity].label}</Badge>
             </div>
 
             {insights.cycleHistory.length > 0 ? (

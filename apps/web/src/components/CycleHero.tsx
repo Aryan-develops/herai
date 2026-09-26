@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
 import type { CycleInsights } from "@/lib/api";
+import { ProgressRing } from "@/components/ui/progress-ring";
 import { PHASE_STYLE, shortDate } from "@/lib/phases";
 
 /** Phase-coloured hero with a day-progress ring. Links to /cycle unless `static`. */
@@ -33,37 +34,14 @@ export function CycleHero({
 
   const style = PHASE_STYLE[insights.phase];
   const pct = Math.min(1, insights.currentCycleDay / insights.cycleLengthDays);
-  const r = 34;
-  const c = 2 * Math.PI * r;
   const cls = `mt-6 flex items-center gap-5 rounded-3xl bg-gradient-to-br ${style.grad} p-6 text-white shadow-lift`;
 
   const body = (
     <>
-      <div
-        className="relative h-24 w-24 shrink-0"
-        role="img"
-        aria-label={`Day ${insights.currentCycleDay} of ${insights.cycleLengthDays}`}
-      >
-        <svg viewBox="0 0 80 80" className="h-full w-full -rotate-90" aria-hidden="true">
-          <circle cx="40" cy="40" r={r} fill="none" stroke="rgba(255,255,255,0.25)" strokeWidth="7" />
-          <circle
-            cx="40"
-            cy="40"
-            r={r}
-            fill="none"
-            stroke="#fff"
-            strokeWidth="7"
-            strokeLinecap="round"
-            strokeDasharray={c}
-            strokeDashoffset={c * (1 - pct)}
-            style={{ transition: "stroke-dashoffset 600ms ease-out" }}
-          />
-        </svg>
-        <div className="tabular absolute inset-0 flex flex-col items-center justify-center leading-none">
-          <span className="font-display text-2xl font-semibold">{insights.currentCycleDay}</span>
-          <span className="mt-0.5 text-[10px] tracking-wide text-white/80 uppercase">Day</span>
-        </div>
-      </div>
+      <ProgressRing value={pct} onDark label={`Day ${insights.currentCycleDay} of ${insights.cycleLengthDays}`}>
+        <span className="font-display text-2xl font-semibold">{insights.currentCycleDay}</span>
+        <span className="mt-0.5 text-[10px] tracking-wide text-white/80 uppercase">Day</span>
+      </ProgressRing>
       <div className="min-w-0">
         <p className="text-xs font-medium tracking-wide text-white/80 uppercase">Right now</p>
         <p className="font-display text-2xl font-semibold">

@@ -4,6 +4,7 @@ import { api, ApiError, type CycleLog, type SymptomLog } from "@/lib/api";
 import { CATALOG, FLOW_OPTIONS, storedName, type FlowKey } from "@/lib/symptomCatalog";
 import { Button } from "@/components/ui/button";
 import { Alert } from "@/components/ui/alert";
+import { useToast } from "@/components/ui/toast";
 import { Spinner } from "@/components/ui/spinner";
 import { cn } from "@/lib/utils";
 
@@ -19,6 +20,7 @@ interface Props {
 
 /** Separate window for one day: flow, every symptom group, tests, search, and what's already logged. */
 export function DaySheet({ day, cycleDay, phaseLabel, cycleLogs, symptomLogs, onClose, onChanged }: Props) {
+  const toast = useToast();
   const [flow, setFlow] = useState<FlowKey | null>(null);
   const [picked, setPicked] = useState<Set<string>>(new Set());
   const [query, setQuery] = useState("");
@@ -72,9 +74,12 @@ export function DaySheet({ day, cycleDay, phaseLabel, cycleLogs, symptomLogs, on
       if (picked.size > 0) await api.createSymptomLog({ symptoms: [...picked].map((name) => ({ name, severity: 2 })), loggedAt });
       setFlow(null);
       setPicked(new Set());
+      toast("Saved");
       onChanged();
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Couldn't save. Please try again.");
+      const msg = err instanceof ApiError ? err.message : "Couldn't save. Please try again.";
+      setError(msg);
+      toast(msg, "error");
     } finally {
       setSaving(false);
     }

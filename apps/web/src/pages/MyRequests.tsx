@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { CalendarCheck, ExternalLink, ShieldCheck } from "lucide-react";
 import { api, ApiError, type CareRequest } from "@/lib/api";
 import { AppShell } from "@/components/AppShell";
+import { EmptyState } from "@/components/ui/empty-state";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Alert } from "@/components/ui/alert";
@@ -57,12 +58,12 @@ export function MyRequests() {
         {requests === null && !error && <div className="space-y-3" aria-hidden="true"><div className="skeleton h-28 w-full rounded-3xl" /><div className="skeleton h-28 w-full rounded-3xl" /></div>}
 
         {requests?.length === 0 && (
-          <div className="rounded-3xl border border-dashed border-brand-200 bg-white/70 p-10 text-center">
-            <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-brand-100 text-brand-600"><CalendarCheck className="h-5 w-5" aria-hidden="true" /></span>
-            <p className="mt-4 font-display text-lg font-semibold text-ink-900">No requests yet</p>
-            <p className="mt-1 text-sm text-ink-700/70">Find a lab or doctor and request a test or appointment.</p>
-            <Link to="/care" className="mt-5 inline-block"><Button>Find care</Button></Link>
-          </div>
+          <EmptyState
+            icon={<CalendarCheck className="h-5 w-5" />}
+            title="No requests yet"
+            body="Find a lab or doctor and request a test or appointment."
+            action={<Link to="/care"><Button>Find care</Button></Link>}
+          />
         )}
 
         <ul className="space-y-3">
