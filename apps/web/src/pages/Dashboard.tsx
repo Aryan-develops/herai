@@ -2,12 +2,13 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Activity, Bot, CalendarPlus, Droplet, Fingerprint, FileText, HeartHandshake, ListPlus, MapPin, ShieldAlert } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
-import { api, ApiError, type CycleInsights, type HealthReportRecord, type TimelineEvent } from "@/lib/api";
+import { api, ApiError, type CycleInsights, type InsightCard, type HealthReportRecord, type TimelineEvent } from "@/lib/api";
 import { getSession } from "@/lib/session";
 import { hasPasskey, registerPasskey } from "@/lib/passkey";
 import { AppShell } from "@/components/AppShell";
 import { CycleHero } from "@/components/CycleHero";
 import { MoodCheckIn } from "@/components/MoodCheckIn";
+import { InsightCards } from "@/components/InsightCards";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 
@@ -20,6 +21,7 @@ export function Dashboard() {
   const { user } = useAuth();
   const [insights, setInsights] = useState<CycleInsights | null>(null);
   const [insightsLoading, setInsightsLoading] = useState(true);
+  const [dailyCards, setDailyCards] = useState<InsightCard[]>([]);
   const [events, setEvents] = useState<TimelineEvent[] | null>(null);
   const [reports, setReports] = useState<HealthReportRecord[]>([]);
   // "checking" until we know; the prompt only shows for "idle"/"working"/"error".
@@ -29,6 +31,7 @@ export function Dashboard() {
   useEffect(() => {
     api.getTimeline().then(({ events }) => setEvents(events.slice(0, 4)));
     api.listReports().then(({ reports }) => setReports(reports)).catch(() => {});
+    api.dailyInsights().then(({ cards }) => setDailyCards(cards)).catch(() => {});
     api
       .getCycleInsights()
       .then(({ insights }) => setInsights(insights))
@@ -69,6 +72,8 @@ export function Dashboard() {
       <CycleHero insights={insights} loading={insightsLoading} />
 
       <MoodCheckIn />
+
+      <InsightCards title="Today's insights" cards={dailyCards} />
 
       {user?.isPartner && (
         <Link

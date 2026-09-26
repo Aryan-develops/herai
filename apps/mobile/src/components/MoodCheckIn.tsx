@@ -4,7 +4,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { api, ApiError, type Mood, type MoodInsight, type Need } from "../lib/api";
 import { NEEDS } from "../lib/phases";
 import { Button, Chip, ErrorText } from "./ui";
-import { MOOD_OPTIONS, moodOption } from "./moodOptions";
+import { INTENSITY_LABELS, MOOD_OPTIONS, moodOption } from "./moodOptions";
 import { colors, radius, shadow } from "../theme";
 
 /** One-tap daily check-in. The optional "I need…" signal is the most useful thing a partner can see. */
@@ -87,7 +87,7 @@ export function MoodCheckIn() {
       {mood && (
         <View style={{ gap: 14, marginTop: 14 }}>
           <View>
-            <Text style={styles.label}>Energy (optional)</Text>
+            <Text style={styles.label}>How much? (optional)</Text>
             <View style={styles.energyRow}>
               {[1, 2, 3, 4, 5].map((n) => (
                 <Pressable
@@ -95,13 +95,14 @@ export function MoodCheckIn() {
                   onPress={() => setEnergy(energy === n ? null : n)}
                   accessibilityRole="button"
                   accessibilityState={{ selected: energy === n }}
-                  accessibilityLabel={`Energy ${n} of 5`}
+                  accessibilityLabel={`${INTENSITY_LABELS[n - 1]}, ${n} of 5`}
                   style={[styles.energy, energy === n && styles.energyActive]}
                 >
                   <Text style={[styles.energyText, energy === n && { color: colors.brand700 }]}>{n}</Text>
                 </Pressable>
               ))}
             </View>
+            <Text style={styles.hint}>{energy ? INTENSITY_LABELS[energy - 1] : "From a little to very much"}</Text>
           </View>
           <View>
             <Text style={styles.label}>Let your partner know (optional)</Text>

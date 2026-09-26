@@ -108,6 +108,20 @@ try {
   const partnerPatch = await call(he.token, "PATCH", `/partner/links/${linkId}`, { scopes: { mood: true } });
   check("partner cannot change what is shared", partnerPatch.status === 403);
 
+  // ---- daily insights + back-dated entries
+  check("partner summary includes insight cards", Array.isArray(sum.json.insights) && sum.json.insights.length >= 4 && sum.json.insights.every((c) => c.title && c.body));
+  const mine = await call(she.token, "GET", "/logs/insights/daily");
+  check("she gets her own insight cards", mine.status === 200 && mine.json.cards.length >= 4 && !!mine.json.phase);
+  const hiCards = await call(she.token, "GET", "/logs/insights/daily?lang=hi");
+  check("insights available in Hindi", /[ऀ-ॿ]/.test(hiCards.json.cards[0].title));
+  const past = new Date(Date.now() - 3 * 86400000).toISOString();
+  const backMood = await call(she.token, "POST", "/logs/moods", { mood: "low", energy: 4, loggedAt: past });
+  check("mood can be logged for an earlier date", backMood.status === 201 && backMood.json.mood.loggedAt.slice(0, 10) === past.slice(0, 10));
+  const backSym = await call(she.token, "POST", "/logs/symptoms", { symptoms: [{ name: "Headache", severity: 2 }], loggedAt: past });
+  check("symptom can be logged for an earlier date", backSym.status === 201);
+  const dateOnlyProfile = await call(she.token, "PUT", "/profile", { lastPeriodStart: "2026-09-01" });
+  check("profile accepts a date-only last period start", dateOnlyProfile.status === 200);
+
   // ---- tasks, streak, feedback, events
   const t1 = await call(he.token, "POST", `/partner/women/${linkId}/tasks`, { taskId: sum.json.guidance.tasks[0].id, done: true });
   check("task done updates streak", t1.status === 200 && t1.json.streak >= 1 && t1.json.doneToday.length === 1);

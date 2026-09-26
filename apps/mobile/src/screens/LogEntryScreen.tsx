@@ -3,6 +3,8 @@ import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { api, ApiError, type CycleLog, type SymptomEntry } from "../lib/api";
 import { Button, Chip, ErrorText, Field, ScreenTitle } from "../components/ui";
+import { MoodLogForm } from "../components/MoodLogForm";
+import { WhenPicker } from "../components/WhenPicker";
 import { colors, radius, shadow } from "../theme";
 import type { AppStackParamList } from "../navigation/types";
 
@@ -18,7 +20,7 @@ const FLOWS: { value: CycleLog["flow"]; label: string }[] = [
 type Props = NativeStackScreenProps<AppStackParamList, "LogEntry">;
 
 export function LogEntryScreen({ navigation }: Props) {
-  const [tab, setTab] = useState<"symptom" | "cycle">("symptom");
+  const [tab, setTab] = useState<"symptom" | "cycle" | "mood">("symptom");
 
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
@@ -27,9 +29,12 @@ export function LogEntryScreen({ navigation }: Props) {
       <View style={styles.tabs} accessibilityRole="tablist">
         <TabButton active={tab === "symptom"} onPress={() => setTab("symptom")} label="Symptoms" />
         <TabButton active={tab === "cycle"} onPress={() => setTab("cycle")} label="Period" />
+        <TabButton active={tab === "mood"} onPress={() => setTab("mood")} label="Mood" />
       </View>
 
-      {tab === "symptom" ? <SymptomForm onDone={() => navigation.goBack()} /> : <CycleForm onDone={() => navigation.goBack()} />}
+      {tab === "symptom" && <SymptomForm onDone={() => navigation.goBack()} />}
+      {tab === "cycle" && <CycleForm onDone={() => navigation.goBack()} />}
+      {tab === "mood" && <MoodLogForm onDone={() => navigation.goBack()} />}
     </ScrollView>
   );
 }
@@ -52,6 +57,7 @@ function SymptomForm({ onDone }: { onDone: () => void }) {
   const [name, setName] = useState("");
   const [severity, setSeverity] = useState(3);
   const [notes, setNotes] = useState("");
+  const [when, setWhen] = useState<string | undefined>(undefined);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
@@ -71,7 +77,7 @@ function SymptomForm({ onDone }: { onDone: () => void }) {
     setError(null);
     setSubmitting(true);
     try {
-      await api.createSymptomLog({ symptoms: pending, notes: notes || undefined });
+      await api.createSymptomLog({ symptoms: pending, notes: notes || undefined, loggedAt: when });
       onDone();
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Something went wrong. Please try again.");
@@ -143,6 +149,10 @@ function SymptomForm({ onDone }: { onDone: () => void }) {
         </View>
       )}
 
+      <View style={{ marginBottom: 14 }}>
+        <WhenPicker value={when} onChange={setWhen} />
+      </View>
+
       <Field label="Notes (optional)" placeholder="Anything else worth noting…" value={notes} onChangeText={setNotes} multiline />
       <ErrorText>{error}</ErrorText>
       <Button title={submitting ? "Saving…" : "Save symptoms"} onPress={submit} loading={submitting} />
@@ -153,6 +163,7 @@ function SymptomForm({ onDone }: { onDone: () => void }) {
 function CycleForm({ onDone }: { onDone: () => void }) {
   const [flow, setFlow] = useState<CycleLog["flow"]>("medium");
   const [notes, setNotes] = useState("");
+  const [when, setWhen] = useState<string | undefined>(undefined);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
@@ -160,7 +171,7 @@ function CycleForm({ onDone }: { onDone: () => void }) {
     setError(null);
     setSubmitting(true);
     try {
-      await api.createCycleLog({ flow, notes: notes || undefined });
+      await api.createCycleLog({ flow, notes: notes || undefined, loggedAt: when });
       onDone();
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Something went wrong. Please try again.");
@@ -171,11 +182,14 @@ function CycleForm({ onDone }: { onDone: () => void }) {
 
   return (
     <View style={styles.card}>
-      <Text style={styles.label}>How's your flow today?</Text>
+      <Text style={styles.label}>How's your flow?</Text>
       <View style={styles.chips}>
         {FLOWS.map((f) => (
           <Chip key={f.value} label={f.label} selected={flow === f.value} onPress={() => setFlow(f.value)} />
         ))}
+      </View>
+      <View style={{ marginTop: 16 }}>
+        <WhenPicker value={when} onChange={setWhen} />
       </View>
       <View style={{ marginTop: 16 }}>
         <Field label="Notes (optional)" placeholder="Cramps, mood, anything worth noting…" value={notes} onChangeText={setNotes} multiline />

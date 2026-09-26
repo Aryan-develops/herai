@@ -36,15 +36,15 @@ function Empty() {
       <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-brand-500 to-violet-500 text-white shadow-soft">
         <HeartHandshake className="h-7 w-7" aria-hidden="true" />
       </span>
-      <h2 className="mt-4 font-display text-2xl font-semibold text-ink-900">You're not following anyone yet</h2>
+      <h2 className="mt-4 font-display text-2xl font-semibold text-ink-900">Your circle starts here</h2>
       <p className="mx-auto mt-2 max-w-md text-sm text-ink-700/80">
-        When someone invites you, you'll see how she's doing today and small, kind things you can do. She decides exactly what you see.
+        Invite someone you trust to support you, or enter a code to follow someone. Whoever shares decides exactly what is seen, and can stop any time.
       </p>
       <div className="mt-5 flex flex-wrap justify-center gap-3">
         <Link to="/settings#partner">
           <Button>
             <UserPlus className="h-4 w-4" aria-hidden="true" />
-            Enter an invite code
+            Invite or enter a code
           </Button>
         </Link>
       </div>

@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Check, Sparkles } from "lucide-react";
 import { api, ApiError, type Mood, type MoodInsight, type Need } from "@/lib/api";
 import { NEEDS } from "@/lib/phases";
-import { MOOD_OPTIONS, moodOption } from "@/components/partner/moodIcons";
+import { INTENSITY_LABELS, MOOD_OPTIONS, moodOption } from "@/components/partner/moodIcons";
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -89,15 +89,15 @@ export function MoodCheckIn() {
         {mood && (
           <div className="mt-4 space-y-4 animate-fade-up">
             <div>
-              <p className="text-sm font-medium text-ink-800">Energy (optional)</p>
-              <div role="group" aria-label="Energy" className="mt-2 flex gap-2">
+              <p className="text-sm font-medium text-ink-800">How much? (optional)</p>
+              <div role="group" aria-label="How much" className="mt-2 flex gap-2">
                 {[1, 2, 3, 4, 5].map((n) => (
                   <button
                     key={n}
                     type="button"
                     onClick={() => setEnergy(energy === n ? null : n)}
                     aria-pressed={energy === n}
-                    aria-label={`Energy ${n} of 5`}
+                    aria-label={`${INTENSITY_LABELS[n - 1]}, ${n} of 5`}
                     className={cn(
                       "tabular h-11 min-w-11 flex-1 cursor-pointer rounded-xl border text-sm font-medium transition-colors",
                       energy === n ? "border-brand-400 bg-brand-50 text-brand-700" : "border-neutral-200 bg-white text-ink-700 hover:border-brand-300",
@@ -107,6 +107,7 @@ export function MoodCheckIn() {
                   </button>
                 ))}
               </div>
+              <p className="mt-1.5 text-xs text-ink-700/60">{energy ? INTENSITY_LABELS[energy - 1] : "From a little to very much"}</p>
             </div>
             <div>
               <p className="text-sm font-medium text-ink-800">Let your partner know (optional)</p>

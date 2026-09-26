@@ -446,6 +446,7 @@ export interface WomanSummary {
   comfort: string[] | null;
   fertility: { window: { start: string; end: string }; ovulationDate: string | null } | null;
   guidance: PartnerGuidance | null;
+  insights: InsightCard[];
   calendar: { date: string; phase: DayPhase | null }[] | null;
   events: { id: string; title: string; date: string; headsUp: "menstrual" | "pms" | null }[];
   progress: { doneToday: string[]; streak: number };
@@ -470,6 +471,15 @@ export interface NotificationPrefs {
   emailEnabled: boolean;
   pushEnabled: boolean;
   language: Lang;
+}
+
+export type InsightTone = "body" | "food" | "move" | "mind" | "care" | "talk" | "plan";
+
+export interface InsightCard {
+  id: string;
+  tone: InsightTone;
+  title: string;
+  body: string;
 }
 
 export interface MoodInsight {
@@ -528,12 +538,12 @@ export const api = {
   updateProfile: (data: Partial<HealthProfile>) =>
     request<{ profile: HealthProfile }>("/profile", { method: "PUT", body: JSON.stringify(data) }),
 
-  createSymptomLog: (data: { symptoms: SymptomEntry[]; notes?: string }) =>
+  createSymptomLog: (data: { symptoms: SymptomEntry[]; notes?: string; loggedAt?: string }) =>
     request<{ log: SymptomLog }>("/logs/symptoms", { method: "POST", body: JSON.stringify(data) }),
   listSymptomLogs: () => request<{ logs: SymptomLog[] }>("/logs/symptoms"),
   deleteSymptomLog: (id: string) => request<void>(`/logs/symptoms/${id}`, { method: "DELETE" }),
 
-  createCycleLog: (data: { flow: CycleLog["flow"]; symptoms?: string[]; notes?: string }) =>
+  createCycleLog: (data: { flow: CycleLog["flow"]; symptoms?: string[]; notes?: string; loggedAt?: string }) =>
     request<{ log: CycleLog }>("/logs/cycles", { method: "POST", body: JSON.stringify(data) }),
   listCycleLogs: () => request<{ logs: CycleLog[] }>("/logs/cycles"),
   deleteCycleLog: (id: string) => request<void>(`/logs/cycles/${id}`, { method: "DELETE" }),
@@ -541,10 +551,11 @@ export const api = {
 
   getTimeline: () => request<{ events: TimelineEvent[] }>("/logs/timeline"),
 
-  createMoodLog: (data: { mood: Mood; energy?: number; need?: Need }) =>
+  createMoodLog: (data: { mood: Mood; energy?: number; need?: Need; loggedAt?: string }) =>
     request<{ mood: MoodLog }>("/logs/moods", { method: "POST", body: JSON.stringify(data) }),
   listMoodLogs: (days = 30) => request<{ moods: MoodLog[] }>(`/logs/moods?days=${days}`),
   moodInsights: () => request<MoodInsight>("/logs/moods/insights"),
+  dailyInsights: (lang?: Lang) => request<{ phase: PhaseKey | null; cards: InsightCard[] }>(`/logs/insights/daily${lang ? `?lang=${lang}` : ""}`),
 
   // Partner mode
   createInvite: (data: { direction?: InviteDirection; relationship?: Relationship; email?: string }) =>

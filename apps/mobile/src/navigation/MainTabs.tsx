@@ -1,12 +1,10 @@
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { Ionicons } from "@expo/vector-icons";
 import { DashboardScreen } from "../screens/DashboardScreen";
-import { TimelineScreen } from "../screens/TimelineScreen";
 import { CycleScreen } from "../screens/CycleScreen";
 import { ChatScreen } from "../screens/ChatScreen";
 import { PartnerHomeScreen } from "../screens/PartnerHomeScreen";
 import { ReportsStack } from "./ReportsStack";
-import { useAuth } from "../context/AuthContext";
 import { colors } from "../theme";
 import type { MainTabsParamList } from "./types";
 
@@ -25,9 +23,6 @@ const ICONS: Record<keyof MainTabsParamList, [IconName, IconName]> = {
 };
 
 export function MainTabs() {
-  const { user } = useAuth();
-  // People who follow someone get a Partner tab in place of Timeline (still reachable from Home).
-  const isPartner = !!user?.isPartner;
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
@@ -43,7 +38,7 @@ export function MainTabs() {
       })}
     >
       <Tab.Screen name="Dashboard" component={DashboardScreen} options={{ title: "Home" }} />
-      {isPartner ? <Tab.Screen name="Partner" component={PartnerHomeScreen} options={{ title: "Partner" }} /> : <Tab.Screen name="Timeline" component={TimelineScreen} />}
+      <Tab.Screen name="Partner" component={PartnerHomeScreen} options={{ title: "Partner" }} />
       <Tab.Screen name="Cycle" component={CycleScreen} />
       <Tab.Screen name="Chat" component={ChatScreen} options={{ title: "Ask Lunee" }} />
       <Tab.Screen name="Reports" component={ReportsStack} />

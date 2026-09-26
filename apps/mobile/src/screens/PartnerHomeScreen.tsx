@@ -8,6 +8,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { api, ApiError, type Lang, type SubscriptionView, type SummaryResponse, type WomanCard, type WomanSummary } from "../lib/api";
 import { DAY_PHASE_COLOR, PARTNER_PHASE_LOOK, shortDate } from "../lib/phases";
 import { Button, ErrorText, Notice, ScreenTitle } from "../components/ui";
+import { InsightCards } from "../components/InsightCards";
 import { moodOption } from "../components/moodOptions";
 import { colors, radius, shadow } from "../theme";
 import type { AppStackParamList } from "../navigation/types";
@@ -64,7 +65,7 @@ function MoodPanel({ s, lang }: { s: WomanSummary; lang: Lang }) {
         <View style={{ flex: 1 }}>
           <Text style={styles.cardTitle}>
             {s.link.firstName} {lang === "hi" ? "का मूड" : "checked in"}: {m.label}
-            {s.mood.energy ? ` · ${lang === "hi" ? "ऊर्जा" : "energy"} ${s.mood.energy}/5` : ""}
+            {s.mood.energy ? ` · ${lang === "hi" ? "कितना" : "how much"} ${s.mood.energy}/5` : ""}
           </Text>
           <Text style={styles.small}>{hours}h ago</Text>
         </View>
@@ -315,6 +316,7 @@ function WomanView({ summary, lang, onRefresh }: { summary: WomanSummary; lang: 
       <Hero s={s} lang={lang} />
       <MoodPanel s={s} lang={lang} />
       <GuidanceCards s={s} lang={lang} />
+      <InsightCards title={lang === "hi" ? "आज की जानकारी" : "Today's insights"} cards={s.insights} />
       <Tasks s={s} linkId={linkId} lang={lang} onProgress={setProgress} />
       <Outlook s={s} lang={lang} />
       {s.comfort && s.comfort.length > 0 ? (
@@ -459,9 +461,9 @@ export function PartnerHomeScreen() {
           <View style={styles.emptyIcon}>
             <Ionicons name="heart-circle" size={30} color={colors.onBrand} />
           </View>
-          <Text style={styles.emptyTitle}>You're not following anyone yet</Text>
-          <Text style={styles.emptyBody}>When someone invites you, you'll see how she's doing today and small, kind things you can do. She decides exactly what you see.</Text>
-          <Button title="Enter an invite code" onPress={() => navigation.navigate("PartnerSettings")} />
+          <Text style={styles.emptyTitle}>Your circle starts here</Text>
+          <Text style={styles.emptyBody}>Invite someone you trust to support you, or enter a code to follow someone. Whoever shares decides exactly what is seen, and can stop any time.</Text>
+          <Button title="Invite or enter a code" onPress={() => navigation.navigate("PartnerSettings")} />
         </View>
       ) : null}
 

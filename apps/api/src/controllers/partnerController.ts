@@ -9,6 +9,7 @@ import type { AuthedRequest } from "../middleware/auth.js";
 import { phaseForDate, type CycleInsights } from "../lib/cycleInsights.js";
 import { loadCycleInsights } from "../lib/cycleService.js";
 import { buildGuidance, effectivePhase } from "../lib/partnerGuidance.js";
+import { partnerInsights } from "../lib/dailyInsights.js";
 import { ensureTrial, getSubscription, loadLink, normaliseScopes, type LinkRow, type SharedScopes } from "../lib/partnerAccess.js";
 import { hitRateLimit } from "../lib/rateLimit.js";
 import { isMinor, hashConsentToken } from "../utils/consent.js";
@@ -526,6 +527,7 @@ export async function womanSummary(req: AuthedRequest, res: Response) {
         ? { window: insights.fertileWindow, ovulationDate: insights.ovulationDate }
         : null,
     guidance,
+    insights: effectivePhase(insights) ? partnerInsights(effectivePhase(insights)!, snap.mood?.mood ?? null, lang) : [],
     calendar,
     events: planEvents,
     progress: { doneToday: progress.doneToday, streak: progress.streak },

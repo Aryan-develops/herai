@@ -1,8 +1,10 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Droplet, Plus, Activity, X } from "lucide-react";
+import { Droplet, Plus, Activity, Smile, X } from "lucide-react";
 import { api, ApiError, type CycleLog, type SymptomEntry } from "@/lib/api";
 import { AppShell } from "@/components/AppShell";
+import { MoodLogForm } from "@/components/MoodLogForm";
+import { WhenPicker } from "@/components/WhenPicker";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -30,7 +32,7 @@ const FLOWS: { value: CycleLog["flow"]; label: string; drops: number }[] = [
 
 export function LogEntry() {
   const navigate = useNavigate();
-  const [tab, setTab] = useState<"symptom" | "cycle">("symptom");
+  const [tab, setTab] = useState<"symptom" | "cycle" | "mood">("symptom");
 
   return (
     <AppShell>
@@ -44,6 +46,9 @@ export function LogEntry() {
         <TabButton id="cycle" active={tab === "cycle"} onClick={() => setTab("cycle")} icon={<Droplet className="h-4 w-4" />}>
           Period
         </TabButton>
+        <TabButton id="mood" active={tab === "mood"} onClick={() => setTab("mood")} icon={<Smile className="h-4 w-4" />}>
+          Mood
+        </TabButton>
       </div>
 
       <div
@@ -52,7 +57,9 @@ export function LogEntry() {
         aria-labelledby={`tab-${tab}`}
         className="mt-4 max-w-xl rounded-3xl border border-neutral-200 bg-white p-5 shadow-soft sm:p-7"
       >
-        {tab === "symptom" ? <SymptomForm onDone={() => navigate("/timeline")} /> : <CycleForm onDone={() => navigate("/timeline")} />}
+        {tab === "symptom" && <SymptomForm onDone={() => navigate("/timeline")} />}
+        {tab === "cycle" && <CycleForm onDone={() => navigate("/timeline")} />}
+        {tab === "mood" && <MoodLogForm onDone={() => navigate("/dashboard")} />}
       </div>
     </AppShell>
   );
@@ -95,6 +102,7 @@ function SymptomForm({ onDone }: { onDone: () => void }) {
   const [name, setName] = useState("");
   const [severity, setSeverity] = useState(3);
   const [notes, setNotes] = useState("");
+  const [when, setWhen] = useState<string | undefined>(undefined);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
@@ -115,7 +123,7 @@ function SymptomForm({ onDone }: { onDone: () => void }) {
     setError(null);
     setSubmitting(true);
     try {
-      await api.createSymptomLog({ symptoms: pending, notes: notes || undefined });
+      await api.createSymptomLog({ symptoms: pending, notes: notes || undefined, loggedAt: when });
       onDone();
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Something went wrong. Please try again.");
@@ -216,6 +224,8 @@ function SymptomForm({ onDone }: { onDone: () => void }) {
         </ul>
       )}
 
+      <WhenPicker value={when} onChange={setWhen} />
+
       <div className="space-y-1.5">
         <Label htmlFor="symptom-notes">Notes (optional)</Label>
         <Textarea id="symptom-notes" value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Anything else worth noting…" />
@@ -234,6 +244,7 @@ function SymptomForm({ onDone }: { onDone: () => void }) {
 function CycleForm({ onDone }: { onDone: () => void }) {
   const [flow, setFlow] = useState<CycleLog["flow"]>("medium");
   const [notes, setNotes] = useState("");
+  const [when, setWhen] = useState<string | undefined>(undefined);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
@@ -241,7 +252,7 @@ function CycleForm({ onDone }: { onDone: () => void }) {
     setError(null);
     setSubmitting(true);
     try {
-      await api.createCycleLog({ flow, notes: notes || undefined });
+      await api.createCycleLog({ flow, notes: notes || undefined, loggedAt: when });
       onDone();
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Something went wrong. Please try again.");
@@ -253,7 +264,7 @@ function CycleForm({ onDone }: { onDone: () => void }) {
   return (
     <div className="space-y-6">
       <fieldset>
-        <legend className="text-sm font-medium text-ink-800">How's your flow today?</legend>
+        <legend className="text-sm font-medium text-ink-800">How's your flow?</legend>
         <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-4">
           {FLOWS.map((f) => (
             <button
@@ -278,6 +289,8 @@ function CycleForm({ onDone }: { onDone: () => void }) {
           ))}
         </div>
       </fieldset>
+
+      <WhenPicker value={when} onChange={setWhen} />
 
       <div className="space-y-1.5">
         <Label htmlFor="cycle-notes">Notes (optional)</Label>

@@ -6,6 +6,9 @@ import type { AuthedRequest } from "../middleware/auth.js";
 import { phaseForDate, type DayPhase } from "../lib/cycleInsights.js";
 import { loadCycleInsights } from "../lib/cycleService.js";
 import { hitRateLimit } from "../lib/rateLimit.js";
+import { selfInsights } from "../lib/dailyInsights.js";
+import { effectivePhase } from "../lib/partnerGuidance.js";
+import type { Lang, Mood } from "../lib/partnerContent.js";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -287,4 +290,25 @@ export async function exportData(req: AuthedRequest, res: Response) {
     careRequests: requests.data ?? [],
     partnerLinks: links.data ?? [],
   });
+}
+
+/** Today's insight cards for the person tracking, based on her phase and any mood she logged in the last day. */
+export async function dailyInsights(req: AuthedRequest, res: Response) {
+  const [insights, moodRes, prefRes] = await Promise.all([
+    loadCycleInsights(req.userId!),
+    supabaseAdmin
+      .from("mood_logs")
+      .select("mood")
+      .eq("user_id", req.userId)
+      .gte("logged_at", new Date(Date.now() - DAY_MS).toISOString())
+      .order("logged_at", { ascending: false })
+      .limit(1),
+    supabaseAdmin.from("notification_prefs").select("language").eq("user_id", req.userId).maybeSingle(),
+  ]);
+  const asked = z.enum(["en", "hi"]).safeParse(req.query.lang);
+  const lang: Lang = asked.success ? asked.data : prefRes.data?.language === "hi" ? "hi" : "en";
+  const phase = effectivePhase(insights);
+  if (!phase) return res.json({ phase: null, cards: [] });
+  const mood = (moodRes.data?.[0]?.mood as Mood | undefined) ?? null;
+  res.json({ phase, cards: selfInsights(phase, mood, lang) });
 }

@@ -10,28 +10,20 @@ import { cn } from "@/lib/utils";
 const DESKTOP_NAV = [
   { to: "/dashboard", label: "Home", icon: LayoutDashboard },
   { to: "/cycle", label: "Cycle", icon: Droplet },
+  { to: "/partner", label: "Partner", icon: HeartHandshake },
   { to: "/chat", label: "Ask", icon: Bot },
   { to: "/reports", label: "Reports", icon: FileText },
   { to: "/timeline", label: "Timeline", icon: ListPlus },
   { to: "/log", label: "Log", icon: CalendarPlus },
 ];
 
-// Bottom bar is capped at five top-level destinations; Timeline stays
-// reachable from the Home screen's "View all".
+// Bottom bar is capped at five top-level destinations. Partner always has its own tab; Reports and Timeline
+// stay reachable from the Home screen's cards.
 const MOBILE_NAV = [
   { to: "/dashboard", label: "Home", icon: LayoutDashboard },
   { to: "/cycle", label: "Cycle", icon: Droplet },
   { to: "/log", label: "Log", icon: CalendarPlus },
-  { to: "/chat", label: "Ask", icon: Bot },
-  { to: "/reports", label: "Reports", icon: FileText },
-];
-
-// People who follow someone get Partner in the bar; Reports moves to Home's cards to keep it at five.
-const MOBILE_NAV_PARTNER = [
-  { to: "/dashboard", label: "Home", icon: LayoutDashboard },
   { to: "/partner", label: "Partner", icon: HeartHandshake },
-  { to: "/cycle", label: "Cycle", icon: Droplet },
-  { to: "/log", label: "Log", icon: CalendarPlus },
   { to: "/chat", label: "Ask", icon: Bot },
 ];
 
@@ -46,8 +38,8 @@ export function AppShell({ children }: { children: ReactNode }) {
     if (pending && !pathname.startsWith("/join")) navigate(`/join/${pending}`, { replace: true });
   }, [pathname, navigate]);
 
-  const desktopNav = user?.isPartner ? [DESKTOP_NAV[0], { to: "/partner", label: "Partner", icon: HeartHandshake }, ...DESKTOP_NAV.slice(1)] : DESKTOP_NAV;
-  const mobileNav = user?.isPartner ? MOBILE_NAV_PARTNER : MOBILE_NAV;
+  const desktopNav = DESKTOP_NAV;
+  const mobileNav = MOBILE_NAV;
   const initials = user?.name
     ?.split(" ")
     .map((p) => p[0])

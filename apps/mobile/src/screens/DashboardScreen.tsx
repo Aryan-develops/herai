@@ -5,11 +5,12 @@ import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { Image, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useAuth } from "../context/AuthContext";
-import { api, type CycleInsights, type TimelineEvent } from "../lib/api";
+import { api, type CycleInsights, type InsightCard, type TimelineEvent } from "../lib/api";
 import { Card } from "../components/ui";
 import { CycleHero } from "../components/CycleHero";
 import { GetHelpButton } from "../components/GetHelp";
 import { MoodCheckIn } from "../components/MoodCheckIn";
+import { InsightCards } from "../components/InsightCards";
 import { colors, radius, shadow } from "../theme";
 import type { AppStackParamList, MainTabsParamList } from "../navigation/types";
 
@@ -26,10 +27,12 @@ export function DashboardScreen({ navigation }: Props) {
   const [events, setEvents] = useState<TimelineEvent[] | null>(null);
   const [insights, setInsights] = useState<CycleInsights | null>(null);
   const [insightsLoading, setInsightsLoading] = useState(true);
+  const [dailyCards, setDailyCards] = useState<InsightCard[]>([]);
 
   useFocusEffect(
     useCallback(() => {
       api.getTimeline().then(({ events }) => setEvents(events.slice(0, 4)));
+      api.dailyInsights().then(({ cards }) => setDailyCards(cards)).catch(() => {});
       api
         .getCycleInsights()
         .then(({ insights }) => setInsights(insights))
@@ -51,8 +54,7 @@ export function DashboardScreen({ navigation }: Props) {
   }
 
   function openTimeline() {
-    if (user?.isPartner) navigation.getParent<NativeStackNavigationProp<AppStackParamList>>()?.navigate("TimelinePage");
-    else navigation.navigate("Timeline");
+    navigation.getParent<NativeStackNavigationProp<AppStackParamList>>()?.navigate("TimelinePage");
   }
 
   return (
@@ -80,6 +82,8 @@ export function DashboardScreen({ navigation }: Props) {
       <CycleHero insights={insights} loading={insightsLoading} onPress={() => navigation.navigate("Cycle")} />
 
       <MoodCheckIn />
+
+      <InsightCards title="Today's insights" cards={dailyCards} />
 
       {user?.isPartner ? (
         <Pressable onPress={() => navigation.navigate("Partner")} accessibilityRole="button" accessibilityLabel="Partner home" style={({ pressed }) => [styles.partnerCard, pressed && { opacity: 0.9 }]}>

@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { api, ApiError, type Lang, type WomanSummary } from "@/lib/api";
 import { DAY_PHASE_DOT, PARTNER_PHASE_STYLE, shortDate } from "@/lib/phases";
+import { InsightCards } from "@/components/InsightCards";
 import { moodOption } from "@/components/partner/moodIcons";
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -112,7 +113,7 @@ function MoodPanel({ s, lang }: { s: WomanSummary; lang: Lang }) {
           <div className="min-w-0">
             <p className="font-medium text-ink-900">
               {s.link.firstName} {lang === "hi" ? "का मूड" : "checked in"}: {m.label}
-              {s.mood.energy ? ` · ${lang === "hi" ? "ऊर्जा" : "energy"} ${s.mood.energy}/5` : ""}
+              {s.mood.energy ? ` · ${lang === "hi" ? "कितना" : "how much"} ${s.mood.energy}/5` : ""}
             </p>
             <p className="text-xs text-ink-700/60">{hours}h ago</p>
           </div>
@@ -412,6 +413,7 @@ export function WomanView({ summary, lang, onRefresh }: { summary: WomanSummary;
       <Hero s={s} lang={lang} />
       <MoodPanel s={s} lang={lang} />
       <GuidanceCards s={s} lang={lang} />
+      <InsightCards title={lang === "hi" ? "आज की जानकारी" : "Today's insights"} cards={s.insights} />
       <Tasks s={s} linkId={linkId} lang={lang} onProgress={setProgress} />
       <Outlook s={s} lang={lang} />
 
