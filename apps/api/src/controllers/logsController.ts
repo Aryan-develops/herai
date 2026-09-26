@@ -11,6 +11,7 @@ const symptomLogSchema = z.object({
     .min(1),
   notes: z.string().max(2000).optional(),
   loggedAt: z.string().datetime().optional(),
+  durationMinutes: z.number().int().min(1).max(14400).optional(),
 });
 
 const cycleLogSchema = z.object({
@@ -18,6 +19,7 @@ const cycleLogSchema = z.object({
   symptoms: z.array(z.string().max(80)).optional(),
   notes: z.string().max(2000).optional(),
   loggedAt: z.string().datetime().optional(),
+  durationMinutes: z.number().int().min(1).max(14400).optional(),
 });
 
 export async function createSymptomLog(req: AuthedRequest, res: Response) {
@@ -32,6 +34,7 @@ export async function createSymptomLog(req: AuthedRequest, res: Response) {
       symptoms: parsed.data.symptoms,
       notes: parsed.data.notes,
       logged_at: parsed.data.loggedAt,
+      duration_minutes: parsed.data.durationMinutes,
     })
     .select("*")
     .single();
@@ -78,6 +81,7 @@ export async function createCycleLog(req: AuthedRequest, res: Response) {
       symptoms: parsed.data.symptoms ?? [],
       notes: parsed.data.notes,
       logged_at: parsed.data.loggedAt,
+      duration_minutes: parsed.data.durationMinutes,
     })
     .select("*")
     .single();
@@ -116,7 +120,7 @@ export async function getCycleInsights(req: AuthedRequest, res: Response) {
 }
 
 export async function getTimeline(req: AuthedRequest, res: Response) {
-  const [symptomLogs, cycleLogs] = await Promise.all([
+  const [symptomLogs, cycleLogs, moodLogs] = await Promise.all([
     supabaseAdmin
       .from("symptom_logs")
       .select("*")
@@ -129,13 +133,20 @@ export async function getTimeline(req: AuthedRequest, res: Response) {
       .eq("user_id", req.userId)
       .order("logged_at", { ascending: false })
       .limit(100),
+    supabaseAdmin
+      .from("mood_logs")
+      .select("*")
+      .eq("user_id", req.userId)
+      .order("logged_at", { ascending: false })
+      .limit(100),
   ]);
 
-  if (symptomLogs.error || cycleLogs.error) throw new HttpError(500, "Failed to load timeline");
+  if (symptomLogs.error || cycleLogs.error || moodLogs.error) throw new HttpError(500, "Failed to load timeline");
 
   const events = [
     ...(symptomLogs.data ?? []).map((l) => ({ type: "symptom" as const, id: l.id, loggedAt: l.logged_at, data: l })),
     ...(cycleLogs.data ?? []).map((l) => ({ type: "cycle" as const, id: l.id, loggedAt: l.logged_at, data: l })),
+    ...(moodLogs.data ?? []).map((l) => ({ type: "mood" as const, id: l.id, loggedAt: l.logged_at, data: l })),
   ].sort((a, b) => new Date(b.loggedAt).getTime() - new Date(a.loggedAt).getTime());
 
   res.json({ events });

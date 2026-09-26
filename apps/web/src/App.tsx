@@ -1,6 +1,7 @@
 import { Suspense, lazy } from "react";
 import { Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/context/AuthContext";
+import { PrefsProvider } from "@/context/PrefsContext";
 import { ProtectedRoute, RequireConsent, RequireDateOfBirth, RequireOnboarding } from "@/components/ProtectedRoute";
 const GuardianConsent = lazy(() => import("@/pages/GuardianConsent").then((m) => ({ default: m.GuardianConsent })));
 const ConsentPending = lazy(() => import("@/pages/ConsentPending").then((m) => ({ default: m.ConsentPending })));
@@ -29,6 +30,7 @@ const Join = lazy(() => import("@/pages/Join").then((m) => ({ default: m.Join })
 function App() {
   return (
     <AuthProvider>
+      <PrefsProvider>
       <Suspense fallback={<div className="flex min-h-dvh items-center justify-center bg-neutral-50 text-neutral-500">Loading…</div>}>
       <Routes>
         <Route path="/" element={<Landing />} />
@@ -68,6 +70,7 @@ function App() {
         </Route>
       </Routes>
       </Suspense>
+      </PrefsProvider>
     </AuthProvider>
   );
 }

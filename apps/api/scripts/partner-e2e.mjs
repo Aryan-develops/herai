@@ -226,6 +226,16 @@ try {
   const cyc = await call(she.token, "GET", "/logs/cycles/insights");
   check("cycle insights include sub-phase + confidence", cyc.status === 200 && "subPhase" in cyc.json.insights && !!cyc.json.insights.confidence);
 
+  // ---- durations
+  const dMood = await call(she.token, "POST", "/logs/moods", { mood: "low", durationMinutes: 90 });
+  check("mood stores duration", dMood.status === 201 && dMood.json.mood.durationMinutes === 90);
+  const dSym = await call(she.token, "POST", "/logs/symptoms", { symptoms: [{ name: "Cramps", severity: 3 }], durationMinutes: 180 });
+  check("symptom stores duration", dSym.status === 201 && dSym.json.log?.duration_minutes === 180);
+  const dBad = await call(she.token, "POST", "/logs/symptoms", { symptoms: [{ name: "Cramps", severity: 3 }], durationMinutes: 0 });
+  check("invalid duration rejected", dBad.status === 400);
+  const tl = await call(she.token, "GET", "/logs/timeline");
+  check("timeline includes mood events", tl.status === 200 && JSON.stringify(tl.json).includes('"mood"'));
+
   // ---- cascade
   const linkBefore = await admin.from("partner_links").select("id").eq("partner_id", he.id);
   await admin.auth.admin.deleteUser(he.id);

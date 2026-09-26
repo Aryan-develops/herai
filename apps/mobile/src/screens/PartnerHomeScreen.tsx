@@ -8,6 +8,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { api, ApiError, type Lang, type SubscriptionView, type SummaryResponse, type WomanCard, type WomanSummary } from "../lib/api";
 import { DAY_PHASE_COLOR, PARTNER_PHASE_LOOK, shortDate } from "../lib/phases";
 import { Button, ErrorText, Notice, ScreenTitle } from "../components/ui";
+import { usePrefs } from "../context/PrefsContext";
 import { InsightCards } from "../components/InsightCards";
 import { moodOption } from "../components/moodOptions";
 import { colors, radius, shadow } from "../theme";
@@ -381,12 +382,9 @@ export function PartnerHomeScreen() {
   const [selected, setSelected] = useState<string | null>(null);
   const [summary, setSummary] = useState<SummaryResponse | null>(null);
   const [summaryError, setSummaryError] = useState<{ status: number; message: string } | null>(null);
-  const [lang, setLang] = useState<Lang>("en");
-  const [langReady, setLangReady] = useState(false);
-
-  useEffect(() => {
-    api.getPrefs().then(({ prefs }) => setLang(prefs.language)).catch(() => {}).finally(() => setLangReady(true));
-  }, []);
+  const { prefs, update } = usePrefs();
+  const lang: Lang = prefs?.language ?? "en";
+  const langReady = prefs !== null;
 
   useFocusEffect(
     useCallback(() => {
@@ -431,8 +429,7 @@ export function PartnerHomeScreen() {
   );
 
   function switchLang(next: Lang) {
-    setLang(next);
-    api.updatePrefs({ language: next }).catch(() => {});
+    update({ language: next });
   }
 
   return (

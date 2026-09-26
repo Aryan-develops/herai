@@ -22,6 +22,7 @@ const moodSchema = z.object({
   energy: z.number().int().min(1).max(5).optional(),
   need: z.enum(["space", "hug", "food", "talk", "rest"]).optional(),
   loggedAt: z.string().datetime().optional(),
+  durationMinutes: z.number().int().min(1).max(14400).optional(),
 });
 
 export async function createMoodLog(req: AuthedRequest, res: Response) {
@@ -35,22 +36,23 @@ export async function createMoodLog(req: AuthedRequest, res: Response) {
       energy: parsed.data.energy,
       need: parsed.data.need,
       logged_at: parsed.data.loggedAt,
+      duration_minutes: parsed.data.durationMinutes,
     })
-    .select("id, mood, energy, need, logged_at")
+    .select("id, mood, energy, need, logged_at, duration_minutes")
     .single();
   if (error || !data) throw new HttpError(500, "Failed to save mood");
   res.status(201).json({ mood: mapMood(data) });
 }
 
-function mapMood(m: { id: string; mood: string; energy: number | null; need: string | null; logged_at: string }) {
-  return { id: m.id, mood: m.mood, energy: m.energy, need: m.need, loggedAt: m.logged_at };
+function mapMood(m: { id: string; mood: string; energy: number | null; need: string | null; logged_at: string; duration_minutes?: number | null }) {
+  return { id: m.id, mood: m.mood, energy: m.energy, need: m.need, loggedAt: m.logged_at, durationMinutes: m.duration_minutes ?? null };
 }
 
 export async function listMoodLogs(req: AuthedRequest, res: Response) {
   const days = Math.min(Number(req.query.days ?? 30) || 30, 180);
   const { data, error } = await supabaseAdmin
     .from("mood_logs")
-    .select("id, mood, energy, need, logged_at")
+    .select("id, mood, energy, need, logged_at, duration_minutes")
     .eq("user_id", req.userId)
     .gte("logged_at", new Date(Date.now() - days * DAY_MS).toISOString())
     .order("logged_at", { ascending: false })

@@ -134,6 +134,7 @@ export interface SymptomEntry {
 
 export interface SymptomLog {
   _id: string;
+  duration_minutes?: number | null;
   symptoms: SymptomEntry[];
   notes?: string;
   loggedAt: string;
@@ -145,6 +146,7 @@ export interface CycleLog {
   symptoms: string[];
   notes?: string;
   loggedAt: string;
+  duration_minutes?: number | null;
 }
 
 export interface CycleInsights {
@@ -283,7 +285,8 @@ export interface SharedData {
 
 export type TimelineEvent =
   | { type: "symptom"; id: string; loggedAt: string; data: SymptomLog }
-  | { type: "cycle"; id: string; loggedAt: string; data: CycleLog };
+  | { type: "cycle"; id: string; loggedAt: string; data: CycleLog }
+  | { type: "mood"; id: string; loggedAt: string; data: { id: string; mood: Mood; energy: number | null; need: Need | null; duration_minutes: number | null } };
 
 export interface HealthReportRecord {
   _id: string;
@@ -336,6 +339,7 @@ export interface MoodLog {
   energy: number | null;
   need: Need | null;
   loggedAt: string;
+  durationMinutes: number | null;
 }
 
 export interface SharedScopes {
@@ -534,12 +538,12 @@ export const api = {
   updateProfile: (data: Partial<HealthProfile>) =>
     request<{ profile: HealthProfile }>("/profile", { method: "PUT", body: JSON.stringify(data) }),
 
-  createSymptomLog: (data: { symptoms: SymptomEntry[]; notes?: string; loggedAt?: string }) =>
+  createSymptomLog: (data: { symptoms: SymptomEntry[]; notes?: string; loggedAt?: string; durationMinutes?: number }) =>
     request<{ log: SymptomLog }>("/logs/symptoms", { method: "POST", body: JSON.stringify(data) }),
   listSymptomLogs: () => request<{ logs: SymptomLog[] }>("/logs/symptoms"),
   deleteSymptomLog: (id: string) => request<void>(`/logs/symptoms/${id}`, { method: "DELETE" }),
 
-  createCycleLog: (data: { flow: CycleLog["flow"]; symptoms?: string[]; notes?: string; loggedAt?: string }) =>
+  createCycleLog: (data: { flow: CycleLog["flow"]; symptoms?: string[]; notes?: string; loggedAt?: string; durationMinutes?: number }) =>
     request<{ log: CycleLog }>("/logs/cycles", { method: "POST", body: JSON.stringify(data) }),
   listCycleLogs: () => request<{ logs: CycleLog[] }>("/logs/cycles"),
   deleteCycleLog: (id: string) => request<void>(`/logs/cycles/${id}`, { method: "DELETE" }),
@@ -547,8 +551,9 @@ export const api = {
 
   getTimeline: () => request<{ events: TimelineEvent[] }>("/logs/timeline"),
 
-  createMoodLog: (data: { mood: Mood; energy?: number; need?: Need; loggedAt?: string }) =>
+  createMoodLog: (data: { mood: Mood; energy?: number; need?: Need; loggedAt?: string; durationMinutes?: number }) =>
     request<{ mood: MoodLog }>("/logs/moods", { method: "POST", body: JSON.stringify(data) }),
+  deleteMoodLog: (id: string) => request<void>(`/logs/moods/${id}`, { method: "DELETE" }),
   listMoodLogs: (days = 30) => request<{ moods: MoodLog[] }>(`/logs/moods?days=${days}`),
   moodInsights: () => request<MoodInsight>("/logs/moods/insights"),
   dailyInsights: (lang?: Lang) => request<{ phase: PhaseKey | null; cards: InsightCard[] }>(`/logs/insights/daily${lang ? `?lang=${lang}` : ""}`),

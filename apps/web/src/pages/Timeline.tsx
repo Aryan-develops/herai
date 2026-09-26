@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { Activity, CalendarPlus, Droplet, Trash2 } from "lucide-react";
 import { api, type TimelineEvent } from "@/lib/api";
+import { formatDuration } from "@/lib/duration";
+import { moodOption } from "@/components/partner/moodIcons";
 import { AppShell } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
 import { Alert } from "@/components/ui/alert";
@@ -36,6 +38,7 @@ export function Timeline() {
     if (!window.confirm("Delete this entry? This can't be undone.")) return;
     try {
       if (event.type === "symptom") await api.deleteSymptomLog(event.id);
+      else if (event.type === "mood") await api.deleteMoodLog(event.id);
       else await api.deleteCycleLog(event.id);
       load();
     } catch {
@@ -103,11 +106,16 @@ export function Timeline() {
                   <span
                     className={cn(
                       "flex h-10 w-10 shrink-0 items-center justify-center rounded-xl",
-                      event.type === "cycle" ? "bg-brand-100 text-brand-600" : "bg-violet-100 text-violet-600"
+                      event.type === "cycle" ? "bg-brand-100 text-brand-600" : event.type === "mood" ? moodOption(event.data.mood).tone : "bg-violet-100 text-violet-600"
                     )}
                   >
                     {event.type === "cycle" ? (
                       <Droplet className="h-5 w-5" aria-hidden="true" />
+                    ) : event.type === "mood" ? (
+                      (() => {
+                        const Icon = moodOption(event.data.mood).icon;
+                        return <Icon className="h-5 w-5" aria-hidden="true" />;
+                      })()
                     ) : (
                       <Activity className="h-5 w-5" aria-hidden="true" />
                     )}
@@ -115,7 +123,8 @@ export function Timeline() {
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center justify-between gap-2">
                       <p className="text-sm font-semibold text-ink-900">
-                        {event.type === "cycle" ? `${event.data.flow[0].toUpperCase()}${event.data.flow.slice(1)} flow` : "Symptoms"}
+                        {event.type === "cycle" ? `${event.data.flow[0].toUpperCase()}${event.data.flow.slice(1)} flow` : event.type === "mood" ? `Mood: ${moodOption(event.data.mood).label}` : "Symptoms"}
+                        {formatDuration(event.data.duration_minutes) && <span className="ml-2 text-xs font-normal text-ink-700/60">lasted {formatDuration(event.data.duration_minutes)}</span>}
                       </p>
                       <p className="tabular text-xs text-neutral-500">
                         {new Date(event.loggedAt).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" })}
@@ -142,12 +151,14 @@ export function Timeline() {
                       </div>
                     )}
 
-                    {event.data.notes && <p className="mt-2 text-sm text-ink-700/80">{event.data.notes}</p>}
+                    {event.type === "mood" && event.data.energy ? <p className="mt-1 text-sm text-ink-700/80">How much: {event.data.energy}/5</p> : null}
+
+                    {event.type !== "mood" && event.data.notes && <p className="mt-2 text-sm text-ink-700/80">{event.data.notes}</p>}
                   </div>
                   <button
                     type="button"
                     onClick={() => remove(event)}
-                    aria-label={`Delete ${event.type === "cycle" ? "period" : "symptom"} entry from ${dayLabel(event.loggedAt)}`}
+                    aria-label={`Delete ${event.type === "cycle" ? "period" : event.type === "mood" ? "mood" : "symptom"} entry from ${dayLabel(event.loggedAt)}`}
                     className="flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center rounded-xl text-neutral-400 transition-colors hover:bg-red-50 hover:text-red-600"
                   >
                     <Trash2 className="h-4 w-4" aria-hidden="true" />

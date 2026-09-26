@@ -3,7 +3,8 @@ import { Alert, Platform, Pressable, ScrollView, Share, StyleSheet, Text, TextIn
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { Ionicons } from "@expo/vector-icons";
 import { useAuth } from "../context/AuthContext";
-import { api, ApiError, type NotificationPrefs } from "../lib/api";
+import { api, ApiError } from "../lib/api";
+import { usePrefs } from "../context/PrefsContext";
 import { authenticate, biometricAvailable, biometricLabel, biometricLockEnabled, setBiometricLockEnabled } from "../lib/biometric";
 import { registerForPush } from "../lib/push";
 import { readThemePreference, writeThemePreference, type ThemePreference } from "../themePref";
@@ -49,8 +50,7 @@ export function SettingsScreen({ navigation }: Props) {
   const [pwMsg, setPwMsg] = useState<{ tone: "success" | "warning"; text: string } | null>(null);
   const [pwError, setPwError] = useState<string | null>(null);
 
-  const [prefs, setPrefs] = useState<NotificationPrefs | null>(null);
-  const [prefsError, setPrefsError] = useState<string | null>(null);
+  const { prefs, update: updatePrefs, error: prefsError } = usePrefs();
   const [theme, setTheme] = useState<ThemePreference>(readThemePreference());
   const [themeChanged, setThemeChanged] = useState(false);
 
@@ -64,7 +64,6 @@ export function SettingsScreen({ navigation }: Props) {
     biometricAvailable().then(setBioAvailable);
     biometricLabel().then(setBioLabel);
     api.getSecurity().then(setSecurity).catch(() => {});
-    api.getPrefs().then(({ prefs }) => setPrefs(prefs)).catch(() => setPrefsError("Couldn't load your preferences."));
   }, []);
 
   async function saveName() {
@@ -100,20 +99,6 @@ export function SettingsScreen({ navigation }: Props) {
       setPwError(err instanceof ApiError ? err.message : "Couldn't change your password.");
     } finally {
       setPwBusy(false);
-    }
-  }
-
-  async function updatePrefs(patch: Partial<NotificationPrefs>) {
-    if (!prefs) return;
-    const previous = prefs;
-    setPrefs({ ...prefs, ...patch });
-    setPrefsError(null);
-    try {
-      if (patch.pushEnabled) await registerForPush();
-      setPrefs((await api.updatePrefs(patch)).prefs);
-    } catch (err) {
-      setPrefs(previous);
-      setPrefsError(err instanceof ApiError ? err.message : "Couldn't save that.");
     }
   }
 

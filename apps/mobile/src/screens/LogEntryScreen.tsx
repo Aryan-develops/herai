@@ -5,6 +5,7 @@ import { api, ApiError, type CycleLog, type SymptomEntry } from "../lib/api";
 import { Button, Chip, ErrorText, Field, ScreenTitle } from "../components/ui";
 import { MoodLogForm } from "../components/MoodLogForm";
 import { WhenPicker } from "../components/WhenPicker";
+import { DurationPicker } from "../components/DurationPicker";
 import { colors, radius, shadow } from "../theme";
 import type { AppStackParamList } from "../navigation/types";
 
@@ -58,6 +59,7 @@ function SymptomForm({ onDone }: { onDone: () => void }) {
   const [severity, setSeverity] = useState(3);
   const [notes, setNotes] = useState("");
   const [when, setWhen] = useState<string | undefined>(undefined);
+  const [duration, setDuration] = useState<number | undefined>(undefined);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
@@ -77,7 +79,7 @@ function SymptomForm({ onDone }: { onDone: () => void }) {
     setError(null);
     setSubmitting(true);
     try {
-      await api.createSymptomLog({ symptoms: pending, notes: notes || undefined, loggedAt: when });
+      await api.createSymptomLog({ symptoms: pending, notes: notes || undefined, loggedAt: when, durationMinutes: duration });
       onDone();
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Something went wrong. Please try again.");
@@ -88,7 +90,9 @@ function SymptomForm({ onDone }: { onDone: () => void }) {
 
   return (
     <View style={styles.card}>
-      <Text style={styles.label}>How strong is it?</Text>
+      <WhenPicker value={when} onChange={setWhen} />
+
+      <Text style={[styles.label, { marginTop: 18 }]}>How strong is it?</Text>
       <View style={styles.severityRow}>
         {SEVERITY.map((label, i) => {
           const n = i + 1;
@@ -150,7 +154,7 @@ function SymptomForm({ onDone }: { onDone: () => void }) {
       )}
 
       <View style={{ marginBottom: 14 }}>
-        <WhenPicker value={when} onChange={setWhen} />
+        <DurationPicker value={duration} onChange={setDuration} />
       </View>
 
       <Field label="Notes (optional)" placeholder="Anything else worth noting…" value={notes} onChangeText={setNotes} multiline />
@@ -164,6 +168,7 @@ function CycleForm({ onDone }: { onDone: () => void }) {
   const [flow, setFlow] = useState<CycleLog["flow"]>("medium");
   const [notes, setNotes] = useState("");
   const [when, setWhen] = useState<string | undefined>(undefined);
+  const [duration, setDuration] = useState<number | undefined>(undefined);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
@@ -171,7 +176,7 @@ function CycleForm({ onDone }: { onDone: () => void }) {
     setError(null);
     setSubmitting(true);
     try {
-      await api.createCycleLog({ flow, notes: notes || undefined, loggedAt: when });
+      await api.createCycleLog({ flow, notes: notes || undefined, loggedAt: when, durationMinutes: duration });
       onDone();
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Something went wrong. Please try again.");
@@ -182,14 +187,16 @@ function CycleForm({ onDone }: { onDone: () => void }) {
 
   return (
     <View style={styles.card}>
-      <Text style={styles.label}>How's your flow?</Text>
+      <WhenPicker value={when} onChange={setWhen} />
+
+      <Text style={[styles.label, { marginTop: 18 }]}>How's your flow?</Text>
       <View style={styles.chips}>
         {FLOWS.map((f) => (
           <Chip key={f.value} label={f.label} selected={flow === f.value} onPress={() => setFlow(f.value)} />
         ))}
       </View>
       <View style={{ marginTop: 16 }}>
-        <WhenPicker value={when} onChange={setWhen} />
+        <DurationPicker value={duration} onChange={setDuration} label={flow === "spotting" ? "How long did the spotting last?" : `How long did the ${flow} flow last?`} />
       </View>
       <View style={{ marginTop: 16 }}>
         <Field label="Notes (optional)" placeholder="Cramps, mood, anything worth noting…" value={notes} onChangeText={setNotes} multiline />

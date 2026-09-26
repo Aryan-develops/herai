@@ -7,8 +7,11 @@ import { getSession } from "@/lib/session";
 import { hasPasskey, registerPasskey } from "@/lib/passkey";
 import { AppShell } from "@/components/AppShell";
 import { CycleHero } from "@/components/CycleHero";
+import { usePrefs } from "@/context/PrefsContext";
 import { MoodCheckIn } from "@/components/MoodCheckIn";
 import { InsightCards } from "@/components/InsightCards";
+import { formatDuration } from "@/lib/duration";
+import { moodOption } from "@/components/partner/moodIcons";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 
@@ -22,6 +25,7 @@ export function Dashboard() {
   const [insights, setInsights] = useState<CycleInsights | null>(null);
   const [insightsLoading, setInsightsLoading] = useState(true);
   const [dailyCards, setDailyCards] = useState<InsightCard[]>([]);
+  const { prefs } = usePrefs();
   const [events, setEvents] = useState<TimelineEvent[] | null>(null);
   const [reports, setReports] = useState<HealthReportRecord[]>([]);
   // "checking" until we know; the prompt only shows for "idle"/"working"/"error".
@@ -31,7 +35,6 @@ export function Dashboard() {
   useEffect(() => {
     api.getTimeline().then(({ events }) => setEvents(events.slice(0, 4)));
     api.listReports().then(({ reports }) => setReports(reports)).catch(() => {});
-    api.dailyInsights().then(({ cards }) => setDailyCards(cards)).catch(() => {});
     api
       .getCycleInsights()
       .then(({ insights }) => setInsights(insights))
@@ -42,6 +45,11 @@ export function Dashboard() {
     if (!session) return;
     hasPasskey(session).then((has) => setPasskeyStatus(has === false ? "idle" : "done"));
   }, []);
+
+  // Insight cards follow the language chosen in Settings.
+  useEffect(() => {
+    api.dailyInsights(prefs?.language).then(({ cards }) => setDailyCards(cards)).catch(() => {});
+  }, [prefs?.language]);
 
   async function onSetUpPasskey() {
     const session = getSession();
@@ -71,7 +79,7 @@ export function Dashboard() {
 
       <CycleHero insights={insights} loading={insightsLoading} />
 
-      <MoodCheckIn onSaved={() => api.dailyInsights().then(({ cards }) => setDailyCards(cards)).catch(() => {})} />
+      <MoodCheckIn onSaved={() => api.dailyInsights(prefs?.language).then(({ cards }) => setDailyCards(cards)).catch(() => {})} />
 
       <InsightCards title="Today's insights" cards={dailyCards} />
 
@@ -226,10 +234,13 @@ export function Dashboard() {
                   <p className="truncate text-sm font-medium text-ink-900">
                     {event.type === "cycle"
                       ? `${event.data.flow[0].toUpperCase()}${event.data.flow.slice(1)} flow`
-                      : event.data.symptoms.map((s) => s.name).join(", ")}
+                      : event.type === "mood"
+                        ? `Mood: ${moodOption(event.data.mood).label}`
+                        : event.data.symptoms.map((s) => s.name).join(", ")}
                   </p>
                   <p className="text-xs text-ink-700/50">
                     {new Date(event.loggedAt).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" })}
+                    {formatDuration(event.data.duration_minutes) ? ` · lasted ${formatDuration(event.data.duration_minutes)}` : ""}
                   </p>
                 </div>
               </div>

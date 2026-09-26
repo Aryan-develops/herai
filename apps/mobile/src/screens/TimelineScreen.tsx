@@ -1,4 +1,6 @@
 import { useCallback, useState } from "react";
+import { formatDuration } from "../lib/duration";
+import { moodOption } from "../components/moodOptions";
 import { useFocusEffect } from "@react-navigation/native";
 import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
 import { api, type TimelineEvent } from "../lib/api";
@@ -19,6 +21,8 @@ export function TimelineScreen() {
   async function remove(event: TimelineEvent) {
     if (event.type === "symptom") {
       await api.deleteSymptomLog(event.id);
+    } else if (event.type === "mood") {
+      await api.deleteMoodLog(event.id);
     } else {
       await api.deleteCycleLog(event.id);
     }
@@ -69,13 +73,21 @@ export function TimelineScreen() {
                 </View>
               ))}
             </View>
+          ) : event.type === "mood" ? (
+            <View style={[styles.chip, styles.chipBrand]}>
+              <Text style={styles.chipText}>
+                Mood: {moodOption(event.data.mood).label}
+                {event.data.energy ? ` · how much ${event.data.energy}/5` : ""}
+              </Text>
+            </View>
           ) : (
             <View style={[styles.chip, styles.chipBrand]}>
               <Text style={styles.chipText}>{event.data.flow} flow</Text>
             </View>
           )}
 
-          {event.data.notes ? <Text style={styles.notes}>{event.data.notes}</Text> : null}
+          {formatDuration(event.data.duration_minutes) ? <Text style={styles.notes}>Lasted {formatDuration(event.data.duration_minutes)}</Text> : null}
+          {event.type !== "mood" && event.data.notes ? <Text style={styles.notes}>{event.data.notes}</Text> : null}
         </View>
       )}
     />

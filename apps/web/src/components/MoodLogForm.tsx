@@ -3,6 +3,7 @@ import { api, ApiError, type Mood, type Need } from "@/lib/api";
 import { NEEDS } from "@/lib/phases";
 import { INTENSITY_LABELS, MOOD_OPTIONS } from "@/components/partner/moodIcons";
 import { WhenPicker } from "@/components/WhenPicker";
+import { DurationPicker } from "@/components/DurationPicker";
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
@@ -14,6 +15,7 @@ export function MoodLogForm({ onDone }: { onDone: () => void }) {
   const [amount, setAmount] = useState<number | null>(null);
   const [need, setNeed] = useState<Need | null>(null);
   const [when, setWhen] = useState<string | undefined>(undefined);
+  const [duration, setDuration] = useState<number | undefined>(undefined);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
@@ -25,7 +27,7 @@ export function MoodLogForm({ onDone }: { onDone: () => void }) {
     setError(null);
     setSubmitting(true);
     try {
-      await api.createMoodLog({ mood, energy: amount ?? undefined, need: need ?? undefined, loggedAt: when });
+      await api.createMoodLog({ mood, energy: amount ?? undefined, need: need ?? undefined, loggedAt: when, durationMinutes: duration });
       onDone();
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Something went wrong. Please try again.");
@@ -36,6 +38,8 @@ export function MoodLogForm({ onDone }: { onDone: () => void }) {
 
   return (
     <div className="space-y-6">
+      <WhenPicker value={when} onChange={setWhen} />
+
       <fieldset>
         <legend className="text-sm font-medium text-ink-800">How are you feeling?</legend>
         <div role="group" className="mt-2 grid grid-cols-4 gap-2 sm:grid-cols-7">
@@ -105,13 +109,15 @@ export function MoodLogForm({ onDone }: { onDone: () => void }) {
         </div>
       </fieldset>
 
-      <WhenPicker value={when} onChange={setWhen} />
+      <DurationPicker value={duration} onChange={setDuration} label="How long has it lasted?" />
 
       {error && <Alert tone="error">{error}</Alert>}
-      <Button className="w-full" size="lg" onClick={submit} disabled={submitting}>
-        {submitting && <Spinner />}
-        {submitting ? "Saving…" : "Save mood"}
-      </Button>
+      <div className="sticky bottom-[4.75rem] z-10 -mx-5 -mb-5 rounded-b-3xl border-t border-neutral-200 bg-white/90 px-5 py-3 backdrop-blur sm:-mx-7 sm:-mb-7 sm:px-7 xl:static xl:m-0 xl:border-0 xl:bg-transparent xl:p-0">
+        <Button className="w-full" size="lg" onClick={submit} disabled={submitting}>
+          {submitting && <Spinner />}
+          {submitting ? "Saving…" : "Save mood"}
+        </Button>
+      </div>
     </div>
   );
 }

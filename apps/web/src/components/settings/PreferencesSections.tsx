@@ -1,9 +1,10 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Bell, Download, Globe, LifeBuoy, Moon, Monitor, ShieldCheck, Sun, Trash2 } from "lucide-react";
-import { api, ApiError, type NotificationPrefs } from "@/lib/api";
+import { api, ApiError } from "@/lib/api";
 import { useAuth } from "@/context/AuthContext";
 import { useTheme, type ThemePreference } from "@/lib/theme";
+import { usePrefs } from "@/context/PrefsContext";
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,28 +15,10 @@ import { GetHelpButton } from "@/components/GetHelp";
 import { cn } from "@/lib/utils";
 
 export function NotificationsSection() {
-  const [prefs, setPrefs] = useState<NotificationPrefs | null>(null);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    api.getPrefs().then(({ prefs }) => setPrefs(prefs)).catch(() => setError("Couldn't load your preferences."));
-  }, []);
-
-  async function update(patch: Partial<NotificationPrefs>) {
-    if (!prefs) return;
-    const previous = prefs;
-    setPrefs({ ...prefs, ...patch });
-    setError(null);
-    try {
-      setPrefs((await api.updatePrefs(patch)).prefs);
-    } catch (err) {
-      setPrefs(previous);
-      setError(err instanceof ApiError ? err.message : "Couldn't save that.");
-    }
-  }
+  const { prefs, update, error } = usePrefs();
 
   return (
-    <SettingsCard id="notifications" icon={Bell} title="Notifications and language" description="For the daily support note when you follow someone.">
+    <SettingsCard id="notifications" icon={Bell} title="Notifications and language" description="For the daily support note when you follow someone, and the language of tips and insights.">
       {!prefs ? (
         <div className="skeleton h-24" aria-hidden="true" />
       ) : (
@@ -49,7 +32,7 @@ export function NotificationsSection() {
                 <Globe className="h-4 w-4 text-ink-700/60" aria-hidden="true" />
                 Language for tips
               </p>
-              <p className="text-xs text-ink-700/60">Used for partner tips and notes.</p>
+              <p className="text-xs text-ink-700/60">Used for insight cards, partner tips and notes.</p>
             </div>
             <div role="radiogroup" aria-label="Language" className="flex gap-1.5">
               {(

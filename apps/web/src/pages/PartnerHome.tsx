@@ -4,6 +4,7 @@ import { Gift, Globe, HeartHandshake, Plus, Sparkles, UserPlus } from "lucide-re
 import { api, ApiError, type Lang, type SubscriptionView, type SummaryResponse, type WomanCard } from "@/lib/api";
 import { PARTNER_PHASE_STYLE } from "@/lib/phases";
 import { AppShell } from "@/components/AppShell";
+import { usePrefs } from "@/context/PrefsContext";
 import { WomanView } from "@/components/partner/WomanView";
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -58,14 +59,11 @@ export function PartnerHome() {
   const [subscription, setSubscription] = useState<SubscriptionView | null>(null);
   const [summary, setSummary] = useState<SummaryResponse | null>(null);
   const [summaryError, setSummaryError] = useState<{ status: number; message: string } | null>(null);
-  const [lang, setLang] = useState<Lang>("en");
-  const [langReady, setLangReady] = useState(false);
+  const { prefs, update } = usePrefs();
+  const lang: Lang = prefs?.language ?? "en";
+  const langReady = prefs !== null;
 
   const selected = params.get("w") ?? women?.[0]?.linkId ?? null;
-
-  useEffect(() => {
-    api.getPrefs().then(({ prefs }) => setLang(prefs.language)).catch(() => {}).finally(() => setLangReady(true));
-  }, []);
 
   useEffect(() => {
     if (!langReady) return;
@@ -115,8 +113,7 @@ export function PartnerHome() {
   }, [loadSummary, lang]);
 
   function switchLang(next: Lang) {
-    setLang(next);
-    api.updatePrefs({ language: next }).catch(() => {});
+    update({ language: next });
   }
 
   return (

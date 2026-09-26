@@ -9,7 +9,10 @@ import { api, type CycleInsights, type InsightCard, type TimelineEvent } from ".
 import { Card } from "../components/ui";
 import { CycleHero } from "../components/CycleHero";
 import { GetHelpButton } from "../components/GetHelp";
+import { usePrefs } from "../context/PrefsContext";
 import { MoodCheckIn } from "../components/MoodCheckIn";
+import { formatDuration } from "../lib/duration";
+import { moodOption } from "../components/moodOptions";
 import { InsightCards } from "../components/InsightCards";
 import { colors, radius, shadow } from "../theme";
 import type { AppStackParamList, MainTabsParamList } from "../navigation/types";
@@ -28,17 +31,19 @@ export function DashboardScreen({ navigation }: Props) {
   const [insights, setInsights] = useState<CycleInsights | null>(null);
   const [insightsLoading, setInsightsLoading] = useState(true);
   const [dailyCards, setDailyCards] = useState<InsightCard[]>([]);
+  const { prefs } = usePrefs();
+  const language = prefs?.language;
 
   useFocusEffect(
     useCallback(() => {
       api.getTimeline().then(({ events }) => setEvents(events.slice(0, 4)));
-      api.dailyInsights().then(({ cards }) => setDailyCards(cards)).catch(() => {});
+      api.dailyInsights(language).then(({ cards }) => setDailyCards(cards)).catch(() => {});
       api
         .getCycleInsights()
         .then(({ insights }) => setInsights(insights))
         .catch(() => {})
         .finally(() => setInsightsLoading(false));
-    }, [])
+    }, [language])
   );
 
   function openCare(type?: "doctor") {
@@ -81,7 +86,7 @@ export function DashboardScreen({ navigation }: Props) {
 
       <CycleHero insights={insights} loading={insightsLoading} onPress={() => navigation.navigate("Cycle")} />
 
-      <MoodCheckIn onSaved={() => api.dailyInsights().then(({ cards }) => setDailyCards(cards)).catch(() => {})} />
+      <MoodCheckIn onSaved={() => api.dailyInsights(language).then(({ cards }) => setDailyCards(cards)).catch(() => {})} />
 
       <InsightCards title="Today's insights" cards={dailyCards} />
 
@@ -147,10 +152,13 @@ export function DashboardScreen({ navigation }: Props) {
           <Text style={styles.eventTitle}>
             {event.type === "cycle"
               ? `${event.data.flow[0].toUpperCase()}${event.data.flow.slice(1)} flow`
-              : event.data.symptoms.map((s) => s.name).join(", ")}
+              : event.type === "mood"
+                ? `Mood: ${moodOption(event.data.mood).label}`
+                : event.data.symptoms.map((s) => s.name).join(", ")}
           </Text>
           <Text style={styles.eventTime}>
             {new Date(event.loggedAt).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" })}
+            {formatDuration(event.data.duration_minutes) ? ` · lasted ${formatDuration(event.data.duration_minutes)}` : ""}
           </Text>
         </Card>
       ))}

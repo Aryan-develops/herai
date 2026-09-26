@@ -5,6 +5,7 @@ import { api, ApiError, type CycleLog, type SymptomEntry } from "@/lib/api";
 import { AppShell } from "@/components/AppShell";
 import { MoodLogForm } from "@/components/MoodLogForm";
 import { WhenPicker } from "@/components/WhenPicker";
+import { DurationPicker } from "@/components/DurationPicker";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -103,6 +104,7 @@ function SymptomForm({ onDone }: { onDone: () => void }) {
   const [severity, setSeverity] = useState(3);
   const [notes, setNotes] = useState("");
   const [when, setWhen] = useState<string | undefined>(undefined);
+  const [duration, setDuration] = useState<number | undefined>(undefined);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
@@ -123,7 +125,7 @@ function SymptomForm({ onDone }: { onDone: () => void }) {
     setError(null);
     setSubmitting(true);
     try {
-      await api.createSymptomLog({ symptoms: pending, notes: notes || undefined, loggedAt: when });
+      await api.createSymptomLog({ symptoms: pending, notes: notes || undefined, loggedAt: when, durationMinutes: duration });
       onDone();
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Something went wrong. Please try again.");
@@ -134,6 +136,7 @@ function SymptomForm({ onDone }: { onDone: () => void }) {
 
   return (
     <div className="space-y-6">
+      <WhenPicker value={when} onChange={setWhen} />
       <fieldset>
         <legend className="text-sm font-medium text-ink-800">How strong is it?</legend>
         <div className="mt-2 grid grid-cols-5 gap-1.5">
@@ -224,7 +227,7 @@ function SymptomForm({ onDone }: { onDone: () => void }) {
         </ul>
       )}
 
-      <WhenPicker value={when} onChange={setWhen} />
+      <DurationPicker value={duration} onChange={setDuration} />
 
       <div className="space-y-1.5">
         <Label htmlFor="symptom-notes">Notes (optional)</Label>
@@ -233,10 +236,12 @@ function SymptomForm({ onDone }: { onDone: () => void }) {
 
       {error && <Alert tone="error">{error}</Alert>}
 
-      <Button className="w-full" size="lg" onClick={submit} disabled={submitting}>
-        {submitting && <Spinner />}
-        {submitting ? "Saving…" : "Save symptoms"}
-      </Button>
+      <div className="sticky bottom-[4.75rem] z-10 -mx-5 -mb-5 rounded-b-3xl border-t border-neutral-200 bg-white/90 px-5 py-3 backdrop-blur sm:-mx-7 sm:-mb-7 sm:px-7 xl:static xl:m-0 xl:border-0 xl:bg-transparent xl:p-0">
+        <Button className="w-full" size="lg" onClick={submit} disabled={submitting}>
+          {submitting && <Spinner />}
+          {submitting ? "Saving…" : "Save symptoms"}
+        </Button>
+      </div>
     </div>
   );
 }
@@ -245,6 +250,7 @@ function CycleForm({ onDone }: { onDone: () => void }) {
   const [flow, setFlow] = useState<CycleLog["flow"]>("medium");
   const [notes, setNotes] = useState("");
   const [when, setWhen] = useState<string | undefined>(undefined);
+  const [duration, setDuration] = useState<number | undefined>(undefined);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
@@ -252,7 +258,7 @@ function CycleForm({ onDone }: { onDone: () => void }) {
     setError(null);
     setSubmitting(true);
     try {
-      await api.createCycleLog({ flow, notes: notes || undefined, loggedAt: when });
+      await api.createCycleLog({ flow, notes: notes || undefined, loggedAt: when, durationMinutes: duration });
       onDone();
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Something went wrong. Please try again.");
@@ -263,6 +269,7 @@ function CycleForm({ onDone }: { onDone: () => void }) {
 
   return (
     <div className="space-y-6">
+      <WhenPicker value={when} onChange={setWhen} />
       <fieldset>
         <legend className="text-sm font-medium text-ink-800">How's your flow?</legend>
         <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-4">
@@ -290,7 +297,7 @@ function CycleForm({ onDone }: { onDone: () => void }) {
         </div>
       </fieldset>
 
-      <WhenPicker value={when} onChange={setWhen} />
+      <DurationPicker value={duration} onChange={setDuration} label={flow === "spotting" ? "How long did the spotting last?" : `How long did the ${flow} flow last?`} />
 
       <div className="space-y-1.5">
         <Label htmlFor="cycle-notes">Notes (optional)</Label>
@@ -299,10 +306,12 @@ function CycleForm({ onDone }: { onDone: () => void }) {
 
       {error && <Alert tone="error">{error}</Alert>}
 
-      <Button className="w-full" size="lg" onClick={submit} disabled={submitting}>
-        {submitting && <Spinner />}
-        {submitting ? "Saving…" : "Save period entry"}
-      </Button>
+      <div className="sticky bottom-[4.75rem] z-10 -mx-5 -mb-5 rounded-b-3xl border-t border-neutral-200 bg-white/90 px-5 py-3 backdrop-blur sm:-mx-7 sm:-mb-7 sm:px-7 xl:static xl:m-0 xl:border-0 xl:bg-transparent xl:p-0">
+        <Button className="w-full" size="lg" onClick={submit} disabled={submitting}>
+          {submitting && <Spinner />}
+          {submitting ? "Saving…" : "Save period entry"}
+        </Button>
+      </div>
     </div>
   );
 }

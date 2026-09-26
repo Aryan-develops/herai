@@ -2,6 +2,7 @@ import { DarkTheme, DefaultTheme, NavigationContainer, type Theme } from "@react
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
 import { AuthProvider } from "./src/context/AuthContext";
+import { PrefsProvider } from "./src/context/PrefsContext";
 import { RootNavigator } from "./src/navigation/RootNavigator";
 import { ErrorBoundary } from "./src/components/ErrorBoundary";
 import { initErrorReporting } from "./src/lib/errorReporting";
@@ -30,10 +31,12 @@ export default function App() {
     <ErrorBoundary>
       <SafeAreaProvider>
         <AuthProvider>
+          <PrefsProvider>
           <NavigationContainer theme={navTheme}>
             <RootNavigator />
             <StatusBar style={isDark ? "light" : "dark"} />
           </NavigationContainer>
+          </PrefsProvider>
         </AuthProvider>
       </SafeAreaProvider>
     </ErrorBoundary>
