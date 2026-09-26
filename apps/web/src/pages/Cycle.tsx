@@ -1,14 +1,10 @@
 import { useCallback, useEffect, useState } from "react";
-import { Link } from "react-router-dom";
-import { CalendarPlus, Droplet, Lightbulb, Sparkles } from "lucide-react";
+import { Droplet, Lightbulb, Sparkles } from "lucide-react";
 import { api, type CycleInsights } from "@/lib/api";
 import { PHASE_STYLE, shortDate } from "@/lib/phases";
 import { AppShell } from "@/components/AppShell";
 import { CycleCalendar } from "@/components/CycleCalendar";
-import { CycleHero } from "@/components/CycleHero";
 import { Badge } from "@/components/ui/badge";
-import { EmptyState } from "@/components/ui/empty-state";
-import { Button } from "@/components/ui/button";
 import { Alert } from "@/components/ui/alert";
 import { cn } from "@/lib/utils";
 
@@ -34,18 +30,8 @@ export function Cycle() {
 
   return (
     <AppShell>
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="font-display text-2xl font-semibold text-ink-900 sm:text-3xl">Your cycle</h1>
-          <p className="mt-1.5 text-ink-700/75">Estimates from your logged periods. Not a diagnosis.</p>
-        </div>
-        <Link to="/log">
-          <Button>
-            <CalendarPlus className="h-4 w-4" aria-hidden="true" />
-            Log period
-          </Button>
-        </Link>
-      </div>
+      <h1 className="font-display text-2xl font-semibold text-ink-900 sm:text-3xl">Calendar</h1>
+      <p className="mt-1 text-sm text-ink-700/70">Tap a day to log. Predictions are estimates.</p>
 
       {error && <Alert tone="error" className="mt-5">{error}</Alert>}
 
@@ -59,20 +45,14 @@ export function Cycle() {
       {insights && <CycleCalendar insights={insights} onChanged={reload} />}
 
       {insights && !ready && (
-        <EmptyState
-          className="mt-8 max-w-xl"
-          icon={<Droplet className="h-5 w-5" />}
-          title="Let's map your cycle"
-          body="Log the days of your last period and Lunee will start predicting your phase, fertile window and next period."
-          action={<Link to="/log"><Button>Log your first period</Button></Link>}
-        />
+        <p className="mt-4 rounded-2xl bg-brand-50 p-4 text-sm text-ink-800">
+          Tap <span className="font-semibold">Edit period dates</span> above and pick the days of your last period to start predictions.
+        </p>
       )}
 
       {insights && ready && insights.phase && insights.currentCycleDay && (
         <div className="max-w-3xl">
-          <CycleHero insights={insights} loading={false} static />
-
-          <div className="mt-4 flex items-start gap-3 rounded-2xl border border-neutral-200 bg-white p-4 shadow-soft">
+          <div className="mt-4 flex items-center gap-3 rounded-2xl bg-amber-50 p-3.5">
             <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-amber-100 text-amber-700">
               <Lightbulb className="h-4 w-4" aria-hidden="true" />
             </span>
@@ -106,11 +86,11 @@ export function Cycle() {
             />
           </div>
 
-          <section className="mt-4 rounded-3xl border border-neutral-200 bg-white p-5 shadow-soft sm:p-6" aria-labelledby="hist-h">
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <h2 id="hist-h" className="font-display text-lg font-semibold text-ink-900">Cycle history</h2>
+          <details className="group mt-4 rounded-3xl border border-neutral-200 bg-white p-5 shadow-soft sm:p-6">
+            <summary className="flex cursor-pointer list-none flex-wrap items-center justify-between gap-2">
+              <h2 className="font-display text-lg font-semibold text-ink-900">Cycle history</h2>
               <Badge tone={REGULARITY[insights.regularity].tone}>{REGULARITY[insights.regularity].label}</Badge>
-            </div>
+            </summary>
 
             {insights.cycleHistory.length > 0 ? (
               <ul className="mt-4 space-y-3">
@@ -132,7 +112,7 @@ export function Cycle() {
             ) : (
               <p className="mt-3 text-sm text-ink-700/70">Log at least two periods to see how your cycle length varies.</p>
             )}
-          </section>
+          </details>
         </div>
       )}
     </AppShell>

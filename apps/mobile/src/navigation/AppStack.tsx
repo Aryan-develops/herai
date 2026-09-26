@@ -2,6 +2,8 @@ import { useEffect } from "react";
 import { useNavigation } from "@react-navigation/native";
 import { createNativeStackNavigator, type NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { MainTabs } from "./MainTabs";
+import { ReportsListScreen } from "../screens/ReportsListScreen";
+import { ReportDetailScreen } from "../screens/ReportDetailScreen";
 import { LogEntryScreen } from "../screens/LogEntryScreen";
 import { CareScreen } from "../screens/CareScreen";
 import { CareProviderScreen } from "../screens/CareProviderScreen";
@@ -49,13 +51,15 @@ export function AppStack() {
       }}
     >
       <Stack.Screen name="Tabs" component={MainTabs} options={{ headerShown: false }} />
-      <Stack.Screen name="LogEntry" component={LogEntryScreen} options={{ title: "Log entry", presentation: "modal" }} />
+      <Stack.Screen name="LogEntry" component={LogEntryScreen} options={{ title: "Log", presentation: "modal" }} />
+      <Stack.Screen name="Reports" component={ReportsListScreen as never} options={{ title: "Lab reports" }} />
+      <Stack.Screen name="ReportDetail" component={ReportDetailScreen as never} options={{ title: "Report" }} />
       <Stack.Screen name="Care" component={CareScreen} options={{ title: "Find care" }} />
       <Stack.Screen name="CareProvider" component={CareProviderScreen} options={{ title: "" }} />
       <Stack.Screen name="MyRequests" component={MyRequestsScreen} options={{ title: "My requests" }} />
       <Stack.Screen name="Provider" component={ProviderScreen} options={{ title: "Provider" }} />
       <Stack.Screen name="Settings" component={SettingsScreen} options={{ title: "Settings" }} />
-      <Stack.Screen name="TimelinePage" component={TimelineScreen} options={{ title: "Timeline" }} />
+      <Stack.Screen name="TimelinePage" component={TimelineScreen} options={{ title: "History" }} />
       <Stack.Screen name="Onboarding" component={OnboardingScreen} options={{ title: "Health profile" }} />
       <Stack.Screen name="PartnerSettings" component={PartnerSettingsScreen} options={{ title: "Partner sharing" }} />
       <Stack.Screen name="PartnerUpgrade" component={PartnerUpgradeScreen} options={{ title: "Plan and gifts" }} />

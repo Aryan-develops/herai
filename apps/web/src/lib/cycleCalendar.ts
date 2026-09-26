@@ -68,8 +68,8 @@ export const KIND_STYLE: Record<DayKind, { label: string; cell: string; dot: str
   "predicted-period": { label: "Predicted period", cell: "border-2 border-dashed border-brand-400 text-brand-700 bg-brand-50", dot: "border-2 border-dashed border-brand-400 bg-brand-50" },
   ovulation: { label: "Ovulation", cell: "bg-violet-500 text-white", dot: "bg-violet-500" },
   fertile: { label: "Fertile window", cell: "bg-violet-100 text-violet-700", dot: "bg-violet-200" },
-  follicular: { label: "Follicular", cell: "text-ink-800", dot: "bg-sage-200" },
-  luteal: { label: "Luteal", cell: "text-ink-800", dot: "bg-peach-200" },
-  pms: { label: "PMS window", cell: "bg-peach-100 text-peach-600", dot: "bg-peach-200" },
+  follicular: { label: "Follicular", cell: "text-ink-800", dot: "bg-sage-500/40" },
+  luteal: { label: "Luteal", cell: "text-ink-800", dot: "bg-peach-400" },
+  pms: { label: "PMS window", cell: "bg-peach-100 text-peach-600", dot: "bg-peach-400" },
   none: { label: "", cell: "text-ink-800", dot: "" },
 };

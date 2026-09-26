@@ -7,7 +7,9 @@ export type AuthStackParamList = {
  * route rather than a tab), so it lives on the wrapping stack, not in Tabs. */
 export type AppStackParamList = {
   Tabs: undefined;
-  LogEntry: undefined;
+  LogEntry: { tab?: "symptom" | "cycle" | "mood" } | undefined;
+  Reports: undefined;
+  ReportDetail: { id: string };
   Care: { type?: "doctor" } | undefined;
   CareProvider: { id: string };
   MyRequests: undefined;
@@ -22,11 +24,10 @@ export type AppStackParamList = {
 
 export type MainTabsParamList = {
   Dashboard: undefined;
-  Timeline: undefined;
-  Partner: undefined;
   Cycle: undefined;
+  LogTab: undefined;
+  Partner: undefined;
   Chat: undefined;
-  Reports: undefined;
 };
 
 /** Reports gets its own nested stack (list → detail with an id param),

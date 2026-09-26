@@ -2,233 +2,215 @@ import { useCallback, useState } from "react";
 import { useFocusEffect } from "@react-navigation/native";
 import type { BottomTabScreenProps } from "@react-navigation/bottom-tabs";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { Image, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
-import { useAuth } from "../context/AuthContext";
-import { api, type CycleInsights, type InsightCard, type TimelineEvent } from "../lib/api";
-import { Card } from "../components/ui";
-import { CycleHero } from "../components/CycleHero";
-import { GetHelpButton } from "../components/GetHelp";
+import { api, ApiError, type CycleInsights, type InsightCard } from "../lib/api";
+import { PHASE_STYLE, shortDate } from "../lib/phases";
+import { addDaysKey, dayKey } from "../lib/cycleCalendar";
 import { usePrefs } from "../context/PrefsContext";
-import { MoodCheckIn } from "../components/MoodCheckIn";
-import { formatDuration } from "../lib/duration";
-import { moodOption } from "../components/moodOptions";
-import { InsightCards } from "../components/InsightCards";
+import { GetHelpButton } from "../components/GetHelp";
+import { ErrorText } from "../components/ui";
 import { colors, radius, shadow } from "../theme";
 import type { AppStackParamList, MainTabsParamList } from "../navigation/types";
 
 type Props = BottomTabScreenProps<MainTabsParamList, "Dashboard">;
-type IconName = React.ComponentProps<typeof Ionicons>["name"];
 
-function greeting(): string {
-  const h = new Date().getHours();
-  return h < 12 ? "Good morning" : h < 18 ? "Good afternoon" : "Good evening";
-}
-
+/** Today: one status, one action, three dates, one check-in. Everything else lives in its own tab. */
 export function DashboardScreen({ navigation }: Props) {
-  const { user } = useAuth();
-  const [events, setEvents] = useState<TimelineEvent[] | null>(null);
-  const [insights, setInsights] = useState<CycleInsights | null>(null);
-  const [insightsLoading, setInsightsLoading] = useState(true);
-  const [dailyCards, setDailyCards] = useState<InsightCard[]>([]);
+  const stack = () => navigation.getParent<NativeStackNavigationProp<AppStackParamList>>();
   const { prefs } = usePrefs();
   const language = prefs?.language;
+  const [insights, setInsights] = useState<CycleInsights | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [card, setCard] = useState<InsightCard | null>(null);
+  const [starting, setStarting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const load = useCallback(() => {
+    api
+      .getCycleInsights()
+      .then(({ insights }) => setInsights(insights))
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, []);
 
   useFocusEffect(
     useCallback(() => {
-      api.getTimeline().then(({ events }) => setEvents(events.slice(0, 4)));
-      api.dailyInsights(language).then(({ cards }) => setDailyCards(cards)).catch(() => {});
-      api
-        .getCycleInsights()
-        .then(({ insights }) => setInsights(insights))
-        .catch(() => {})
-        .finally(() => setInsightsLoading(false));
-    }, [language])
+      load();
+      api.dailyInsights(language).then(({ cards }) => setCard(cards[0] ?? null)).catch(() => {});
+    }, [load, language]),
   );
 
-  function openCare(type?: "doctor") {
-    navigation.getParent<NativeStackNavigationProp<AppStackParamList>>()?.navigate("Care", type ? { type } : undefined);
-  }
+  const tracking = !!insights?.lastPeriodStart && !!insights.phase && !!insights.currentCycleDay;
+  const onPeriod = tracking && insights!.phase === "menstrual";
 
-  function openLogEntry() {
-    navigation.getParent<NativeStackNavigationProp<AppStackParamList>>()?.navigate("LogEntry");
-  }
-
-  function openSettings() {
-    navigation.getParent<NativeStackNavigationProp<AppStackParamList>>()?.navigate("Settings");
-  }
-
-  function openTimeline() {
-    navigation.getParent<NativeStackNavigationProp<AppStackParamList>>()?.navigate("TimelinePage");
+  async function periodStarted() {
+    const plen = Math.max(1, Math.min(insights?.periodLengthDays || 5, 10));
+    const today = dayKey(new Date());
+    setStarting(true);
+    setError(null);
+    try {
+      await api.createPeriodRange(Array.from({ length: plen }, (_, i) => ({ date: addDaysKey(today, i), flow: "medium" as const })));
+      load();
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Couldn't save. Please try again.");
+    } finally {
+      setStarting(false);
+    }
   }
 
   return (
-    <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
-      <View style={styles.topBar}>
-        <Pressable onPress={openSettings} accessibilityRole="button" accessibilityLabel="Lunee settings" style={({ pressed }) => [styles.brand, pressed && { opacity: 0.7 }]}>
-          <Image source={require("../../assets/icon.png")} style={styles.logo} accessibilityIgnoresInvertColors />
-          <Text style={styles.brandText}>Lunee</Text>
-          <Ionicons name="settings-outline" size={14} color={colors.muted} />
-        </Pressable>
-        <Pressable onPress={openSettings} accessibilityRole="button" accessibilityLabel="Settings" style={styles.avatar}>
-          <Text style={styles.avatarText}>{(user?.name ?? "?").split(" ").map((p) => p[0]).slice(0, 2).join("").toUpperCase()}</Text>
-        </Pressable>
-      </View>
-      <View style={styles.headerRow}>
-        <View style={{ flex: 1 }}>
-          <Text style={styles.greeting} accessibilityRole="header">
-            {greeting()}, {user?.name?.split(" ")[0]}
-          </Text>
-          <Text style={styles.subtitle}>How are you feeling today?</Text>
+    <ScrollView style={s.screen} contentContainerStyle={{ paddingBottom: 32 }}>
+      <LinearGradient colors={[colors.brand100, colors.violet50, colors.neutral50]} style={s.hero}>
+        <View style={s.topBar}>
+          <Pressable onPress={() => stack()?.navigate("Settings")} accessibilityRole="button" accessibilityLabel="Settings" style={s.iconBtn}>
+            <Ionicons name="settings-outline" size={24} color={colors.ink900} />
+          </Pressable>
+          <GetHelpButton onFindCare={(type) => stack()?.navigate("Care", type ? { type } : undefined)} />
         </View>
-        <GetHelpButton onFindCare={openCare} />
-      </View>
 
-      <CycleHero insights={insights} loading={insightsLoading} onPress={() => navigation.navigate("Cycle")} />
-
-      <MoodCheckIn onSaved={() => api.dailyInsights(language).then(({ cards }) => setDailyCards(cards)).catch(() => {})} />
-
-      <InsightCards title="Today's insights" cards={dailyCards} />
-
-      {user?.isPartner ? (
-        <Pressable onPress={() => navigation.navigate("Partner")} accessibilityRole="button" accessibilityLabel="Partner home" style={({ pressed }) => [styles.partnerCard, pressed && { opacity: 0.9 }]}>
-          <View style={[styles.quickIcon, { backgroundColor: colors.brand600 }]}>
-            <Ionicons name="heart-circle" size={24} color={colors.onBrand} />
+        {loading ? (
+          <ActivityIndicator color={colors.brand600} style={{ marginVertical: 48 }} />
+        ) : tracking ? (
+          <Status insights={insights!} />
+        ) : (
+          <View style={s.status}>
+            <Text style={s.phase}>Welcome to Lunee</Text>
+            <Text style={s.big}>Let's start</Text>
+            <Text style={s.small}>Log your last period to see your cycle.</Text>
           </View>
-          <View style={{ flex: 1 }}>
-            <Text style={styles.careTitle}>Partner home</Text>
-            <Text style={styles.careSub}>See how she's doing today and small ways to help</Text>
-          </View>
-          <Ionicons name="chevron-forward" size={20} color={colors.muted} />
-        </Pressable>
-      ) : null}
+        )}
 
-      <View style={styles.quickLinks}>
-        <QuickLink icon="chatbubble-ellipses" tint={colors.brand100} fg={colors.brand600} label="Ask Lunee" onPress={() => navigation.navigate("Chat")} />
-        <QuickLink icon="add-circle" tint={colors.violet50} fg={colors.violet700} label="Log entry" onPress={openLogEntry} />
-        <QuickLink icon="document-text" tint={colors.sage100} fg={colors.sage700} label="Reports" onPress={() => navigation.navigate("Reports")} />
-        <QuickLink icon="time" tint={colors.peach100} fg={colors.peach600} label="Timeline" onPress={() => openTimeline()} />
-      </View>
-
-      <Pressable
-        onPress={() => openCare()}
-        accessibilityRole="button"
-        accessibilityLabel="Find care: labs and doctors near you"
-        style={({ pressed }) => [styles.careCard, pressed && { opacity: 0.9 }]}
-      >
-        <View style={[styles.quickIcon, { backgroundColor: colors.peach100 }]}>
-          <Ionicons name="location" size={22} color={colors.peach600} />
-        </View>
-        <View style={{ flex: 1 }}>
-          <Text style={styles.careTitle}>Find care</Text>
-          <Text style={styles.careSub}>Labs and doctors near you</Text>
-        </View>
-        <Ionicons name="chevron-forward" size={20} color={colors.muted} />
-      </Pressable>
-      {user?.isProvider && (
         <Pressable
-          onPress={() => navigation.getParent<NativeStackNavigationProp<AppStackParamList>>()?.navigate("Provider")}
+          onPress={onPeriod ? () => stack()?.navigate("LogEntry", { tab: "cycle" }) : periodStarted}
+          disabled={starting || loading}
           accessibilityRole="button"
-          style={({ pressed }) => [styles.careCard, pressed && { opacity: 0.9 }]}
+          style={({ pressed }) => [s.cta, pressed && { transform: [{ scale: 0.97 }] }]}
         >
-          <View style={[styles.quickIcon, { backgroundColor: colors.brand100 }]}>
-            <Ionicons name="storefront" size={22} color={colors.brand600} />
-          </View>
-          <View style={{ flex: 1 }}>
-            <Text style={styles.careTitle}>Provider dashboard</Text>
-            <Text style={styles.careSub}>Requests and availability</Text>
-          </View>
-          <Ionicons name="chevron-forward" size={20} color={colors.muted} />
+          {starting ? <ActivityIndicator color={colors.onBrand} /> : <Ionicons name="water" size={18} color={colors.onBrand} />}
+          <Text style={s.ctaText}>{onPeriod ? "Log today's flow" : starting ? "Saving…" : tracking ? "Period started" : "My period started today"}</Text>
         </Pressable>
-      )}
+        {!tracking && !loading && (
+          <Pressable onPress={() => navigation.navigate("Cycle")} accessibilityRole="link" style={{ marginTop: 12 }}>
+            <Text style={s.link}>It started earlier? Pick dates on the calendar</Text>
+          </Pressable>
+        )}
+        <ErrorText>{error}</ErrorText>
+      </LinearGradient>
 
-      <Text style={styles.sectionTitle} accessibilityRole="header">
-        Recent activity
-      </Text>
-      {events === null && <View style={styles.skeleton} />}
-      {events?.length === 0 && <Text style={styles.muted}>Nothing logged yet. Your first entry starts your timeline.</Text>}
-      {events?.map((event) => (
-        <Card key={event.id}>
-          <Text style={styles.eventTitle}>
-            {event.type === "cycle"
-              ? `${event.data.flow[0].toUpperCase()}${event.data.flow.slice(1)} flow`
-              : event.type === "mood"
-                ? `Mood: ${moodOption(event.data.mood).label}`
-                : event.data.symptoms.map((s) => s.name).join(", ")}
-          </Text>
-          <Text style={styles.eventTime}>
-            {new Date(event.loggedAt).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" })}
-            {formatDuration(event.data.duration_minutes) ? ` · lasted ${formatDuration(event.data.duration_minutes)}` : ""}
-          </Text>
-        </Card>
-      ))}
+      <View style={s.body}>
+        {tracking && <DateTiles insights={insights!} onPress={() => navigation.navigate("Cycle")} />}
+
+        <Pressable onPress={() => stack()?.navigate("LogEntry", { tab: "mood" })} accessibilityRole="button" style={({ pressed }) => [s.feel, pressed && { opacity: 0.9 }]}>
+          <View style={{ flex: 1 }}>
+            <Text style={s.feelTitle}>How are you feeling today?</Text>
+            <Text style={s.feelSub}>Log mood or symptoms in a few taps.</Text>
+          </View>
+          <View style={s.feelIcon}>
+            <Ionicons name="happy-outline" size={26} color={colors.amber900} />
+          </View>
+        </Pressable>
+
+        {card && (
+          <View style={s.tip}>
+            <Text style={s.tipLabel}>TODAY'S TIP</Text>
+            <Text style={s.tipTitle}>{card.title}</Text>
+            <Text style={s.tipBody}>{card.body}</Text>
+          </View>
+        )}
+      </View>
     </ScrollView>
   );
 }
 
-function QuickLink({
-  icon,
-  tint,
-  fg,
-  label,
-  onPress,
-}: {
-  icon: IconName;
-  tint: string;
-  fg: string;
-  label: string;
-  onPress: () => void;
-}) {
+function Status({ insights }: { insights: CycleInsights }) {
+  const phase = insights.phase!;
+  const until = insights.daysUntilNextPeriod;
+  const label = insights.subPhase === "pms" ? "PMS window" : PHASE_STYLE[phase].label;
+  let big: string;
+  let small: string | null = null;
+  if (phase === "menstrual") big = `Day ${insights.currentCycleDay}`;
+  else if (until !== null && until > 0) {
+    big = `${until} ${until === 1 ? "day" : "days"}`;
+    small = "until your period";
+  } else if (until === 0) big = "Due today";
+  else big = "May be late";
+
   return (
-    <Pressable
-      onPress={onPress}
-      accessibilityRole="button"
-      accessibilityLabel={label}
-      style={({ pressed }) => [styles.quickLink, pressed && { transform: [{ scale: 0.97 }] }]}
-    >
-      <View style={[styles.quickIcon, { backgroundColor: tint }]}>
-        <Ionicons name={icon} size={22} color={fg} />
-      </View>
-      <Text style={styles.quickLinkLabel}>{label}</Text>
-    </Pressable>
+    <View style={s.status}>
+      <Text style={s.phase}>{label}</Text>
+      <Text style={s.big}>{big}</Text>
+      {small && <Text style={s.small}>{small}</Text>}
+      {insights.predictedNextPeriodStart && (
+        <Text style={s.next}>
+          {shortDate(insights.predictedNextPeriodStart)} · Next period{insights.confidence === "low" ? " (estimate)" : ""}
+        </Text>
+      )}
+    </View>
   );
 }
 
-const styles = StyleSheet.create({
+function DateTiles({ insights, onPress }: { insights: CycleInsights; onPress: () => void }) {
+  const today = dayKey(new Date());
+  const fw = insights.fertileWindow;
+  const fertileNow = !!fw && fw.start <= today && today <= fw.end;
+  const pct = Math.min(1, (insights.currentCycleDay ?? 0) / insights.cycleLengthDays);
+  return (
+    <View style={s.tiles}>
+      <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel={`Cycle day ${insights.currentCycleDay}`} style={[s.tile, { backgroundColor: colors.violet50 }]}>
+        <Text style={[s.tileLabel, { color: colors.violet700 }]}>CYCLE DAY</Text>
+        <Text style={s.tileBig}>{insights.currentCycleDay}</Text>
+        <View style={s.bar}>
+          <View style={[s.barFill, { width: `${pct * 100}%` }]} />
+        </View>
+      </Pressable>
+      <Pressable onPress={onPress} accessibilityRole="button" style={[s.tile, { backgroundColor: colors.amber50 }]}>
+        <Ionicons name="leaf-outline" size={18} color={colors.amber900} />
+        <View>
+          <Text style={s.tileValue}>{fertileNow ? "Now" : fw ? shortDate(fw.start) : "—"}</Text>
+          <Text style={[s.tileSub, { color: colors.amber900 }]}>{fertileNow ? "Fertile window" : "Next fertile"}</Text>
+        </View>
+      </Pressable>
+      <Pressable onPress={onPress} accessibilityRole="button" style={[s.tile, { backgroundColor: colors.peach100 }]}>
+        <Ionicons name="sparkles-outline" size={18} color={colors.peach600} />
+        <View>
+          <Text style={s.tileValue}>{insights.ovulationDate ? shortDate(insights.ovulationDate) : "—"}</Text>
+          <Text style={[s.tileSub, { color: colors.peach600 }]}>Ovulation</Text>
+        </View>
+      </Pressable>
+    </View>
+  );
+}
+
+const s = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.neutral50 },
-  content: { padding: 20, paddingBottom: 40, gap: 16 },
-  topBar: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
-  brand: { flexDirection: "row", alignItems: "center", gap: 8, minHeight: 44 },
-  logo: { width: 30, height: 30, borderRadius: 9 },
-  brandText: { fontSize: 18, fontWeight: "700", color: colors.ink900 },
-  avatar: { width: 40, height: 40, borderRadius: 20, backgroundColor: colors.brand100, alignItems: "center", justifyContent: "center" },
-  avatarText: { fontSize: 13, fontWeight: "700", color: colors.brand700 },
-  partnerCard: { flexDirection: "row", alignItems: "center", gap: 12, backgroundColor: colors.brand50, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.brand100, padding: 14 },
-  headerRow: { flexDirection: "row", alignItems: "flex-start", gap: 10 },
-  careCard: { flexDirection: "row", alignItems: "center", gap: 12, backgroundColor: colors.white, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.neutral200, padding: 14, ...shadow.soft },
-  careTitle: { fontSize: 15, fontWeight: "700", color: colors.ink900 },
-  careSub: { fontSize: 12, color: colors.muted, marginTop: 2 },
-  greeting: { fontSize: 28, fontWeight: "700", color: colors.ink900 },
-  subtitle: { fontSize: 15, color: colors.muted, marginTop: 2 },
-  quickLinks: { flexDirection: "row", gap: 10 },
-  quickLink: {
-    flex: 1,
-    minHeight: 92,
-    backgroundColor: colors.white,
-    borderRadius: radius.lg,
-    borderWidth: 1,
-    borderColor: colors.neutral200,
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 8,
-    paddingVertical: 12,
-    ...shadow.soft,
-  },
-  quickIcon: { width: 44, height: 44, borderRadius: 14, alignItems: "center", justifyContent: "center" },
-  quickLinkLabel: { fontSize: 12, fontWeight: "600", color: colors.ink900 },
-  sectionTitle: { fontSize: 18, fontWeight: "700", color: colors.ink900, marginTop: 4 },
-  muted: { color: colors.muted, fontSize: 13 },
-  skeleton: { height: 64, borderRadius: radius.lg, backgroundColor: colors.neutral200 },
-  eventTitle: { fontSize: 15, fontWeight: "600", color: colors.ink900 },
-  eventTime: { fontSize: 12, color: colors.muted, marginTop: 2 },
+  hero: { paddingTop: 52, paddingHorizontal: 20, paddingBottom: 28, alignItems: "center", borderBottomLeftRadius: 36, borderBottomRightRadius: 36 },
+  topBar: { position: "absolute", top: 44, left: 12, right: 12, flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
+  iconBtn: { width: 44, height: 44, alignItems: "center", justifyContent: "center" },
+  status: { alignItems: "center", marginTop: 48 },
+  phase: { fontSize: 18, fontWeight: "600", color: colors.ink700 },
+  big: { fontSize: 48, fontWeight: "800", color: colors.ink900, marginTop: 2 },
+  small: { fontSize: 15, color: colors.ink700 },
+  next: { fontSize: 14, fontWeight: "600", color: colors.ink700, marginTop: 8 },
+  cta: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, minHeight: 54, minWidth: 230, paddingHorizontal: 28, borderRadius: 999, backgroundColor: colors.brand600, marginTop: 24, ...shadow.soft },
+  ctaText: { fontSize: 17, fontWeight: "700", color: colors.onBrand },
+  link: { fontSize: 14, fontWeight: "600", color: colors.brand700 },
+  body: { paddingHorizontal: 16, gap: 12, marginTop: 4 },
+  tiles: { flexDirection: "row", gap: 10 },
+  tile: { flex: 1, minHeight: 116, borderRadius: radius.lg, padding: 12, justifyContent: "space-between" },
+  tileLabel: { fontSize: 10, fontWeight: "800", letterSpacing: 0.5 },
+  tileBig: { fontSize: 32, fontWeight: "800", color: colors.ink900 },
+  bar: { height: 6, borderRadius: 3, backgroundColor: colors.white, overflow: "hidden" },
+  barFill: { height: 6, borderRadius: 3, backgroundColor: colors.brand500 },
+  tileValue: { fontSize: 18, fontWeight: "800", color: colors.ink900 },
+  tileSub: { fontSize: 12, fontWeight: "600" },
+  feel: { flexDirection: "row", alignItems: "center", gap: 12, backgroundColor: colors.white, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.neutral200, padding: 18, ...shadow.soft },
+  feelTitle: { fontSize: 17, fontWeight: "700", color: colors.ink900 },
+  feelSub: { fontSize: 13, color: colors.muted, marginTop: 2 },
+  feelIcon: { width: 48, height: 48, borderRadius: 16, backgroundColor: colors.amber50, alignItems: "center", justifyContent: "center" },
+  tip: { backgroundColor: colors.violet50, borderRadius: radius.lg, padding: 16 },
+  tipLabel: { fontSize: 11, fontWeight: "800", color: colors.violet700, letterSpacing: 0.5 },
+  tipTitle: { fontSize: 16, fontWeight: "700", color: colors.ink900, marginTop: 6 },
+  tipBody: { fontSize: 14, color: colors.ink700, marginTop: 4, lineHeight: 20 },
 });

@@ -135,7 +135,34 @@ export function SettingsScreen({ navigation }: Props) {
 
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-      <ScreenTitle title="Settings" subtitle="Your account, sign-in, sharing and privacy in one place." />
+      <ScreenTitle title="Settings" />
+
+      <View style={styles.moreCard}>
+        {(
+          [
+            ["TimelinePage", "time-outline", "History", "Everything you've logged"],
+            ["Reports", "document-text-outline", "Lab reports", "Upload and understand reports"],
+            ["Care", "location-outline", "Find care", "Labs and doctors near you"],
+            ["MyRequests", "calendar-outline", "My requests", "Tests and appointments you asked for"],
+          ] as const
+        ).map(([route, icon, label, hint], i) => (
+          <Pressable
+            key={route}
+            onPress={() => navigation.navigate(route)}
+            accessibilityRole="button"
+            style={({ pressed }) => [styles.moreRow, i > 0 && styles.moreDivider, pressed && { backgroundColor: colors.neutral50 }]}
+          >
+            <View style={styles.moreIcon}>
+              <Ionicons name={icon} size={18} color={colors.brand600} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.moreLabel}>{label}</Text>
+              <Text style={styles.moreHint}>{hint}</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={16} color={colors.muted} />
+          </Pressable>
+        ))}
+      </View>
 
       <SettingsCard icon="person-outline" title="Profile" description="How you appear in Lunee.">
         <Field label="Name" value={name} onChangeText={setName} maxLength={120} autoComplete="name" />
@@ -241,6 +268,12 @@ export function SettingsScreen({ navigation }: Props) {
 }
 
 const styles = StyleSheet.create({
+  moreCard: { backgroundColor: colors.white, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.neutral200, overflow: "hidden" },
+  moreRow: { flexDirection: "row", alignItems: "center", gap: 12, minHeight: 60, paddingHorizontal: 14 },
+  moreDivider: { borderTopWidth: 1, borderTopColor: colors.neutral200 },
+  moreIcon: { width: 36, height: 36, borderRadius: 12, backgroundColor: colors.brand50, alignItems: "center", justifyContent: "center" },
+  moreLabel: { fontSize: 15, fontWeight: "700", color: colors.ink900 },
+  moreHint: { fontSize: 12, color: colors.muted, marginTop: 1 },
   screen: { flex: 1, backgroundColor: colors.neutral50 },
   content: { padding: 20, gap: 16 },
   small: { fontSize: 12, color: colors.muted, lineHeight: 17 },

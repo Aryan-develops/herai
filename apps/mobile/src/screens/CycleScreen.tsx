@@ -5,7 +5,6 @@ import { api, type CycleInsights } from "../lib/api";
 import { PHASE_STYLE, shortDate } from "../lib/phases";
 import { Card, Notice, ScreenTitle } from "../components/ui";
 import { CycleCalendar } from "../components/CycleCalendar";
-import { CycleHero } from "../components/CycleHero";
 import { colors, radius } from "../theme";
 
 const REGULARITY: Record<CycleInsights["regularity"], { label: string; bg: string; fg: string }> = {
@@ -32,11 +31,9 @@ export function CycleScreen() {
 
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
-      <ScreenTitle title="Your cycle" subtitle="Estimates from your logged periods. Not a diagnosis." />
+      <ScreenTitle title="Calendar" subtitle="Tap a day to log. Predictions are estimates." />
 
       {insights && <CycleCalendar insights={insights} onChanged={load} />}
-
-      <CycleHero insights={insights} loading={loading} />
 
       {ready && insights.phase && (
         <>

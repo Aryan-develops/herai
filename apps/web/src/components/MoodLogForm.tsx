@@ -88,6 +88,11 @@ export function MoodLogForm({ onDone }: { onDone: () => void }) {
         <p className="mt-1.5 text-xs text-neutral-500 sm:hidden">{amount ? INTENSITY_LABELS[amount - 1] : "From a little to very much"}</p>
       </fieldset>
 
+      <details className="group rounded-2xl border border-neutral-200 bg-white">
+        <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between px-4 text-sm font-medium text-ink-800">
+          Add details <span className="text-xs font-normal text-neutral-500">optional</span>
+        </summary>
+        <div className="space-y-5 border-t border-neutral-100 p-4">
       <fieldset>
         <legend className="text-sm font-medium text-ink-800">Let your partner know (optional)</legend>
         <p className="text-xs text-ink-700/60">Only people you share your mood with can see this.</p>
@@ -110,6 +115,8 @@ export function MoodLogForm({ onDone }: { onDone: () => void }) {
       </fieldset>
 
       <DurationPicker value={duration} onChange={setDuration} label="How long has it lasted?" />
+        </div>
+      </details>
 
       {error && <Alert tone="error">{error}</Alert>}
       <div className="sticky bottom-[4.75rem] z-10 -mx-5 -mb-5 rounded-b-3xl border-t border-neutral-200 bg-white/90 px-5 py-3 backdrop-blur sm:-mx-7 sm:-mb-7 sm:px-7 xl:static xl:m-0 xl:border-0 xl:bg-transparent xl:p-0">

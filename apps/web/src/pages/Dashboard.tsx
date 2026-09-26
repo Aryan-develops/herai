@@ -1,284 +1,200 @@
-import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
-import { Activity, Bot, CalendarPlus, Droplet, Fingerprint, FileText, HeartHandshake, ListPlus, MapPin, ShieldAlert } from "lucide-react";
-import { useAuth } from "@/context/AuthContext";
-import { api, ApiError, type CycleInsights, type InsightCard, type HealthReportRecord, type TimelineEvent } from "@/lib/api";
-import { getSession } from "@/lib/session";
-import { hasPasskey, registerPasskey } from "@/lib/passkey";
-import { AppShell } from "@/components/AppShell";
-import { CycleHero } from "@/components/CycleHero";
+import { useCallback, useEffect, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { ChevronRight, Droplet, ShieldAlert, Smile, Sparkles, Sprout } from "lucide-react";
+import { api, ApiError, type CycleInsights, type HealthReportRecord, type InsightCard } from "@/lib/api";
+import { PHASE_STYLE, shortDate } from "@/lib/phases";
+import { dayKey, addDaysKey } from "@/lib/cycleCalendar";
 import { usePrefs } from "@/context/PrefsContext";
-import { MoodCheckIn } from "@/components/MoodCheckIn";
-import { InsightCards } from "@/components/InsightCards";
-import { formatDuration } from "@/lib/duration";
-import { moodOption } from "@/components/partner/moodIcons";
+import { AppShell } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { ProgressRing } from "@/components/ui/progress-ring";
+import { Spinner } from "@/components/ui/spinner";
+import { useToast } from "@/components/ui/toast";
+import { cn } from "@/lib/utils";
 
-function greeting(): string {
-  const h = new Date().getHours();
-  return h < 12 ? "Good morning" : h < 18 ? "Good afternoon" : "Good evening";
-}
-
+/** Today: one status, one action, three dates, one check-in. Everything else lives in its own tab. */
 export function Dashboard() {
-  const { user } = useAuth();
-  const [insights, setInsights] = useState<CycleInsights | null>(null);
-  const [insightsLoading, setInsightsLoading] = useState(true);
-  const [dailyCards, setDailyCards] = useState<InsightCard[]>([]);
+  const navigate = useNavigate();
+  const toast = useToast();
   const { prefs } = usePrefs();
-  const [events, setEvents] = useState<TimelineEvent[] | null>(null);
-  const [reports, setReports] = useState<HealthReportRecord[]>([]);
-  // "checking" until we know; the prompt only shows for "idle"/"working"/"error".
-  const [passkeyStatus, setPasskeyStatus] = useState<"checking" | "idle" | "working" | "done" | "error">("checking");
-  const [passkeyError, setPasskeyError] = useState<string | null>(null);
+  const [insights, setInsights] = useState<CycleInsights | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [card, setCard] = useState<InsightCard | null>(null);
+  const [urgent, setUrgent] = useState<HealthReportRecord | null>(null);
+  const [starting, setStarting] = useState(false);
 
-  useEffect(() => {
-    api.getTimeline().then(({ events }) => setEvents(events.slice(0, 4)));
-    api.listReports().then(({ reports }) => setReports(reports)).catch(() => {});
+  const load = useCallback(() => {
     api
       .getCycleInsights()
       .then(({ insights }) => setInsights(insights))
       .catch(() => {})
-      .finally(() => setInsightsLoading(false));
-
-    const session = getSession();
-    if (!session) return;
-    hasPasskey(session).then((has) => setPasskeyStatus(has === false ? "idle" : "done"));
+      .finally(() => setLoading(false));
   }, []);
 
-  // Insight cards follow the language chosen in Settings.
   useEffect(() => {
-    api.dailyInsights(prefs?.language).then(({ cards }) => setDailyCards(cards)).catch(() => {});
+    load();
+    api.listReports().then(({ reports }) => setUrgent(reports.find((r) => r.emergency) ?? null)).catch(() => {});
+  }, [load]);
+
+  useEffect(() => {
+    api.dailyInsights(prefs?.language).then(({ cards }) => setCard(cards[0] ?? null)).catch(() => {});
   }, [prefs?.language]);
 
-  async function onSetUpPasskey() {
-    const session = getSession();
-    if (!session) return;
-    setPasskeyStatus("working");
-    setPasskeyError(null);
+  const tracking = !!insights?.lastPeriodStart && !!insights.phase && !!insights.currentCycleDay;
+  const onPeriod = tracking && insights!.phase === "menstrual";
+
+  async function periodStarted() {
+    const plen = Math.max(1, Math.min(insights?.periodLengthDays || 5, 10));
+    const today = dayKey(new Date());
+    setStarting(true);
     try {
-      await registerPasskey(session);
-      setPasskeyStatus("done");
+      await api.createPeriodRange(Array.from({ length: plen }, (_, i) => ({ date: addDaysKey(today, i), flow: "medium" as const })));
+      toast(`Period logged for ${plen} days. Adjust it on the calendar.`);
+      load();
     } catch (err) {
-      setPasskeyError(err instanceof ApiError || err instanceof Error ? err.message : "Something went wrong");
-      setPasskeyStatus("error");
+      toast(err instanceof ApiError ? err.message : "Couldn't save. Please try again.", "error");
+    } finally {
+      setStarting(false);
     }
   }
 
-  const urgentReport = reports.find((r) => r.emergency);
-  const carePlanItems = reports
-    .filter((r) => !r.emergency && (r.questionsToAsk?.length || r.carePlan?.discuss_with_clinician?.length))
-    .slice(0, 2);
-
   return (
     <AppShell>
-      <h1 className="font-display text-3xl font-medium text-ink-900 sm:text-4xl">
-        {greeting()}, {user?.name?.split(" ")[0]}
-      </h1>
-      <p className="mt-1.5 max-w-xl text-ink-700/70">How are you feeling today? Log it and Lunee keeps your timeline.</p>
-
-      <CycleHero insights={insights} loading={insightsLoading} />
-
-      <MoodCheckIn onSaved={() => api.dailyInsights(prefs?.language).then(({ cards }) => setDailyCards(cards)).catch(() => {})} />
-
-      <InsightCards title="Today's insights" cards={dailyCards} />
-
-      {user?.isPartner && (
-        <Link
-          to="/partner"
-          className="mt-6 flex items-center gap-4 rounded-2xl border border-brand-200 bg-brand-50/60 p-4 transition-colors hover:bg-brand-50"
-        >
-          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-brand-500 to-violet-500 text-white">
-            <HeartHandshake className="h-5 w-5" aria-hidden="true" />
-          </span>
+      <section className="-mx-4 -mt-6 rounded-b-[2.5rem] bg-gradient-to-b from-brand-100 via-violet-50 to-transparent px-4 pt-10 pb-6 text-center sm:-mx-6 sm:-mt-10 sm:px-6 sm:pt-14">
+        {loading ? (
+          <div className="mx-auto h-36 max-w-xs skeleton rounded-3xl" aria-hidden="true" />
+        ) : tracking ? (
+          <Status insights={insights!} />
+        ) : (
           <div>
-            <p className="font-display font-semibold text-ink-900">Partner home</p>
-            <p className="text-sm text-ink-700/70">See how she's doing today and small ways to help.</p>
-          </div>
-        </Link>
-      )}
-
-      {passkeyStatus !== "done" && passkeyStatus !== "checking" && (
-        <div className="mt-6 flex items-center justify-between gap-3 rounded-2xl border border-neutral-200 bg-white p-4">
-          <div className="flex items-center gap-3">
-            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-violet-100 text-violet-600">
-              <Fingerprint className="h-4.5 w-4.5" />
-            </span>
-            <div>
-              <p className="text-sm font-medium text-ink-900">Set up a passkey</p>
-              <p className="text-xs text-ink-700/60">
-                {passkeyStatus === "error" ? passkeyError : "Sign in with Face ID or your fingerprint. No password needed."}
-              </p>
-            </div>
-          </div>
-          <Button variant="outline" size="sm" onClick={onSetUpPasskey} disabled={passkeyStatus === "working"} aria-label="Set up a passkey with Face ID or fingerprint">
-            {passkeyStatus === "working" ? "Setting up…" : "Set up"}
-          </Button>
-        </div>
-      )}
-
-      {urgentReport && (
-        <Link to={`/reports/${urgentReport._id}`} className="mt-6 flex items-center gap-3 rounded-2xl border border-red-300 bg-red-50 p-4 hover:bg-red-100">
-          <ShieldAlert className="h-5 w-5 shrink-0 text-red-600" />
-          <div className="min-w-0 flex-1">
-            <p className="text-sm font-semibold text-red-800">Urgent: {urgentReport.fileName}</p>
-            <p className="text-xs text-red-700">The Safety Agent flagged this report — tap to review.</p>
-          </div>
-        </Link>
-      )}
-
-      <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Link to="/chat">
-          <Card className="group h-full transition-shadow hover:shadow-md">
-            <CardContent className="flex items-center gap-4 p-5">
-              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-brand-500 to-violet-500 text-white">
-                <Bot className="h-5 w-5" />
-              </span>
-              <div>
-                <h3 className="font-display font-semibold text-ink-900">Ask Lunee</h3>
-                <p className="text-sm text-ink-700/60">Ask about symptoms and your cycle</p>
-              </div>
-            </CardContent>
-          </Card>
-        </Link>
-        <Link to="/reports">
-          <Card className="group h-full transition-shadow hover:shadow-md">
-            <CardContent className="flex items-center gap-4 p-5">
-              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-sage-100 text-sage-700">
-                <FileText className="h-5 w-5" />
-              </span>
-              <div>
-                <h3 className="font-display font-semibold text-ink-900">Reports</h3>
-                <p className="text-sm text-ink-700/60">Upload & analyze lab reports</p>
-              </div>
-            </CardContent>
-          </Card>
-        </Link>
-        <Link to="/log">
-          <Card className="group h-full transition-shadow hover:shadow-md">
-            <CardContent className="flex items-center gap-4 p-5">
-              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-violet-100 text-violet-600">
-                <CalendarPlus className="h-5 w-5" />
-              </span>
-              <div>
-                <h3 className="font-display font-semibold text-ink-900">Log an entry</h3>
-                <p className="text-sm text-ink-700/60">Symptom or cycle logging</p>
-              </div>
-            </CardContent>
-          </Card>
-        </Link>
-        <Link to="/care">
-          <Card className="group h-full transition-shadow hover:shadow-md">
-            <CardContent className="flex items-center gap-4 p-5">
-              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-peach-100 text-peach-600">
-                <MapPin className="h-5 w-5" aria-hidden="true" />
-              </span>
-              <div>
-                <h3 className="font-display font-semibold text-ink-900">Find care</h3>
-                <p className="text-sm text-ink-700/60">Labs and doctors near you</p>
-              </div>
-            </CardContent>
-          </Card>
-        </Link>
-        <Link to="/timeline">
-          <Card className="group h-full transition-shadow hover:shadow-md">
-            <CardContent className="flex items-center gap-4 p-5">
-              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-brand-100 text-brand-600">
-                <ListPlus className="h-5 w-5" />
-              </span>
-              <div>
-                <h3 className="font-display font-semibold text-ink-900">View timeline</h3>
-                <p className="text-sm text-ink-700/60">Your full logged history</p>
-              </div>
-            </CardContent>
-          </Card>
-        </Link>
-      </div>
-
-      <div className="mt-10">
-        <div className="flex items-center justify-between">
-          <h2 className="font-display text-lg font-semibold text-ink-900">Recent activity</h2>
-          <Link to="/timeline" className="text-sm font-medium text-brand-600 hover:underline">
-            View all
-          </Link>
-        </div>
-
-        {events === null && <p className="mt-4 text-sm text-ink-700/60">Loading…</p>}
-
-        {events?.length === 0 && (
-          <div className="mt-4 rounded-2xl border border-dashed border-neutral-300 bg-white/60 p-8 text-center">
-            <p className="text-ink-700/70">Nothing logged yet — start your timeline.</p>
-            <Link to="/log" className="mt-3 inline-block">
-              <Button variant="outline" size="sm">
-                Log your first entry
-              </Button>
-            </Link>
+            <p className="font-display text-lg text-ink-700">Welcome to Lunee</p>
+            <p className="mt-1 font-display text-4xl font-semibold text-ink-900 sm:text-5xl">Let's start</p>
+            <p className="mt-2 text-ink-700/80">Log your last period to see your cycle.</p>
           </div>
         )}
 
-        {events && events.length > 0 && (
-          <div className="mt-4 space-y-2">
-            {events.map((event) => (
-              <div
-                key={event.id}
-                className="flex items-center gap-3 rounded-xl border border-neutral-200 bg-white px-4 py-3"
-              >
-                <span
-                  className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${
-                    event.type === "cycle" ? "bg-brand-100 text-brand-600" : "bg-violet-100 text-violet-600"
-                  }`}
-                >
-                  {event.type === "cycle" ? <Droplet className="h-4 w-4" /> : <Activity className="h-4 w-4" />}
-                </span>
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium text-ink-900">
-                    {event.type === "cycle"
-                      ? `${event.data.flow[0].toUpperCase()}${event.data.flow.slice(1)} flow`
-                      : event.type === "mood"
-                        ? `Mood: ${moodOption(event.data.mood).label}`
-                        : event.data.symptoms.map((s) => s.name).join(", ")}
-                  </p>
-                  <p className="text-xs text-ink-700/50">
-                    {new Date(event.loggedAt).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" })}
-                    {formatDuration(event.data.duration_minutes) ? ` · lasted ${formatDuration(event.data.duration_minutes)}` : ""}
-                  </p>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {carePlanItems.length > 0 && (
-        <div className="mt-10">
-          <div className="flex items-center justify-between">
-            <h2 className="font-display text-lg font-semibold text-ink-900">Care plan updates</h2>
-            <Link to="/reports" className="text-sm font-medium text-brand-600 hover:underline">
-              View reports
+        <div className="mt-6">
+          {onPeriod ? (
+            <Button size="lg" className="min-w-56 rounded-full shadow-lift" onClick={() => navigate("/log?tab=cycle")}>
+              <Droplet className="h-4 w-4" aria-hidden="true" />
+              Log today's flow
+            </Button>
+          ) : (
+            <Button size="lg" className="min-w-56 rounded-full shadow-lift" onClick={periodStarted} disabled={starting || loading}>
+              {starting ? <Spinner /> : <Droplet className="h-4 w-4" aria-hidden="true" />}
+              {starting ? "Saving…" : tracking ? "Period started" : "My period started today"}
+            </Button>
+          )}
+          {!tracking && !loading && (
+            <Link to="/cycle" className="mt-3 block text-sm font-medium text-brand-700 hover:underline">
+              It started earlier? Pick dates on the calendar
             </Link>
-          </div>
-          <p className="mt-1 text-sm text-ink-700/60">From your uploaded reports — discuss these at your next visit.</p>
-          <div className="mt-4 space-y-3">
-            {carePlanItems.map((r) => {
-              const items = (r.questionsToAsk?.length ? r.questionsToAsk : r.carePlan?.discuss_with_clinician) ?? [];
-              return (
-                <Link
-                  key={r._id}
-                  to={`/reports/${r._id}`}
-                  className="block rounded-xl border border-neutral-200 bg-white px-4 py-3 hover:border-brand-300"
-                >
-                  <p className="text-sm font-medium text-ink-900">{r.fileName}</p>
-                  <ul className="mt-1.5 space-y-1">
-                    {items.slice(0, 2).map((item, i) => (
-                      <li key={i} className="text-xs text-ink-700/70">• {item}</li>
-                    ))}
-                  </ul>
-                </Link>
-              );
-            })}
-          </div>
+          )}
+        </div>
+      </section>
+
+      {urgent && (
+        <Link to={`/reports/${urgent._id}`} className="mt-4 flex items-center gap-3 rounded-2xl border border-red-300 bg-red-50 p-4 hover:bg-red-100">
+          <ShieldAlert className="h-5 w-5 shrink-0 text-red-600" aria-hidden="true" />
+          <p className="min-w-0 flex-1 text-sm font-semibold text-red-800">A report needs your attention</p>
+          <ChevronRight className="h-4 w-4 text-red-700" aria-hidden="true" />
+        </Link>
+      )}
+
+      {tracking && <DateTiles insights={insights!} />}
+
+      <Link
+        to="/log?tab=mood"
+        className="mt-4 flex items-center gap-4 rounded-3xl border border-neutral-200 bg-white p-5 shadow-soft transition-transform hover:-translate-y-0.5"
+      >
+        <div className="min-w-0 flex-1">
+          <p className="font-display text-lg font-semibold text-ink-900">How are you feeling today?</p>
+          <p className="mt-0.5 text-sm text-ink-700/70">Log mood or symptoms in a few taps.</p>
+        </div>
+        <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-amber-100 text-amber-700" aria-hidden="true">
+          <Smile className="h-6 w-6" />
+        </span>
+      </Link>
+
+      {card && (
+        <div className="mt-4 rounded-3xl border border-violet-100 bg-violet-50 p-5">
+          <p className="flex items-center gap-1.5 text-xs font-semibold tracking-wide text-violet-700 uppercase">
+            <Sparkles className="h-3.5 w-3.5" aria-hidden="true" />
+            Today's tip
+          </p>
+          <p className="mt-2 font-display text-base font-semibold text-ink-900">{card.title}</p>
+          <p className="mt-1 text-sm text-ink-700/80">{card.body}</p>
         </div>
       )}
     </AppShell>
+  );
+}
+
+function Status({ insights }: { insights: CycleInsights }) {
+  const phase = insights.phase!;
+  const onPeriod = phase === "menstrual";
+  const until = insights.daysUntilNextPeriod;
+  const label = insights.subPhase === "pms" ? "PMS window" : PHASE_STYLE[phase].label;
+
+  let big: string;
+  let small: string | null = null;
+  if (onPeriod) big = `Day ${insights.currentCycleDay}`;
+  else if (until !== null && until > 0) {
+    big = `${until} ${until === 1 ? "day" : "days"}`;
+    small = "until your period";
+  } else if (until === 0) big = "Due today";
+  else big = "Period may be late";
+
+  return (
+    <div>
+      <p className="font-display text-lg font-medium text-ink-700">{label}</p>
+      <p className="tabular mt-1 font-display text-5xl font-semibold text-ink-900 sm:text-6xl">{big}</p>
+      {small && <p className="mt-1 text-ink-700/80">{small}</p>}
+      {insights.predictedNextPeriodStart && (
+        <p className="mt-2 text-sm font-medium text-ink-700/80">
+          {shortDate(insights.predictedNextPeriodStart)} · Next period{insights.confidence === "low" ? " (estimate)" : ""}
+        </p>
+      )}
+    </div>
+  );
+}
+
+function DateTiles({ insights }: { insights: CycleInsights }) {
+  const today = dayKey(new Date());
+  const fw = insights.fertileWindow;
+  const fertileNow = !!fw && fw.start <= today && today <= fw.end;
+  return (
+    <div className="mt-4 grid grid-cols-3 gap-3">
+      <Link to="/cycle" className="flex flex-col items-center justify-center rounded-3xl bg-violet-50 p-3 text-center transition-transform hover:-translate-y-0.5">
+        <p className="text-[11px] font-semibold tracking-wide text-violet-700 uppercase">Cycle day</p>
+        <ProgressRing value={(insights.currentCycleDay ?? 0) / insights.cycleLengthDays} size={64} label={`Cycle day ${insights.currentCycleDay}`} className="mt-1.5">
+          <span className="font-display text-xl font-semibold text-ink-900">{insights.currentCycleDay}</span>
+        </ProgressRing>
+      </Link>
+      <Tile
+        tone="bg-amber-50 text-amber-700"
+        icon={<Sprout className="h-4 w-4" aria-hidden="true" />}
+        value={fertileNow ? "Now" : fw ? shortDate(fw.start) : "—"}
+        label={fertileNow ? "Fertile window" : "Next fertile"}
+      />
+      <Tile
+        tone="bg-peach-100 text-peach-600"
+        icon={<Sparkles className="h-4 w-4" aria-hidden="true" />}
+        value={insights.ovulationDate ? shortDate(insights.ovulationDate) : "—"}
+        label="Ovulation"
+      />
+    </div>
+  );
+}
+
+function Tile({ tone, icon, value, label }: { tone: string; icon: React.ReactNode; value: string; label: string }) {
+  return (
+    <Link to="/cycle" className={cn("flex min-h-28 flex-col justify-between rounded-3xl p-3.5 transition-transform hover:-translate-y-0.5", tone)}>
+      {icon}
+      <div>
+        <p className="tabular font-display text-lg leading-tight font-semibold text-ink-900">{value}</p>
+        <p className="text-xs font-medium">{label}</p>
+      </div>
+    </Link>
   );
 }

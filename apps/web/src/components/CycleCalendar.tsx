@@ -93,7 +93,7 @@ export function CycleCalendar({ insights, onChanged }: { insights: CycleInsights
   return (
     <section className="mt-4 rounded-3xl border border-neutral-200 bg-white p-4 shadow-soft sm:p-6" aria-labelledby="cal-h">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h2 id="cal-h" className="font-display text-lg font-semibold text-ink-900">Calendar</h2>
+        <h2 id="cal-h" className="sr-only">Calendar</h2>
         {!editing && (
           <Button size="sm" variant="outline" onClick={startEdit}>
             <Pencil className="h-3.5 w-3.5" aria-hidden="true" />
@@ -213,7 +213,7 @@ function MonthGrid({
   const cells: (number | null)[] = [...Array(lead).fill(null), ...Array.from({ length: count }, (_, i) => i + 1)];
 
   return (
-    <div className={cn("mt-2 grid grid-cols-7", mini ? "gap-0.5" : "gap-1")}>
+    <div className={cn("mt-2 grid grid-cols-7", mini ? "gap-0.5" : "mx-auto max-w-md gap-1")}>
       {!mini && WEEKDAYS.map((w, i) => (
         <span key={i} className="pb-1 text-center text-xs font-medium text-neutral-400">{w}</span>
       ))}

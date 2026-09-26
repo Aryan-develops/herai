@@ -21,8 +21,8 @@ const FLOWS: { value: CycleLog["flow"]; label: string }[] = [
 
 type Props = NativeStackScreenProps<AppStackParamList, "LogEntry">;
 
-export function LogEntryScreen({ navigation }: Props) {
-  const [tab, setTab] = useState<"symptom" | "cycle" | "mood">("symptom");
+export function LogEntryScreen({ navigation, route }: Props) {
+  const [tab, setTab] = useState<"symptom" | "cycle" | "mood">(route.params?.tab ?? "symptom");
 
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">

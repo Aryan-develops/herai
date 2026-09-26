@@ -127,8 +127,7 @@ export function PartnerHome() {
     <AppShell>
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h1 className="font-display text-3xl font-medium text-ink-900 sm:text-4xl">Partner home</h1>
-          <p className="mt-1.5 max-w-xl text-ink-700/70">How she's doing today, and small ways to help.</p>
+          <h1 className="font-display text-2xl font-semibold text-ink-900 sm:text-3xl">Partner</h1>
         </div>
         <div className="flex items-center gap-1.5">
           <Globe className="h-4 w-4 text-ink-700/60" aria-hidden="true" />
@@ -161,8 +160,6 @@ export function PartnerHome() {
 
       {women === null && <div className="skeleton mt-6 h-40 rounded-3xl" aria-hidden="true" />}
       {women?.length === 0 && supporters?.filter((p) => p.status !== "revoked").length === 0 && <Empty />}
-
-      <CircleCard supporters={supporters} following={women} selected={selected} onSelect={(id) => setParams({ w: id })} />
 
       {women && women.length > 0 && (
         <>
@@ -215,6 +212,8 @@ export function PartnerHome() {
           </div>
         </>
       )}
+
+      <CircleCard supporters={supporters} following={women} selected={selected} onSelect={(id) => setParams({ w: id })} />
 
       <div className="mt-8 flex flex-wrap gap-3">
         <Link to="/settings#partner">

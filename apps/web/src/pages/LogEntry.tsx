@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Droplet, Plus, Activity, Smile, X } from "lucide-react";
 import { api, ApiError, type CycleLog, type SymptomEntry } from "@/lib/api";
 import { AppShell } from "@/components/AppShell";
@@ -33,12 +33,13 @@ const FLOWS: { value: CycleLog["flow"]; label: string; drops: number }[] = [
 
 export function LogEntry() {
   const navigate = useNavigate();
-  const [tab, setTab] = useState<"symptom" | "cycle" | "mood">("symptom");
+  const [params] = useSearchParams();
+  const initial = params.get("tab");
+  const [tab, setTab] = useState<"symptom" | "cycle" | "mood">(initial === "cycle" || initial === "mood" ? initial : "symptom");
 
   return (
     <AppShell>
-      <h1 className="font-display text-2xl font-semibold text-ink-900 sm:text-3xl">Log an entry</h1>
-      <p className="mt-1.5 text-ink-700/75">It takes a few seconds and makes your insights sharper.</p>
+      <h1 className="font-display text-2xl font-semibold text-ink-900 sm:text-3xl">Log</h1>
 
       <div role="tablist" aria-label="Entry type" className="mt-6 inline-flex rounded-2xl bg-neutral-100 p-1">
         <TabButton id="symptom" active={tab === "symptom"} onClick={() => setTab("symptom")} icon={<Activity className="h-4 w-4" />}>
@@ -227,12 +228,19 @@ function SymptomForm({ onDone }: { onDone: () => void }) {
         </ul>
       )}
 
+      <details className="group rounded-2xl border border-neutral-200 bg-white">
+        <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between px-4 text-sm font-medium text-ink-800">
+          Add details <span className="text-xs font-normal text-neutral-500">optional</span>
+        </summary>
+        <div className="space-y-5 border-t border-neutral-100 p-4">
       <DurationPicker value={duration} onChange={setDuration} />
 
       <div className="space-y-1.5">
         <Label htmlFor="symptom-notes">Notes (optional)</Label>
         <Textarea id="symptom-notes" value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Anything else worth noting…" />
       </div>
+        </div>
+      </details>
 
       {error && <Alert tone="error">{error}</Alert>}
 

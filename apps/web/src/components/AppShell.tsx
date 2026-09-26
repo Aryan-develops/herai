@@ -1,30 +1,20 @@
 import { useEffect, type ReactNode } from "react";
 import { LogoMark } from "@/components/LogoMark";
 import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
-import { Bot, CalendarPlus, Droplet, FileText, HeartHandshake, LayoutDashboard, ListPlus, Settings, Store } from "lucide-react";
+import { CalendarDays, HeartHandshake, Plus, Settings, Sparkles, Store, Sun } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { GetHelpButton } from "@/components/GetHelp";
 import { takePendingJoin } from "@/lib/join";
 import { cn } from "@/lib/utils";
 
-const DESKTOP_NAV = [
-  { to: "/dashboard", label: "Home", icon: LayoutDashboard },
-  { to: "/cycle", label: "Cycle", icon: Droplet },
+// Five destinations everywhere; Log is the raised centre button on phones. Reports, Care and Timeline
+// live under Settings > More so the bar stays calm.
+const NAV = [
+  { to: "/dashboard", label: "Today", icon: Sun },
+  { to: "/cycle", label: "Calendar", icon: CalendarDays },
+  { to: "/log", label: "Log", icon: Plus, center: true },
   { to: "/partner", label: "Partner", icon: HeartHandshake },
-  { to: "/chat", label: "Ask", icon: Bot },
-  { to: "/reports", label: "Reports", icon: FileText },
-  { to: "/timeline", label: "Timeline", icon: ListPlus },
-  { to: "/log", label: "Log", icon: CalendarPlus },
-];
-
-// Bottom bar is capped at five top-level destinations. Partner always has its own tab; Reports and Timeline
-// stay reachable from the Home screen's cards.
-const MOBILE_NAV = [
-  { to: "/dashboard", label: "Home", icon: LayoutDashboard },
-  { to: "/cycle", label: "Cycle", icon: Droplet },
-  { to: "/log", label: "Log", icon: CalendarPlus },
-  { to: "/partner", label: "Partner", icon: HeartHandshake },
-  { to: "/chat", label: "Ask", icon: Bot },
+  { to: "/chat", label: "Ask", icon: Sparkles },
 ];
 
 export function AppShell({ children }: { children: ReactNode }) {
@@ -38,14 +28,6 @@ export function AppShell({ children }: { children: ReactNode }) {
     if (pending && !pathname.startsWith("/join")) navigate(`/join/${pending}`, { replace: true });
   }, [pathname, navigate]);
 
-  const desktopNav = DESKTOP_NAV;
-  const mobileNav = MOBILE_NAV;
-  const initials = user?.name
-    ?.split(" ")
-    .map((p) => p[0])
-    .slice(0, 2)
-    .join("")
-    .toUpperCase();
 
   return (
     <div className="min-h-dvh bg-neutral-50">
@@ -56,99 +38,84 @@ export function AppShell({ children }: { children: ReactNode }) {
         Skip to content
       </a>
 
-      <header className="sticky top-0 z-30 border-b border-neutral-200/80 bg-white/75 backdrop-blur-xl">
-        <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3 sm:px-6">
-          <div className="flex items-center gap-8">
-            <Link
-              to="/settings"
-              aria-label="Lunee settings"
-              title="Settings"
-              className="group flex items-center gap-2 rounded-xl font-display text-lg font-semibold text-ink-900 transition-opacity hover:opacity-80"
-            >
-              <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-brand-500 to-violet-500 text-white shadow-soft">
-                <LogoMark className="h-4 w-4" />
-              </span>
-              Lunee
-              <Settings className="h-3.5 w-3.5 text-neutral-400 transition-transform duration-300 group-hover:rotate-90" aria-hidden="true" />
-            </Link>
-            <nav aria-label="Main" className="hidden items-center gap-1 lg:flex">
-              {desktopNav.map(({ to, label, icon: Icon }) => (
-                <NavLink
-                  key={to}
-                  to={to}
-                  className={({ isActive }) =>
-                    cn(
-                      "flex items-center gap-1.5 whitespace-nowrap rounded-xl px-2.5 py-2 text-sm font-medium transition-colors",
-                      isActive
-                        ? "bg-brand-50 text-brand-700"
-                        : "text-neutral-500 hover:bg-neutral-100 hover:text-ink-900"
-                    )
-                  }
-                >
-                  <Icon className="h-4 w-4" aria-hidden="true" />
-                  {label}
-                </NavLink>
-              ))}
-            </nav>
-          </div>
-          <div className="flex items-center gap-1.5 sm:gap-2">
-            {user?.isProvider && (
+      <header className="sticky top-0 z-30 bg-neutral-50/80 backdrop-blur-xl">
+        <div className="mx-auto flex max-w-5xl items-center justify-between gap-3 px-4 py-2.5 sm:px-6">
+          <Link
+            to="/settings"
+            aria-label="Settings"
+            title="Settings"
+            className="flex h-11 w-11 items-center justify-center rounded-full text-ink-800 transition-colors hover:bg-neutral-100"
+          >
+            <Settings className="h-5.5 w-5.5" aria-hidden="true" />
+          </Link>
+          <nav aria-label="Main" className="hidden items-center gap-1 lg:flex">
+            {NAV.map(({ to, label, icon: Icon }) => (
               <NavLink
-                to="/provider"
-                aria-label="Provider dashboard"
-                title="Provider dashboard"
-                className="flex h-10 w-10 items-center justify-center rounded-xl text-brand-700 hover:bg-brand-50"
+                key={to}
+                to={to}
+                className={({ isActive }) =>
+                  cn(
+                    "flex min-h-10 items-center gap-1.5 rounded-full px-3.5 text-sm font-medium transition-colors",
+                    isActive ? "bg-brand-100 text-brand-700" : "text-neutral-500 hover:bg-neutral-100 hover:text-ink-900",
+                  )
+                }
               >
-                <Store className="h-4.5 w-4.5" aria-hidden="true" />
+                <Icon className="h-4 w-4" aria-hidden="true" />
+                {label}
+              </NavLink>
+            ))}
+          </nav>
+          <Link to="/dashboard" className="flex items-center gap-2 font-display text-lg font-semibold text-ink-900 lg:hidden" aria-label="Lunee home">
+            <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-brand-500 to-violet-500 text-white">
+              <LogoMark className="h-4 w-4" />
+            </span>
+            Lunee
+          </Link>
+          <div className="flex items-center gap-1">
+            {user?.isProvider && (
+              <NavLink to="/provider" aria-label="Provider dashboard" title="Provider dashboard" className="flex h-11 w-11 items-center justify-center rounded-full text-brand-700 hover:bg-brand-50">
+                <Store className="h-5 w-5" aria-hidden="true" />
               </NavLink>
             )}
             <GetHelpButton />
-            <Link
-              to="/settings"
-              aria-label={user?.name ? `Settings for ${user.name}` : "Settings"}
-              title="Settings"
-              className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-brand-100 to-violet-100 text-xs font-semibold text-brand-700 transition-shadow hover:shadow-soft"
-            >
-              {initials}
-            </Link>
           </div>
         </div>
       </header>
 
-      <main id="main" className="mx-auto max-w-5xl px-4 pt-6 pb-28 sm:px-6 sm:pt-10 lg:pb-12">
+      <main id="main" className="mx-auto max-w-3xl px-4 pt-6 pb-28 sm:px-6 sm:pt-10 lg:pb-12">
         {children}
       </main>
 
       <nav
-        aria-label="Main"
+        aria-label="Main navigation"
         className="fixed inset-x-0 bottom-0 z-30 border-t border-neutral-200/80 bg-white/90 pb-[env(safe-area-inset-bottom)] backdrop-blur-xl lg:hidden"
       >
-        <ul className="mx-auto flex max-w-md items-stretch justify-around px-2">
-          {mobileNav.map(({ to, label, icon: Icon }) => (
+        <ul className="mx-auto flex max-w-md items-end justify-around px-2">
+          {NAV.map(({ to, label, icon: Icon, center }) => (
             <li key={to} className="flex-1">
-              <NavLink
-                to={to}
-                className={({ isActive }) =>
-                  cn(
-                    "flex min-h-14 flex-col items-center justify-center gap-0.5 rounded-xl text-[11px] font-medium transition-colors",
-                    isActive ? "text-brand-600" : "text-neutral-500"
-                  )
-                }
-              >
-                {({ isActive }) => (
-                  <>
-                    <span
-                      className={cn(
-                        "flex h-7 w-12 items-center justify-center rounded-full transition-colors",
-                        isActive && "bg-brand-100"
-                      )}
-                    >
-                      <Icon className="h-5 w-5" aria-hidden="true" />
-                    </span>
-                    {label}
-                  </>
-                )}
-              </NavLink>
+              {center ? (
+                <NavLink to={to} aria-label="Log" className="-mt-6 flex flex-col items-center">
+                  <span className="flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-brand-500 to-brand-600 text-white shadow-lift ring-4 ring-neutral-50 transition-transform active:scale-95">
+                    <Icon className="h-7 w-7" aria-hidden="true" />
+                  </span>
+                </NavLink>
+              ) : (
+                <NavLink
+                  to={to}
+                  className={({ isActive }) =>
+                    cn("flex min-h-14 flex-col items-center justify-center gap-0.5 text-[11px] font-medium transition-colors", isActive ? "text-brand-600" : "text-neutral-500")
+                  }
+                >
+                  {({ isActive }) => (
+                    <>
+                      <span className={cn("flex h-7 w-12 items-center justify-center rounded-full transition-colors", isActive && "bg-brand-100")}>
+                        <Icon className="h-5 w-5" aria-hidden="true" />
+                      </span>
+                      {label}
+                    </>
+                  )}
+                </NavLink>
+              )}
             </li>
           ))}
         </ul>
