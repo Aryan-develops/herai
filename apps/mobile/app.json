@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "Lunee",
-    "slug": "herai",
+    "slug": "lunee",
     "scheme": "lunee",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -15,14 +15,14 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.herai.app",
+      "bundleIdentifier": "com.lunee.app",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
         "NSFaceIDUsageDescription": "Lunee uses Face ID to unlock the app and keep your health data private."
       }
     },
     "android": {
-      "package": "com.herai.app",
+      "package": "com.lunee.app",
       "adaptiveIcon": {
         "backgroundColor": "#fdf2f8",
         "foregroundImage": "./assets/android-icon-foreground.png",

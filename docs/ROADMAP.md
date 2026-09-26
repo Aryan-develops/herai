@@ -1,6 +1,6 @@
 # Lunee roadmap
 
-Status: master task run completed. Live at herai-web-kappa.vercel.app (web + API on Vercel, AI service on Render).
+Status: master task run completed. Live at https://lunee.me (web + API on Vercel, AI service on Render). Domain, Resend email (Lunee <hello@lunee.me>), Supabase URLs and passkey RP ID are set for lunee.me. IP India trademark search for LUNEE found no records (owner checked).
 
 ## Done
 - Cycle module, Google OAuth, passkeys (built-in authenticator: Face ID / Touch ID / Windows Hello), DOB gate, guardian consent
@@ -14,7 +14,8 @@ Status: master task run completed. Live at herai-web-kappa.vercel.app (web + API
 - Real app icon, splash and favicon
 
 ## Needs the owner (cannot be done in code)
-1. **Vercel env vars on the herai-api project:** `CRON_SECRET` (any long random string) so the 09:00 IST support note runs; `RESEND_API_KEY` and `EMAIL_FROM` (verified domain) for guardian-consent and invite emails; optional `AI_SERVICE_URL` (+ `INTERNAL_API_TOKEN` on both Render and Vercel) to let the AI reword partner tips.
+0. **Done:** `CRON_SECRET`, `RESEND_API_KEY`, `EMAIL_FROM`, `CORS_ORIGIN`, `APP_BASE_URL` are set on the herai-api Vercel project. Still optional: `AI_SERVICE_URL` (+ `INTERNAL_API_TOKEN` on both Render and Vercel).
+1. **(Old note) Vercel env vars on the herai-api project:** `CRON_SECRET` (any long random string) so the 09:00 IST support note runs; `RESEND_API_KEY` and `EMAIL_FROM` (verified domain) for guardian-consent and invite emails; optional `AI_SERVICE_URL` (+ `INTERNAL_API_TOKEN` on both Render and Vercel) to let the AI reword partner tips.
 2. **Supabase dashboard:** turn on "Leaked password protection" (Auth > Passwords).
 3. **Payments:** pick a provider account (Razorpay recommended), then implement its adapter in `apps/api/src/payments/providers.ts` and set `PARTNER_PAYWALL=true`.
 4. **Legal:** lawyer review of PRIVACY, TERMS and the provider DPA; confirm the India helpline numbers; DPDP verifiable parental consent standard.
