@@ -4,6 +4,7 @@ import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { api, type CycleInsights } from "../lib/api";
 import { PHASE_STYLE, shortDate } from "../lib/phases";
 import { Card, Notice, ScreenTitle } from "../components/ui";
+import { CycleCalendar } from "../components/CycleCalendar";
 import { CycleHero } from "../components/CycleHero";
 import { colors, radius } from "../theme";
 
@@ -38,6 +39,8 @@ export function CycleScreen() {
       {ready && insights.phase && (
         <>
           <Notice tone="warning">{PHASE_STYLE[insights.phase].tip}</Notice>
+
+          <CycleCalendar insights={insights} />
 
           <View style={styles.dates}>
             <DateCard label="Next period" value={insights.predictedNextPeriodStart ? shortDate(insights.predictedNextPeriodStart) : "—"} />

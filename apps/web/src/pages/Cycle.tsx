@@ -4,6 +4,7 @@ import { CalendarPlus, Droplet, Lightbulb, Sparkles } from "lucide-react";
 import { api, type CycleInsights } from "@/lib/api";
 import { PHASE_STYLE, shortDate } from "@/lib/phases";
 import { AppShell } from "@/components/AppShell";
+import { CycleCalendar } from "@/components/CycleCalendar";
 import { CycleHero } from "@/components/CycleHero";
 import { Button } from "@/components/ui/button";
 import { Alert } from "@/components/ui/alert";
@@ -77,6 +78,8 @@ export function Cycle() {
             </span>
             <p className="text-sm text-ink-800">{PHASE_STYLE[insights.phase].tip}</p>
           </div>
+
+          <CycleCalendar insights={insights} />
 
           <PhaseTimeline insights={insights} />
 
