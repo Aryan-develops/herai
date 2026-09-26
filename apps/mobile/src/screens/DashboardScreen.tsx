@@ -81,7 +81,7 @@ export function DashboardScreen({ navigation }: Props) {
 
       <CycleHero insights={insights} loading={insightsLoading} onPress={() => navigation.navigate("Cycle")} />
 
-      <MoodCheckIn />
+      <MoodCheckIn onSaved={() => api.dailyInsights().then(({ cards }) => setDailyCards(cards)).catch(() => {})} />
 
       <InsightCards title="Today's insights" cards={dailyCards} />
 

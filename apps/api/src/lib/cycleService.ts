@@ -1,13 +1,14 @@
 import { supabaseAdmin } from "../config/supabase.js";
 import { HttpError } from "../middleware/errorHandler.js";
 import { computeCycleInsights, type CycleInsights } from "./cycleInsights.js";
+import { istNow } from "./time.js";
 
 const CRAMP_PATTERN = /cramp|pelvic pain|abdominal pain|period pain/i;
 const TWO_DAYS_MS = 2 * 24 * 60 * 60 * 1000;
 
 /** Loads a user's cycle data and computes insights. The one place that knows where cycle inputs live. */
-export async function loadCycleInsights(userId: string, today = new Date()): Promise<CycleInsights> {
-  const since = new Date(today.getTime() - TWO_DAYS_MS).toISOString();
+export async function loadCycleInsights(userId: string, today = istNow()): Promise<CycleInsights> {
+  const since = new Date(Date.now() - TWO_DAYS_MS).toISOString();
   const [logsResult, profileResult, symptomsResult] = await Promise.all([
     supabaseAdmin
       .from("cycle_logs")
@@ -26,7 +27,7 @@ export async function loadCycleInsights(userId: string, today = new Date()): Pro
     : null;
 
   const recentCycleSymptoms = (logsResult.data ?? [])
-    .filter((l) => new Date(l.logged_at).getTime() >= today.getTime() - TWO_DAYS_MS)
+    .filter((l) => new Date(l.logged_at).getTime() >= Date.now() - TWO_DAYS_MS)
     .flatMap((l) => (l.symptoms as string[] | null) ?? []);
   const recentSymptomNames = (symptomsResult.data ?? []).flatMap((l) =>
     ((l.symptoms as { name?: string }[] | null) ?? []).map((s) => s.name ?? ""),

@@ -71,7 +71,7 @@ export function Dashboard() {
 
       <CycleHero insights={insights} loading={insightsLoading} />
 
-      <MoodCheckIn />
+      <MoodCheckIn onSaved={() => api.dailyInsights().then(({ cards }) => setDailyCards(cards)).catch(() => {})} />
 
       <InsightCards title="Today's insights" cards={dailyCards} />
 

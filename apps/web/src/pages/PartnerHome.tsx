@@ -60,7 +60,6 @@ export function PartnerHome() {
   const [summaryError, setSummaryError] = useState<{ status: number; message: string } | null>(null);
   const [lang, setLang] = useState<Lang>("en");
   const [langReady, setLangReady] = useState(false);
-  const [version, setVersion] = useState(0);
 
   const selected = params.get("w") ?? women?.[0]?.linkId ?? null;
 
@@ -86,7 +85,6 @@ export function PartnerHome() {
       .womanSummary(selected, lang)
       .then((s) => {
         setSummary(s);
-        setVersion((v) => v + 1);
       })
       .catch((err) => {
         setSummary(null);
@@ -98,6 +96,23 @@ export function PartnerHome() {
     setSummary(null);
     loadSummary();
   }, [loadSummary]);
+
+  // Keep what she shares fresh: refetch every minute while the tab is visible, and when it regains focus.
+  useEffect(() => {
+    const refresh = () => {
+      if (document.visibilityState !== "visible") return;
+      loadSummary();
+      api.listWomen(lang).then(({ women, subscription }) => { setWomen(women); setSubscription(subscription); }).catch(() => {});
+    };
+    const timer = setInterval(refresh, 60_000);
+    document.addEventListener("visibilitychange", refresh);
+    window.addEventListener("focus", refresh);
+    return () => {
+      clearInterval(timer);
+      document.removeEventListener("visibilitychange", refresh);
+      window.removeEventListener("focus", refresh);
+    };
+  }, [loadSummary, lang]);
 
   function switchLang(next: Lang) {
     setLang(next);
@@ -190,7 +205,7 @@ export function PartnerHome() {
                 </CardContent>
               </Card>
             )}
-            {summary && summary.available && <WomanView key={version} summary={summary} lang={lang} onRefresh={loadSummary} />}
+            {summary && summary.available && <WomanView key={summary.link.id} summary={summary} lang={lang} onRefresh={loadSummary} />}
           </div>
         </>
       )}

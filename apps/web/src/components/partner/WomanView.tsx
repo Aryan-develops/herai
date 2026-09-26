@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   BookOpen,
   CalendarHeart,
@@ -275,7 +275,7 @@ function Outlook({ s, lang }: { s: WomanSummary; lang: Lang }) {
         <div className="mt-3 grid grid-cols-7 gap-1.5">
           {s.calendar.map((d) => {
             const date = new Date(`${d.date}T00:00:00`);
-            const today = d.date === new Date().toISOString().slice(0, 10);
+            const today = d.date === s.calendar![0]?.date;
             return (
               <div
                 key={d.date}
@@ -405,6 +405,8 @@ function Feedback({ s, linkId, lang }: { s: WomanSummary; linkId: string; lang: 
 
 export function WomanView({ summary, lang, onRefresh }: { summary: WomanSummary; lang: Lang; onRefresh: () => void }) {
   const [progress, setProgress] = useState(summary.progress);
+  // Refreshes arrive as a new `summary`; take the server's task progress without remounting the form inputs.
+  useEffect(() => setProgress(summary.progress), [summary.progress]);
   const s = { ...summary, progress };
   const linkId = summary.link.id;
 

@@ -122,6 +122,22 @@ try {
   const dateOnlyProfile = await call(she.token, "PUT", "/profile", { lastPeriodStart: "2026-09-01" });
   check("profile accepts a date-only last period start", dateOnlyProfile.status === 200);
 
+  // ---- her changes show up for him straight away (no stale copy)
+  await call(she.token, "PATCH", `/partner/links/${linkId}`, { scopes: { mood: true, comfort: true } });
+  await call(she.token, "PUT", "/settings/comfort", { items: ["Fresh item"] });
+  const fresh = await call(he.token, "GET", `/partner/women/${linkId}/summary`);
+  check("comfort list edit is visible to him immediately", fresh.json.comfort?.includes("Fresh item"));
+  await call(she.token, "POST", "/logs/moods", { mood: "anxious", need: "hug" });
+  const listNow = await call(he.token, "GET", "/partner/women");
+  const card = listNow.json.women.find((w) => w.linkId === linkId);
+  check("partner list card shows her newest mood", card?.mood === "anxious");
+  const fresh2 = await call(he.token, "GET", `/partner/women/${linkId}/summary`);
+  check("summary shows the newest mood and need", fresh2.json.mood?.mood === "anxious" && fresh2.json.mood?.need === "hug" && fresh2.json.insights[0]?.id === "mood");
+  await call(she.token, "PATCH", `/partner/links/${linkId}`, { status: "paused" });
+  const listPaused = await call(he.token, "GET", "/partner/women");
+  check("pause is reflected in his list", listPaused.json.women.find((w) => w.linkId === linkId)?.available === false);
+  await call(she.token, "PATCH", `/partner/links/${linkId}`, { status: "active" });
+
   // ---- tasks, streak, feedback, events
   const t1 = await call(he.token, "POST", `/partner/women/${linkId}/tasks`, { taskId: sum.json.guidance.tasks[0].id, done: true });
   check("task done updates streak", t1.status === 200 && t1.json.streak >= 1 && t1.json.doneToday.length === 1);

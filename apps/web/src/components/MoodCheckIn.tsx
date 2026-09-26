@@ -10,7 +10,7 @@ import { Spinner } from "@/components/ui/spinner";
 import { cn } from "@/lib/utils";
 
 /** One-tap daily check-in. The optional "I need…" signal is the most useful thing a partner can see. */
-export function MoodCheckIn() {
+export function MoodCheckIn({ onSaved }: { onSaved?: () => void } = {}) {
   const [mood, setMood] = useState<Mood | null>(null);
   const [energy, setEnergy] = useState<number | null>(null);
   const [need, setNeed] = useState<Need | null>(null);
@@ -37,6 +37,7 @@ export function MoodCheckIn() {
     try {
       await api.createMoodLog({ mood, energy: energy ?? undefined, need: need ?? undefined });
       setSavedMood(mood);
+      onSaved?.();
       setMood(null);
       setEnergy(null);
       setNeed(null);

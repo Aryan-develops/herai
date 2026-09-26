@@ -12,6 +12,7 @@ import { buildGuidance, effectivePhase } from "../lib/partnerGuidance.js";
 import { partnerInsights } from "../lib/dailyInsights.js";
 import { ensureTrial, getSubscription, loadLink, normaliseScopes, type LinkRow, type SharedScopes } from "../lib/partnerAccess.js";
 import { hitRateLimit } from "../lib/rateLimit.js";
+import { istDay, istNow } from "../lib/time.js";
 import { isMinor, hashConsentToken } from "../utils/consent.js";
 import type { Lang, Mood, Need } from "../lib/partnerContent.js";
 
@@ -436,11 +437,11 @@ async function loadPartnerLink(req: AuthedRequest): Promise<LinkRow> {
 }
 
 function todayIso(): string {
-  return new Date().toISOString().slice(0, 10);
+  return istDay(0);
 }
 
 async function streakFor(partnerId: string, linkId: string): Promise<{ streak: number; doneToday: string[] }> {
-  const since = new Date(Date.now() - 60 * DAY_MS).toISOString().slice(0, 10);
+  const since = istDay(-60);
   const { data } = await supabaseAdmin
     .from("partner_task_progress")
     .select("day, done")
@@ -452,7 +453,7 @@ async function streakFor(partnerId: string, linkId: string): Promise<{ streak: n
   let streak = 0;
   // Today is still in progress, so an empty today doesn't break the streak; an empty yesterday does.
   for (let i = byDay.get(today)?.length ? 0 : 1; i < 60; i++) {
-    const day = new Date(Date.now() - i * DAY_MS).toISOString().slice(0, 10);
+    const day = istDay(-i);
     if ((byDay.get(day)?.length ?? 0) > 0) streak++;
     else break;
   }
@@ -486,7 +487,7 @@ export async function womanSummary(req: AuthedRequest, res: Response) {
 
   const calendar = scopes.predictions
     ? Array.from({ length: 14 }, (_, i) => {
-        const date = new Date(Date.now() + i * DAY_MS);
+        const date = new Date(istNow().getTime() + i * DAY_MS);
         return { date: date.toISOString().slice(0, 10), phase: phaseForDate(insights, date) };
       })
     : null;

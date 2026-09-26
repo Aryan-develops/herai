@@ -183,7 +183,7 @@ function Tasks({ s, linkId, lang, onProgress }: { s: WomanSummary; linkId: strin
 function Outlook({ s, lang }: { s: WomanSummary; lang: Lang }) {
   if (!s.calendar) return null;
   const eventDates = new Set(s.events.map((e) => e.date));
-  const today = new Date().toISOString().slice(0, 10);
+  const today = s.calendar[0]?.date;
   const legend: [keyof typeof DAY_PHASE_COLOR, string, string][] = [
     ["menstrual", "Period", "पीरियड"],
     ["pms", "PMS", "PMS"],
@@ -309,6 +309,7 @@ function Feedback({ s, linkId, lang }: { s: WomanSummary; linkId: string; lang: 
 
 function WomanView({ summary, lang, onRefresh }: { summary: WomanSummary; lang: Lang; onRefresh: () => void }) {
   const [progress, setProgress] = useState(summary.progress);
+  useEffect(() => setProgress(summary.progress), [summary.progress]);
   const s = { ...summary, progress };
   const linkId = summary.link.id;
   return (
@@ -382,7 +383,6 @@ export function PartnerHomeScreen() {
   const [summaryError, setSummaryError] = useState<{ status: number; message: string } | null>(null);
   const [lang, setLang] = useState<Lang>("en");
   const [langReady, setLangReady] = useState(false);
-  const [version, setVersion] = useState(0);
 
   useEffect(() => {
     api.getPrefs().then(({ prefs }) => setLang(prefs.language)).catch(() => {}).finally(() => setLangReady(true));
@@ -409,7 +409,6 @@ export function PartnerHomeScreen() {
       .womanSummary(selected, lang)
       .then((s) => {
         setSummary(s);
-        setVersion((v) => v + 1);
       })
       .catch((err) => {
         setSummary(null);
@@ -421,6 +420,15 @@ export function PartnerHomeScreen() {
     setSummary(null);
     loadSummary();
   }, [loadSummary]);
+
+  // Keep what she shares fresh: refetch whenever this tab is focused and every minute while it is.
+  useFocusEffect(
+    useCallback(() => {
+      loadSummary();
+      const timer = setInterval(loadSummary, 60_000);
+      return () => clearInterval(timer);
+    }, [loadSummary]),
+  );
 
   function switchLang(next: Lang) {
     setLang(next);
@@ -496,7 +504,7 @@ export function PartnerHomeScreen() {
               <Text style={styles.small}>Check back later.</Text>
             </View>
           ) : null}
-          {summary && summary.available ? <WomanView key={version} summary={summary} lang={lang} onRefresh={loadSummary} /> : null}
+          {summary && summary.available ? <WomanView key={summary.link.id} summary={summary} lang={lang} onRefresh={loadSummary} /> : null}
         </View>
       ) : null}
 
