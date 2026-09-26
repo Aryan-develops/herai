@@ -9,7 +9,10 @@ const profileSchema = z.object({
   heightCm: z.number().min(100).max(250).optional(),
   weightKg: z.number().min(25).max(250).optional(),
   cycleLengthDays: z.number().min(15).max(60).optional(),
-  lastPeriodStart: z.string().datetime().optional(),
+  // The date pickers send YYYY-MM-DD; older clients send a full ISO timestamp. Both are accepted.
+  lastPeriodStart: z
+    .union([z.string().regex(/^\d{4}-\d{2}-\d{2}$/), z.string().datetime()])
+    .optional(),
   knownConditions: z.array(z.string()).optional(),
   medications: z.array(z.string()).optional(),
   allergies: z.array(z.string()).optional(),
@@ -82,7 +85,7 @@ export async function updateProfile(req: AuthedRequest, res: Response) {
   if (data.heightCm !== undefined) update.height_cm = data.heightCm;
   if (data.weightKg !== undefined) update.weight_kg = data.weightKg;
   if (data.cycleLengthDays !== undefined) update.cycle_length_days = data.cycleLengthDays;
-  if (data.lastPeriodStart !== undefined) update.last_period_start = data.lastPeriodStart;
+  if (data.lastPeriodStart !== undefined) update.last_period_start = data.lastPeriodStart.slice(0, 10);
   if (data.knownConditions !== undefined) update.known_conditions = data.knownConditions;
   if (data.medications !== undefined) update.medications = data.medications;
   if (data.allergies !== undefined) update.allergies = data.allergies;
