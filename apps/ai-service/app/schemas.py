@@ -11,6 +11,9 @@ class Lifestyle(BaseModel):
 
 
 class HealthProfileIn(BaseModel):
+    name: str | None = None
+    cyclePhase: str | None = None
+    cycleDay: int | None = None
     ageRange: str | None = None
     heightCm: float | None = None
     weightKg: float | None = None
@@ -31,3 +34,4 @@ class ChatRequest(BaseModel):
     message: str = Field(min_length=1, max_length=4000)
     healthProfile: HealthProfileIn | None = None
     history: list[ChatMessage] = Field(default_factory=list)
+    language: str | None = None

@@ -217,6 +217,31 @@ _EMERGENCY_PATTERNS: dict[str, list[str]] = {
     ],
 }
 
+# The gate is keyword based, so it needs the words people actually type. Hindi (Devanagari) and Hinglish
+# are covered here; other Indian languages are caught by the risk agent's "urgent" level and the language
+# specific phrases below for the most common crisis wording.
+_EMERGENCY_PATTERNS_IN: dict[str, list[str]] = {
+    "cardiac_or_respiratory": [
+        "सीने में दर्द", "सांस नहीं", "साँस नहीं", "सांस लेने में तकलीफ", "seene mein dard", "sine me dard",
+        "saans nahi", "sans nahi aa", "saans lene mein takleef", "छाती में दर्द",
+    ],
+    "neurological": [
+        "बेहोश", "दौरा पड़", "behosh", "daura pad", "zubaan lad", "बोल नहीं पा",
+    ],
+    "mental_health_crisis": [
+        "मरना चाहती", "जान देना", "आत्महत्या", "खुद को नुकसान", "marna chahti", "jaan dena", "khudkushi",
+        "suicide karna", "khud ko nuksan", "মরে যেতে চাই", "আত্মহত্যা", "இறக்க வேண்டும்", "தற்கொலை",
+        "చనిపోవాలని", "ఆత్మహత్య", "મરી જવું છે", "આત્મહત્યા", "ಸಾಯಬೇಕು", "ആത്മഹത്യ", "ਖੁਦਕੁਸ਼ੀ", "خودکشی",
+    ],
+    "obstetric_gynecologic_emergency": [
+        "बहुत ज़्यादा ब्लीडिंग", "बहुत ज्यादा ब्लीडिंग", "ब्लीडिंग रुक नहीं", "bleeding ruk nahi",
+        "bahut zyada bleeding", "pad har ghante", "हर घंटे पैड",
+    ],
+    "severe_bleeding_or_pain": [
+        "बहुत तेज़ दर्द", "बहुत तेज दर्द", "बर्दाश्त नहीं", "bahut tez dard", "bardasht nahi",
+    ],
+}
+
 
 @dataclass
 class EmergencyCheck:
@@ -227,8 +252,9 @@ class EmergencyCheck:
 
 def detect_emergency(text: str) -> EmergencyCheck:
     lowered = text.lower()
-    for category, phrases in _EMERGENCY_PATTERNS.items():
-        matched = [p for p in phrases if p in lowered]
-        if matched:
-            return EmergencyCheck(is_emergency=True, matched_signals=matched, category=category)
+    for patterns in (_EMERGENCY_PATTERNS, _EMERGENCY_PATTERNS_IN):
+        for category, phrases in patterns.items():
+            matched = [p for p in phrases if p in lowered]
+            if matched:
+                return EmergencyCheck(is_emergency=True, matched_signals=matched, category=category)
     return EmergencyCheck(is_emergency=False)

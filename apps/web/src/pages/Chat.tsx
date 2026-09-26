@@ -1,8 +1,6 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import {
   AlertTriangle,
-  Bot,
-  CheckCircle2,
   Loader2,
   Send,
   ShieldAlert,
@@ -16,6 +14,8 @@ import {
   type FinalResult,
   type PipelineEvent,
 } from "@/lib/aiChat";
+import { useAuth } from "@/context/AuthContext";
+import { CHAT_LANGUAGES, loadChatLanguage, saveChatLanguage } from "@/lib/chatLanguages";
 import { AppShell } from "@/components/AppShell";
 import { SourcesList } from "@/components/SourcesList";
 import { GetHelpButton } from "@/components/GetHelp";
@@ -77,22 +77,6 @@ function applyEvent(turn: Turn, event: PipelineEvent): Turn {
     default:
       return turn;
   }
-}
-
-function StepRow({ step }: { step: StepState }) {
-  return (
-    <div className="flex items-center gap-2 text-sm">
-      {step.status === "running" ? (
-        <Loader2 className="h-3.5 w-3.5 shrink-0 animate-spin text-brand-500" />
-      ) : (
-        <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-sage-500" />
-      )}
-      <span className={cn(step.status === "running" ? "text-ink-900" : "text-ink-700/70")}>{step.label}</span>
-      {step.status === "done" && step.duration_ms !== undefined && (
-        <span className="text-xs text-ink-700/40">{step.duration_ms}ms</span>
-      )}
-    </div>
-  );
 }
 
 function ConfidenceBadge({ confidence }: { confidence: number }) {
@@ -284,7 +268,10 @@ function AssistantResult({ result, onFollowUp }: { result: FinalResult; onFollow
 }
 
 export function Chat() {
+  const { user } = useAuth();
   const [profile, setProfile] = useState<HealthProfile | null>(null);
+  const [cycle, setCycle] = useState<{ phase?: string; day?: number }>({});
+  const [language, setLanguage] = useState(loadChatLanguage);
   const [turns, setTurns] = useState<Turn[]>([]);
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
@@ -295,6 +282,10 @@ export function Chat() {
       .getProfile()
       .then(({ profile }) => setProfile(profile))
       .catch(() => setProfile(null));
+    api
+      .getCycleInsights()
+      .then(({ insights }) => setCycle({ phase: insights.subPhase ?? insights.phase ?? undefined, day: insights.currentCycleDay ?? undefined }))
+      .catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -320,7 +311,8 @@ export function Chat() {
             ]
           : [{ role: "user" as const, content: t.userMessage }];
       });
-      await streamChat({ message: trimmed, healthProfile: profile ?? undefined, history }, (event) => {
+      const healthProfile = { ...(profile ?? {}), name: user?.name, cyclePhase: cycle.phase, cycleDay: cycle.day };
+      await streamChat({ message: trimmed, healthProfile, history, language }, (event) => {
         setTurns((prev) => prev.map((t) => (t.id === id ? applyEvent(t, event) : t)));
         if (event.type === "final") {
           api
@@ -348,13 +340,36 @@ export function Chat() {
 
   return (
     <AppShell>
-      <div className="flex items-center gap-3">
-        <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-brand-500 to-violet-500 text-white shadow-soft">
-          <Bot className="h-5 w-5" aria-hidden="true" />
-        </span>
-        <div>
-          <h1 className="font-display text-2xl font-semibold text-ink-900">Ask Lunee</h1>
-          <p className="text-sm text-ink-700/70">Ask about your cycle, symptoms or lab reports.</p>
+      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-brand-500 via-brand-600 to-violet-600 p-5 text-white shadow-lift sm:p-6">
+        <div className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full bg-white/15 blur-2xl" aria-hidden="true" />
+        <div className="pointer-events-none absolute -bottom-12 left-1/3 h-32 w-32 rounded-full bg-peach-300/30 blur-2xl" aria-hidden="true" />
+        <div className="relative flex items-center gap-3">
+          <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white/20 ring-1 ring-white/40 backdrop-blur">
+            <Sparkles className="h-6 w-6" aria-hidden="true" />
+          </span>
+          <div className="min-w-0 flex-1">
+            <h1 className="font-display text-2xl font-semibold">Ask Lunee</h1>
+            <p className="text-sm text-white/85">
+              {user?.name ? `Hi ${user.name.split(" ")[0]}, ` : ""}
+              ask about your cycle, symptoms or reports.
+            </p>
+          </div>
+        </div>
+        <div className="relative mt-4 flex items-center gap-2">
+          <label htmlFor="chat-lang" className="text-xs font-medium text-white/85">Language</label>
+          <select
+            id="chat-lang"
+            value={language}
+            onChange={(e) => {
+              setLanguage(e.target.value);
+              saveChatLanguage(e.target.value);
+            }}
+            className="h-9 cursor-pointer rounded-full border-0 bg-white/20 px-3 text-sm font-medium text-white outline-none ring-1 ring-white/40 focus-visible:ring-2 focus-visible:ring-white [&>option]:text-ink-900"
+          >
+            {CHAT_LANGUAGES.map((l) => (
+              <option key={l.code} value={l.code}>{l.label}</option>
+            ))}
+          </select>
         </div>
       </div>
 
@@ -362,9 +377,7 @@ export function Chat() {
         {turns.length === 0 && (
           <div className="rounded-3xl border border-brand-100 bg-gradient-to-br from-white to-brand-50/60 p-6 shadow-soft">
             <p className="font-display text-lg font-semibold text-ink-900">How are you feeling?</p>
-            <p className="mt-1 text-sm text-ink-700/75">
-              Describe a symptom or a worry in your own words. Try one of these, or write your own:
-            </p>
+            <p className="mt-1 text-sm text-ink-700/75">Type in any language. Or tap one:</p>
             <div className="mt-4 grid gap-2 sm:grid-cols-1">
               {SUGGESTIONS.map((s) => (
                 <button
@@ -395,31 +408,10 @@ export function Chat() {
             </div>
 
             <div className="flex items-start gap-2">
-              <span className="mt-1 hidden h-7 w-7 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-brand-500 to-violet-500 text-white sm:flex">
-                <Bot className="h-3.5 w-3.5" aria-hidden="true" />
+              <span className="mt-1 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-brand-500 to-violet-500 text-white">
+                <Sparkles className="h-3.5 w-3.5" aria-hidden="true" />
               </span>
-              <div className="w-full max-w-full rounded-3xl rounded-tl-md border border-neutral-200 bg-white p-4 shadow-soft sm:max-w-[90%] sm:p-5">
-                {turn.steps.length > 0 && turn.status === "streaming" && (
-                  <div className="space-y-1.5" aria-live="polite">
-                    {turn.steps.map((step) => (
-                      <StepRow key={step.agent} step={step} />
-                    ))}
-                  </div>
-                )}
-                {turn.steps.length > 0 && turn.status !== "streaming" && turn.result?.kind !== "reply" && (
-                  <details className="group mb-4 border-b border-neutral-100 pb-3">
-                    <summary className="flex cursor-pointer list-none items-center gap-1.5 text-xs font-medium text-neutral-500 hover:text-ink-900">
-                      <CheckCircle2 className="h-3.5 w-3.5 text-sage-500" aria-hidden="true" />
-                      How Lunee worked this out ({turn.steps.length} steps)
-                    </summary>
-                    <div className="mt-3 space-y-1.5">
-                      {turn.steps.map((step) => (
-                        <StepRow key={step.agent} step={step} />
-                      ))}
-                    </div>
-                  </details>
-                )}
-
+              <div className="w-full max-w-full rounded-3xl rounded-tl-md border border-brand-100 bg-gradient-to-br from-white to-brand-50/70 p-4 shadow-soft sm:max-w-[90%] sm:p-5">
                 {turn.emergency && <EmergencyBanner data={turn.emergency} />}
 
                 {turn.status === "error" && (
@@ -436,14 +428,14 @@ export function Chat() {
                   <AssistantResult result={turn.result} onFollowUp={(q) => send(q)} />
                 )}
 
-                {turn.status === "streaming" && turn.steps.length === 0 && (
+                {turn.status === "streaming" && !turn.result && (
                   <div className="flex items-center gap-2 text-sm text-ink-700/60">
                     <span className="flex gap-1" aria-hidden="true">
                       <span className="h-2 w-2 animate-bounce rounded-full bg-brand-300 [animation-delay:-0.2s]" />
                       <span className="h-2 w-2 animate-bounce rounded-full bg-brand-400 [animation-delay:-0.1s]" />
                       <span className="h-2 w-2 animate-bounce rounded-full bg-brand-500" />
                     </span>
-                    Lunee is typing…
+                    {turn.steps.length > 0 ? turn.steps[turn.steps.length - 1].label : "Lunee is typing"}…
                   </div>
                 )}
               </div>
@@ -473,7 +465,7 @@ export function Chat() {
                 send(input);
               }
             }}
-            placeholder="e.g. I've been tired for two weeks"
+            placeholder="Ask anything…"
             className="min-h-11 flex-1 resize-none border-none shadow-none focus-visible:ring-0"
             rows={1}
           />

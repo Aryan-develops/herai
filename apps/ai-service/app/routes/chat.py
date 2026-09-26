@@ -26,7 +26,7 @@ async def chat_stream(payload: ChatRequest):
         try:
             profile = payload.healthProfile.model_dump() if payload.healthProfile else None
             history = [m.model_dump() for m in payload.history]
-            async for event in run_pipeline(payload.message, profile, history):
+            async for event in run_pipeline(payload.message, profile, history, payload.language):
                 yield f"data: {json.dumps(event, default=str)}\n\n"
         except Exception as exc:  # noqa: BLE001 - surface any agent failure to the client instead of a bare 500
             yield f"data: {json.dumps({'type': 'error', 'message': str(exc)})}\n\n"

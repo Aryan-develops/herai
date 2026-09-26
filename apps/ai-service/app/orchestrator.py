@@ -38,6 +38,7 @@ from app.agents import (
     SymptomAnalysisAgent,
     WomensHealthAgent,
 )
+from app.lang import current_language, emergency_copy, normalize
 from app.llm import get_llm_provider
 from app.utils import lab_values as lv
 from app.utils.ocr import extract_text
@@ -143,10 +144,11 @@ def _collect_sources(ctx: dict) -> list[dict]:
 
 
 def _build_emergency_response(ctx: dict, safety: dict, trace: list[dict]) -> dict:
+    message, action = emergency_copy(ctx.get("language", "auto"), ctx.get("message", ""))
     return {
         "emergency": True,
-        "message": safety["message"],
-        "recommended_action": safety["recommended_action"],
+        "message": message,
+        "recommended_action": action,
         "matched_signals": safety["matched_signals"],
         "intake": ctx.get("intake"),
         "confidence": 0.95,
@@ -409,11 +411,14 @@ async def run_pipeline(
     message: str,
     health_profile: dict | None,
     history: list[dict] | None = None,
+    language: str | None = None,
 ) -> AsyncIterator[dict]:
     request_id = uuid.uuid4().hex[:8]
+    language = normalize(language)
+    current_language.set(language)
     llm = get_llm_provider()
     trace: list[dict] = []
-    ctx: dict[str, Any] = {"message": message, "health_profile": health_profile or {}, "history": history or []}
+    ctx: dict[str, Any] = {"message": message, "health_profile": health_profile or {}, "history": history or [], "language": language}
 
     logger.info(
         "[%s] pipeline=chat status=start message_len=%d has_health_profile=%s",
@@ -453,9 +458,7 @@ async def run_pipeline(
             classification = "greeting"
         if classification in CONVERSATIONAL:
             if classification == "off_topic":
-                yield {"type": "final", "data": _build_reply_response(ctx, OFF_TOPIC_REPLY, OFF_TOPIC_SUGGESTIONS, trace)}
-                logger.info("[%s] pipeline=chat status=complete outcome=off_topic", request_id)
-                return
+                ctx["off_topic"] = True
 
             if classification in ("informational", "general_question"):
                 knowledge_agent = KnowledgeRetrievalAgent(llm)

@@ -5,6 +5,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   Pressable,
+  ScrollView,
   StyleSheet,
   Text,
   TextInput,
@@ -17,6 +18,10 @@ import { GetHelpButton } from "../components/GetHelp";
 import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { AppStackParamList } from "../navigation/types";
+import { LinearGradient } from "expo-linear-gradient";
+import { Ionicons } from "@expo/vector-icons";
+import { useAuth } from "../context/AuthContext";
+import { CHAT_LANGUAGES, loadChatLanguage, saveChatLanguage } from "../lib/chatLanguages";
 import { colors } from "../theme";
 
 /** Ported from apps/web/src/pages/Chat.tsx — same Turn/StepState model and
@@ -243,7 +248,10 @@ function AssistantResult({ result, onFollowUp }: { result: FinalResult; onFollow
 
 export function ChatScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<AppStackParamList>>();
+  const { user } = useAuth();
   const [profile, setProfile] = useState<HealthProfile | null>(null);
+  const [cycle, setCycle] = useState<{ phase?: string; day?: number }>({});
+  const [language, setLanguage] = useState(loadChatLanguage);
   const [turns, setTurns] = useState<Turn[]>([]);
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
@@ -251,6 +259,10 @@ export function ChatScreen() {
 
   useEffect(() => {
     api.getProfile().then(({ profile }) => setProfile(profile)).catch(() => setProfile(null));
+    api
+      .getCycleInsights()
+      .then(({ insights }) => setCycle({ phase: insights.subPhase ?? insights.phase ?? undefined, day: insights.currentCycleDay ?? undefined }))
+      .catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -278,7 +290,8 @@ export function ChatScreen() {
             ]
           : [{ role: "user" as const, content: t.userMessage }];
       });
-      await streamChat({ message: trimmed, healthProfile: profile ?? undefined, history }, (event) => {
+      const healthProfile = { ...(profile ?? {}), name: user?.name, cyclePhase: cycle.phase, cycleDay: cycle.day };
+      await streamChat({ message: trimmed, healthProfile, history, language }, (event) => {
         setTurns((prev) => prev.map((t) => (t.id === id ? applyEvent(t, event) : t)));
         if (event.type === "final") {
           api
@@ -309,13 +322,42 @@ export function ChatScreen() {
         keyExtractor={(t) => t.id}
         ListHeaderComponent={
           <View style={styles.intro}>
-            <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
-              <Text style={styles.title} accessibilityRole="header">Ask Lunee</Text>
-              <GetHelpButton onFindCare={(type) => navigation.navigate("Care", type ? { type } : undefined)} />
-            </View>
-            <Text style={styles.subtitle}>Ask about your cycle, symptoms or lab reports.</Text>
+            <LinearGradient colors={[colors.brand500, colors.brand600, "#7c4dd6"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.hero}>
+              <View style={styles.heroTop}>
+                <View style={styles.orb}>
+                  <Ionicons name="sparkles" size={22} color="#fff" />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.heroTitle} accessibilityRole="header">Ask Lunee</Text>
+                  <Text style={styles.heroSub}>
+                    {user?.name ? `Hi ${user.name.split(" ")[0]}, ` : ""}ask about your cycle, symptoms or reports.
+                  </Text>
+                </View>
+                <GetHelpButton onFindCare={(type) => navigation.navigate("Care", type ? { type } : undefined)} />
+              </View>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.langRow} accessibilityLabel="Reply language">
+                {CHAT_LANGUAGES.map((l) => {
+                  const on = language === l.code;
+                  return (
+                    <Pressable
+                      key={l.code}
+                      onPress={() => {
+                        setLanguage(l.code);
+                        saveChatLanguage(l.code);
+                      }}
+                      accessibilityRole="button"
+                      accessibilityState={{ selected: on }}
+                      style={[styles.langChip, on && styles.langChipOn]}
+                    >
+                      <Text style={[styles.langText, on && styles.langTextOn]}>{l.label}</Text>
+                    </Pressable>
+                  );
+                })}
+              </ScrollView>
+            </LinearGradient>
             {turns.length === 0 && (
               <View style={styles.suggestions}>
+                <Text style={styles.suggestHint}>Type in any language. Or tap one:</Text>
                 {SUGGESTIONS.map((s) => (
                   <Pressable key={s} onPress={() => send(s)} style={styles.suggestionChip}>
                     <Text style={styles.suggestionText}>{s}</Text>
@@ -328,20 +370,12 @@ export function ChatScreen() {
         renderItem={({ item: turn }) => (
           <View style={styles.turn}>
             <View style={styles.userRow}>
-              <View style={styles.userBubble}>
+              <LinearGradient colors={[colors.brand500, colors.brand600]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.userBubble}>
                 <Text style={styles.userText}>{turn.userMessage}</Text>
-              </View>
+              </LinearGradient>
             </View>
 
             <View style={styles.assistantBubble}>
-              {turn.steps.length > 0 && turn.status === "streaming" && (
-                <View style={styles.stepsBox}>
-                  {turn.steps.map((step) => (
-                    <StepRow key={step.agent} step={step} />
-                  ))}
-                </View>
-              )}
-
               {turn.emergency && <EmergencyBanner data={turn.emergency} />}
 
               {turn.status === "error" && <Text style={styles.errorText}>⚠ {turn.error}</Text>}
@@ -353,10 +387,10 @@ export function ChatScreen() {
                 <AssistantResult result={turn.result} onFollowUp={(q) => send(q)} />
               )}
 
-              {turn.status === "streaming" && turn.steps.length === 0 && (
+              {turn.status === "streaming" && !turn.result && (
                 <View style={styles.stepRow}>
                   <ActivityIndicator size="small" color={colors.ink700} />
-                  <Text style={styles.stepLabel}>Lunee is typing…</Text>
+                  <Text style={styles.stepLabel}>{turn.steps.length > 0 ? turn.steps[turn.steps.length - 1].label : "Lunee is typing"}…</Text>
                 </View>
               )}
             </View>
@@ -369,7 +403,7 @@ export function ChatScreen() {
           style={styles.input}
           value={input}
           onChangeText={setInput}
-          placeholder="e.g. I've been tired for two weeks"
+          placeholder="Ask anything…"
           placeholderTextColor={colors.muted}
           accessibilityLabel="Message to Lunee"
           multiline
@@ -383,7 +417,9 @@ export function ChatScreen() {
           accessibilityState={{ disabled: busy || !input.trim(), busy }}
           style={[styles.sendButton, (busy || !input.trim()) && styles.sendButtonDisabled]}
         >
-          {busy ? <ActivityIndicator size="small" color={colors.onBrand} /> : <Text style={styles.sendText}>➤</Text>}
+          <LinearGradient colors={[colors.brand500, "#7c4dd6"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.sendFill}>
+            {busy ? <ActivityIndicator size="small" color={colors.onBrand} /> : <Ionicons name="send" size={18} color={colors.onBrand} />}
+          </LinearGradient>
         </Pressable>
       </View>
     </KeyboardAvoidingView>
@@ -395,6 +431,17 @@ const styles = StyleSheet.create({
   list: { flex: 1 },
   listContent: { padding: 16, paddingBottom: 8 },
   intro: { marginBottom: 12 },
+  hero: { borderRadius: 24, padding: 16, gap: 14, overflow: "hidden" },
+  heroTop: { flexDirection: "row", alignItems: "center", gap: 12 },
+  orb: { width: 46, height: 46, borderRadius: 16, backgroundColor: "rgba(255,255,255,0.22)", borderWidth: 1, borderColor: "rgba(255,255,255,0.45)", alignItems: "center", justifyContent: "center" },
+  heroTitle: { fontSize: 22, fontWeight: "700", color: "#fff" },
+  heroSub: { fontSize: 13, color: "rgba(255,255,255,0.88)", marginTop: 2, lineHeight: 18 },
+  langRow: { gap: 8, paddingRight: 8 },
+  langChip: { minHeight: 36, paddingHorizontal: 14, borderRadius: 999, backgroundColor: "rgba(255,255,255,0.2)", borderWidth: 1, borderColor: "rgba(255,255,255,0.4)", alignItems: "center", justifyContent: "center" },
+  langChipOn: { backgroundColor: "#fff", borderColor: "#fff" },
+  langText: { fontSize: 13, fontWeight: "600", color: "#fff" },
+  langTextOn: { color: "#ac1a55" },
+  suggestHint: { fontSize: 13, color: colors.ink700 },
   title: { fontSize: 22, fontWeight: "700", color: colors.ink900 },
   subtitle: { fontSize: 13, color: colors.ink700, marginTop: 4, lineHeight: 18 },
   suggestions: { marginTop: 14, gap: 8 },
@@ -410,15 +457,15 @@ const styles = StyleSheet.create({
   suggestionText: { fontSize: 12, color: colors.ink700 },
   turn: { marginBottom: 16, gap: 8 },
   userRow: { alignItems: "flex-end" },
-  userBubble: { maxWidth: "82%", backgroundColor: colors.brand600, borderRadius: 18, borderTopRightRadius: 4, paddingHorizontal: 14, paddingVertical: 10 },
+  userBubble: { maxWidth: "82%", borderRadius: 18, borderTopRightRadius: 4, paddingHorizontal: 14, paddingVertical: 10 },
   userText: { color: colors.onBrand, fontSize: 14 },
   assistantBubble: {
     maxWidth: "90%",
-    backgroundColor: colors.white,
+    backgroundColor: colors.brand50,
     borderRadius: 16,
     borderTopLeftRadius: 4,
     borderWidth: 1,
-    borderColor: colors.neutral200,
+    borderColor: colors.brand100,
     padding: 14,
   },
   stepsBox: { gap: 6, borderBottomWidth: 1, borderBottomColor: colors.neutral200, paddingBottom: 10, marginBottom: 10 },
@@ -474,7 +521,8 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: colors.ink900,
   },
-  sendButton: { height: 44, width: 44, borderRadius: 14, backgroundColor: colors.brand600, alignItems: "center", justifyContent: "center" },
+  sendButton: { height: 44, width: 44, borderRadius: 14, overflow: "hidden" },
+  sendFill: { flex: 1, alignItems: "center", justifyContent: "center" },
   sendButtonDisabled: { opacity: 0.4 },
   sendText: { color: colors.onBrand, fontSize: 16 },
 });

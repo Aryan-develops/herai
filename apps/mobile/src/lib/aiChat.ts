@@ -136,7 +136,7 @@ export interface ChatMessagePayload {
 }
 
 export async function streamChat(
-  payload: { message: string; healthProfile?: HealthProfile; history?: ChatMessagePayload[] },
+  payload: { message: string; healthProfile?: Partial<HealthProfile> & { name?: string; cyclePhase?: string; cycleDay?: number }; history?: ChatMessagePayload[]; language?: string },
   onEvent: (event: PipelineEvent) => void,
   signal?: AbortSignal
 ): Promise<void> {
