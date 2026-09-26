@@ -236,6 +236,18 @@ try {
   const tl = await call(she.token, "GET", "/logs/timeline");
   check("timeline includes mood events", tl.status === 200 && JSON.stringify(tl.json).includes('"mood"'));
 
+  // ---- period range + one flow per day
+  const d0 = new Date(Date.now() - 4 * 86400000).toISOString().slice(0, 10);
+  const d1 = new Date(Date.now() - 3 * 86400000).toISOString().slice(0, 10);
+  const rng = await call(she.token, "POST", "/logs/cycles/range", { days: [{ date: d0, flow: "heavy" }, { date: d1, flow: "light" }] });
+  check("period range saves every day", rng.status === 201 && rng.json.logs.length === 2);
+  await call(she.token, "POST", "/logs/cycles/range", { days: [{ date: d0, flow: "medium" }] });
+  const cl = await call(she.token, "GET", "/logs/cycles");
+  const onD0 = cl.json.logs.filter((l) => l.loggedAt?.slice(0, 10) === d0 || l.logged_at?.slice(0, 10) === d0);
+  check("one flow per day (replaced)", onD0.length === 1 && onD0[0].flow === "medium");
+  const fut = await call(she.token, "POST", "/logs/cycles/range", { days: [{ date: "2999-01-01", flow: "light" }] });
+  check("future period days rejected", fut.status === 400);
+
   // ---- cascade
   const linkBefore = await admin.from("partner_links").select("id").eq("partner_id", he.id);
   await admin.auth.admin.deleteUser(he.id);

@@ -122,8 +122,8 @@ export function computeCycleInsights(
 
   const predictedNextPeriodStart = addDays(lastPeriodStartDate, cycleLengthDays);
   const ovulationDate = addDays(predictedNextPeriodStart, -LUTEAL_PHASE_LENGTH);
-  const fertileWindowStart = addDays(ovulationDate, -5);
-  const fertileWindowEnd = addDays(ovulationDate, 1);
+  const fertileWindowStart = addDays(ovulationDate, -4);
+  const fertileWindowEnd = addDays(ovulationDate, 3);
 
   let phase: CycleInsights["phase"];
   if (currentCycleDay < periodLengthDays) phase = "menstrual";
@@ -179,7 +179,7 @@ export function phaseForDate(insights: CycleInsights, date: Date): DayPhase | nu
   const idx = ((diff % L) + L) % L; // 0-based day in cycle
   const ovulationIdx = L - LUTEAL_PHASE_LENGTH;
   if (idx < insights.periodLengthDays) return "menstrual";
-  if (idx >= ovulationIdx - 5 && idx <= ovulationIdx + 1) return "ovulation";
+  if (idx >= ovulationIdx - 4 && idx <= ovulationIdx + 3) return "ovulation";
   if (idx >= L - PMS_WINDOW_DAYS) return "pms";
   return idx < ovulationIdx ? "follicular" : "luteal";
 }

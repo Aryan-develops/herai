@@ -545,6 +545,8 @@ export const api = {
 
   createCycleLog: (data: { flow: CycleLog["flow"]; symptoms?: string[]; notes?: string; loggedAt?: string; durationMinutes?: number }) =>
     request<{ log: CycleLog }>("/logs/cycles", { method: "POST", body: JSON.stringify(data) }),
+  createPeriodRange: (days: { date: string; flow: CycleLog["flow"] }[]) =>
+    request<{ logs: CycleLog[] }>("/logs/cycles/range", { method: "POST", body: JSON.stringify({ days }) }),
   listCycleLogs: () => request<{ logs: CycleLog[] }>("/logs/cycles"),
   deleteCycleLog: (id: string) => request<void>(`/logs/cycles/${id}`, { method: "DELETE" }),
   getCycleInsights: () => request<{ insights: CycleInsights }>("/logs/cycles/insights"),

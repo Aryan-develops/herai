@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { Droplet, Plus, Activity, Smile, X } from "lucide-react";
 import { api, ApiError, type CycleLog, type SymptomEntry } from "@/lib/api";
@@ -246,19 +246,37 @@ function SymptomForm({ onDone }: { onDone: () => void }) {
   );
 }
 
+function localDay(d: Date) {
+  return d.toLocaleDateString("sv");
+}
+
+function daysBetween(start: string, end: string): string[] {
+  const out: string[] = [];
+  for (let t = Date.parse(`${start}T12:00:00`); t <= Date.parse(`${end}T12:00:00`) && out.length < 31; t += 86400000) out.push(localDay(new Date(t)));
+  return out;
+}
+
+/** Logs a whole period in one go: pick the first and last day, set a flow for each day. */
 function CycleForm({ onDone }: { onDone: () => void }) {
-  const [flow, setFlow] = useState<CycleLog["flow"]>("medium");
-  const [notes, setNotes] = useState("");
-  const [when, setWhen] = useState<string | undefined>(undefined);
-  const [duration, setDuration] = useState<number | undefined>(undefined);
+  const today = localDay(new Date());
+  const [start, setStart] = useState(today);
+  const [end, setEnd] = useState(today);
+  const [flows, setFlows] = useState<Record<string, CycleLog["flow"]>>({});
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
+  const days = useMemo(() => (start <= end ? daysBetween(start, end) : []), [start, end]);
+  const flowFor = (d: string): CycleLog["flow"] => flows[d] ?? "medium";
+
   async function submit() {
+    if (days.length === 0) {
+      setError("The last day can't be before the first day.");
+      return;
+    }
     setError(null);
     setSubmitting(true);
     try {
-      await api.createCycleLog({ flow, notes: notes || undefined, loggedAt: when, durationMinutes: duration });
+      await api.createPeriodRange(days.map((date) => ({ date, flow: flowFor(date) })));
       onDone();
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Something went wrong. Please try again.");
@@ -269,47 +287,62 @@ function CycleForm({ onDone }: { onDone: () => void }) {
 
   return (
     <div className="space-y-6">
-      <WhenPicker value={when} onChange={setWhen} />
-      <fieldset>
-        <legend className="text-sm font-medium text-ink-800">How's your flow?</legend>
-        <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-4">
-          {FLOWS.map((f) => (
-            <button
-              key={f.value}
-              type="button"
-              aria-pressed={flow === f.value}
-              onClick={() => setFlow(f.value)}
-              className={cn(
-                "flex min-h-20 cursor-pointer flex-col items-center justify-center gap-1.5 rounded-2xl border text-sm font-medium transition-all duration-200 active:scale-95",
-                flow === f.value
-                  ? "border-brand-500 bg-brand-50 text-brand-700 shadow-soft"
-                  : "border-neutral-200 bg-white text-neutral-600 hover:border-brand-300"
-              )}
-            >
-              <span className="flex" aria-hidden="true">
-                {Array.from({ length: f.drops }).map((_, i) => (
-                  <Droplet key={i} className={cn("h-4 w-4", flow === f.value ? "fill-brand-500 text-brand-500" : "text-neutral-400")} />
-                ))}
-              </span>
-              {f.label}
-            </button>
-          ))}
+      <div className="grid grid-cols-2 gap-3">
+        <div className="space-y-1.5">
+          <Label htmlFor="p-start">First day</Label>
+          <input id="p-start" type="date" max={today} value={start} onChange={(e) => e.target.value && (setStart(e.target.value), e.target.value > end && setEnd(e.target.value))} className="h-11 w-full rounded-xl border border-neutral-300 bg-white px-3 text-sm" />
         </div>
-      </fieldset>
-
-      <DurationPicker value={duration} onChange={setDuration} label={flow === "spotting" ? "How long did the spotting last?" : `How long did the ${flow} flow last?`} />
-
-      <div className="space-y-1.5">
-        <Label htmlFor="cycle-notes">Notes (optional)</Label>
-        <Textarea id="cycle-notes" value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Cramps, mood, anything worth noting…" />
+        <div className="space-y-1.5">
+          <Label htmlFor="p-end">Last day</Label>
+          <input id="p-end" type="date" min={start} max={today} value={end} onChange={(e) => e.target.value && setEnd(e.target.value)} className="h-11 w-full rounded-xl border border-neutral-300 bg-white px-3 text-sm" />
+        </div>
       </div>
+
+      <fieldset>
+        <legend className="text-sm font-medium text-ink-800">
+          Flow each day <span className="font-normal text-neutral-500">({days.length} {days.length === 1 ? "day" : "days"})</span>
+        </legend>
+        {days.length > 1 && (
+          <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-neutral-500">
+            Set all:
+            {FLOWS.map((f) => (
+              <button key={f.value} type="button" onClick={() => setFlows(Object.fromEntries(days.map((d) => [d, f.value])))} className="min-h-8 cursor-pointer rounded-full border border-neutral-200 px-3 font-medium text-ink-700 hover:border-brand-300">
+                {f.label}
+              </button>
+            ))}
+          </div>
+        )}
+        <ul className="mt-3 space-y-2">
+          {days.map((d) => (
+            <li key={d} className="flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-neutral-200 p-2.5">
+              <span className="text-sm font-medium text-ink-900">{new Date(`${d}T12:00:00`).toLocaleDateString(undefined, { weekday: "short", day: "numeric", month: "short" })}</span>
+              <div role="group" aria-label={`Flow on ${d}`} className="flex gap-1.5">
+                {FLOWS.map((f) => (
+                  <button
+                    key={f.value}
+                    type="button"
+                    aria-pressed={flowFor(d) === f.value}
+                    onClick={() => setFlows((p) => ({ ...p, [d]: f.value }))}
+                    className={cn(
+                      "min-h-9 cursor-pointer rounded-full border px-2.5 text-xs font-medium transition-colors",
+                      flowFor(d) === f.value ? "border-brand-500 bg-brand-50 text-brand-700" : "border-neutral-200 text-neutral-600 hover:border-brand-300",
+                    )}
+                  >
+                    {f.label}
+                  </button>
+                ))}
+              </div>
+            </li>
+          ))}
+        </ul>
+      </fieldset>
 
       {error && <Alert tone="error">{error}</Alert>}
 
       <div className="sticky bottom-[4.75rem] z-10 -mx-5 -mb-5 rounded-b-3xl border-t border-neutral-200 bg-white/90 px-5 py-3 backdrop-blur sm:-mx-7 sm:-mb-7 sm:px-7 xl:static xl:m-0 xl:border-0 xl:bg-transparent xl:p-0">
         <Button className="w-full" size="lg" onClick={submit} disabled={submitting}>
           {submitting && <Spinner />}
-          {submitting ? "Saving…" : "Save period entry"}
+          {submitting ? "Saving…" : "Save period"}
         </Button>
       </div>
     </div>

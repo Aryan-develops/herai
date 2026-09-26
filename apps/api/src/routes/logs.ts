@@ -5,6 +5,7 @@ import { requireDateOfBirth } from "../middleware/requireDateOfBirth.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import {
   createCycleLog,
+  createPeriodRange,
   createSymptomLog,
   deleteCycleLog,
   deleteSymptomLog,
@@ -26,6 +27,7 @@ logsRouter.get("/symptoms", asyncHandler(listSymptomLogs));
 logsRouter.delete("/symptoms/:id", asyncHandler(deleteSymptomLog));
 
 logsRouter.post("/cycles", asyncHandler(createCycleLog));
+logsRouter.post("/cycles/range", asyncHandler(createPeriodRange));
 logsRouter.get("/cycles", asyncHandler(listCycleLogs));
 logsRouter.get("/cycles/insights", asyncHandler(getCycleInsights));
 logsRouter.delete("/cycles/:id", asyncHandler(deleteCycleLog));

@@ -5,6 +5,7 @@ import { api, ApiError, type CycleLog, type SymptomEntry } from "../lib/api";
 import { Button, Chip, ErrorText, Field, ScreenTitle } from "../components/ui";
 import { MoodLogForm } from "../components/MoodLogForm";
 import { WhenPicker } from "../components/WhenPicker";
+import { DateField } from "../components/DateField";
 import { DurationPicker } from "../components/DurationPicker";
 import { colors, radius, shadow } from "../theme";
 import type { AppStackParamList } from "../navigation/types";
@@ -164,19 +165,37 @@ function SymptomForm({ onDone }: { onDone: () => void }) {
   );
 }
 
+function localDay(d: Date) {
+  return d.toLocaleDateString("sv");
+}
+
+function daysBetween(start: string, end: string): string[] {
+  const out: string[] = [];
+  for (let t = Date.parse(`${start}T12:00:00`); t <= Date.parse(`${end}T12:00:00`) && out.length < 31; t += 86400000) out.push(localDay(new Date(t)));
+  return out;
+}
+
+/** Logs a whole period in one go: pick the first and last day, set a flow for each day. */
 function CycleForm({ onDone }: { onDone: () => void }) {
-  const [flow, setFlow] = useState<CycleLog["flow"]>("medium");
-  const [notes, setNotes] = useState("");
-  const [when, setWhen] = useState<string | undefined>(undefined);
-  const [duration, setDuration] = useState<number | undefined>(undefined);
+  const today = localDay(new Date());
+  const [start, setStart] = useState(today);
+  const [end, setEnd] = useState(today);
+  const [flows, setFlows] = useState<Record<string, CycleLog["flow"]>>({});
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
+  const days = start <= end ? daysBetween(start, end) : [];
+  const flowFor = (d: string): CycleLog["flow"] => flows[d] ?? "medium";
+
   async function submit() {
+    if (days.length === 0) {
+      setError("The last day can't be before the first day.");
+      return;
+    }
     setError(null);
     setSubmitting(true);
     try {
-      await api.createCycleLog({ flow, notes: notes || undefined, loggedAt: when, durationMinutes: duration });
+      await api.createPeriodRange(days.map((date) => ({ date, flow: flowFor(date) })));
       onDone();
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Something went wrong. Please try again.");
@@ -187,22 +206,31 @@ function CycleForm({ onDone }: { onDone: () => void }) {
 
   return (
     <View style={styles.card}>
-      <WhenPicker value={when} onChange={setWhen} />
+      <View style={{ flexDirection: "row", gap: 10 }}>
+        <DateField label="First day" value={start} max={today} onChange={(d) => { setStart(d); if (d > end) setEnd(d); }} />
+        <DateField label="Last day" value={end} min={start} max={today} onChange={setEnd} />
+      </View>
 
-      <Text style={[styles.label, { marginTop: 18 }]}>How's your flow?</Text>
-      <View style={styles.chips}>
-        {FLOWS.map((f) => (
-          <Chip key={f.value} label={f.label} selected={flow === f.value} onPress={() => setFlow(f.value)} />
-        ))}
-      </View>
-      <View style={{ marginTop: 16 }}>
-        <DurationPicker value={duration} onChange={setDuration} label={flow === "spotting" ? "How long did the spotting last?" : `How long did the ${flow} flow last?`} />
-      </View>
-      <View style={{ marginTop: 16 }}>
-        <Field label="Notes (optional)" placeholder="Cramps, mood, anything worth noting…" value={notes} onChangeText={setNotes} multiline />
-      </View>
+      <Text style={[styles.label, { marginTop: 18 }]}>Flow each day ({days.length})</Text>
+      {days.length > 1 && (
+        <View style={[styles.chips, { marginBottom: 10 }]}>
+          {FLOWS.map((f) => (
+            <Chip key={f.value} label={`All ${f.label.toLowerCase()}`} onPress={() => setFlows(Object.fromEntries(days.map((d) => [d, f.value])))} />
+          ))}
+        </View>
+      )}
+      {days.map((d) => (
+        <View key={d} style={{ marginBottom: 10 }}>
+          <Text style={styles.dayLabel}>{new Date(`${d}T12:00:00`).toLocaleDateString(undefined, { weekday: "short", day: "numeric", month: "short" })}</Text>
+          <View style={styles.chips}>
+            {FLOWS.map((f) => (
+              <Chip key={f.value} label={f.label} selected={flowFor(d) === f.value} onPress={() => setFlows((p) => ({ ...p, [d]: f.value }))} />
+            ))}
+          </View>
+        </View>
+      ))}
       <ErrorText>{error}</ErrorText>
-      <Button title={submitting ? "Saving…" : "Save period entry"} onPress={submit} loading={submitting} />
+      <Button title={submitting ? "Saving…" : "Save period"} onPress={submit} loading={submitting} />
     </View>
   );
 }
@@ -217,6 +245,7 @@ const styles = StyleSheet.create({
   tabButtonTextActive: { color: colors.brand700 },
   card: { backgroundColor: colors.white, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.neutral200, padding: 16, ...shadow.soft },
   label: { fontSize: 14, fontWeight: "600", color: colors.ink900, marginBottom: 10 },
+  dayLabel: { fontSize: 13, fontWeight: "600", color: colors.ink700, marginBottom: 6 },
   hint: { fontSize: 12, color: colors.muted, marginTop: 6 },
   severityRow: { flexDirection: "row", gap: 8 },
   sev: { flex: 1, minHeight: 48, borderRadius: radius.md, borderWidth: 1, borderColor: colors.neutral300, alignItems: "center", justifyContent: "center", backgroundColor: colors.white },

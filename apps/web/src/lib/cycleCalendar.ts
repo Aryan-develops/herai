@@ -32,11 +32,11 @@ export function makeClassifier(insights: CycleInsights | null, loggedPeriodDays:
     const projected = d > today || (offset < 0 && !logged);
     if (logged) return { kind: "period", cycleDay, projected: false };
 
-    const ov = len - 14; // ovulation day-of-cycle
+    const ov = len - 13; // ovulation day-of-cycle (1-based), 14 days before next period
     let kind: DayKind;
     if (cycleDay <= plen) kind = d > today || offset < 0 ? "predicted-period" : "period";
     else if (cycleDay === ov) kind = "ovulation";
-    else if (cycleDay >= ov - 5 && cycleDay <= ov + 1) kind = "fertile";
+    else if (cycleDay >= ov - 4 && cycleDay <= ov + 3) kind = "fertile";
     else if (cycleDay > len - 5) kind = "pms";
     else if (cycleDay < ov) kind = "follicular";
     else kind = "luteal";

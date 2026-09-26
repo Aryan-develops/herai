@@ -68,11 +68,47 @@ export async function deleteSymptomLog(req: AuthedRequest, res: Response) {
   res.status(204).send();
 }
 
+async function clearCycleDays(userId: string, days: string[]) {
+  for (const day of days) {
+    await supabaseAdmin
+      .from("cycle_logs")
+      .delete()
+      .eq("user_id", userId)
+      .gte("logged_at", `${day}T00:00:00.000Z`)
+      .lt("logged_at", `${new Date(Date.parse(`${day}T00:00:00.000Z`) + 86400000).toISOString()}`);
+  }
+}
+
+const periodRangeSchema = z.object({
+  days: z
+    .array(z.object({ date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/), flow: z.enum(["spotting", "light", "medium", "heavy"]) }))
+    .min(1)
+    .max(31),
+});
+
+/** Log a whole period in one go: one flow per day, replacing anything already logged on those days. */
+export async function createPeriodRange(req: AuthedRequest, res: Response) {
+  const parsed = periodRangeSchema.safeParse(req.body);
+  if (!parsed.success) throw new HttpError(400, parsed.error.issues[0]?.message ?? "Invalid input");
+  const today = new Date().toISOString().slice(0, 10);
+  const days = [...new Map(parsed.data.days.map((d) => [d.date, d])).values()];
+  if (days.some((d) => d.date > today)) throw new HttpError(400, "Periods can't be logged for future days.");
+  await clearCycleDays(req.userId!, days.map((d) => d.date));
+  const { data, error } = await supabaseAdmin
+    .from("cycle_logs")
+    .insert(days.map((d) => ({ user_id: req.userId, flow: d.flow, symptoms: [], logged_at: `${d.date}T12:00:00.000Z` })))
+    .select("*");
+  if (error || !data) throw new HttpError(500, "Failed to create log");
+  res.status(201).json({ logs: data });
+}
+
 export async function createCycleLog(req: AuthedRequest, res: Response) {
   const parsed = cycleLogSchema.safeParse(req.body);
   if (!parsed.success) {
     throw new HttpError(400, parsed.error.issues[0]?.message ?? "Invalid input");
   }
+  // One flow entry per day: a new entry for a day replaces the old one.
+  if (parsed.data.loggedAt) await clearCycleDays(req.userId!, [parsed.data.loggedAt.slice(0, 10)]);
   const { data, error } = await supabaseAdmin
     .from("cycle_logs")
     .insert({
