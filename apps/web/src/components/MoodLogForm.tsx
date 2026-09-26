@@ -3,7 +3,6 @@ import { api, ApiError, type Mood, type Need } from "@/lib/api";
 import { NEEDS } from "@/lib/phases";
 import { INTENSITY_LABELS, MOOD_OPTIONS } from "@/components/partner/moodIcons";
 import { WhenPicker } from "@/components/WhenPicker";
-import { DurationPicker } from "@/components/DurationPicker";
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
@@ -15,7 +14,6 @@ export function MoodLogForm({ onDone }: { onDone: () => void }) {
   const [amount, setAmount] = useState<number | null>(null);
   const [need, setNeed] = useState<Need | null>(null);
   const [when, setWhen] = useState<string | undefined>(undefined);
-  const [duration, setDuration] = useState<number | undefined>(undefined);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
@@ -27,7 +25,7 @@ export function MoodLogForm({ onDone }: { onDone: () => void }) {
     setError(null);
     setSubmitting(true);
     try {
-      await api.createMoodLog({ mood, energy: amount ?? undefined, need: need ?? undefined, loggedAt: when, durationMinutes: duration });
+      await api.createMoodLog({ mood, energy: amount ?? undefined, need: need ?? undefined, loggedAt: when });
       onDone();
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Something went wrong. Please try again.");
@@ -114,7 +112,6 @@ export function MoodLogForm({ onDone }: { onDone: () => void }) {
         </div>
       </fieldset>
 
-      <DurationPicker value={duration} onChange={setDuration} label="How long has it lasted?" />
         </div>
       </details>
 

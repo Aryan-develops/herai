@@ -46,20 +46,37 @@ export function CareScreen({ navigation, route }: Props) {
 
   useEffect(load, [load]);
 
-  async function useMyLocation() {
+  // About 1 km precision is enough for "near me" and avoids holding an exact address.
+  const round = (n: number) => Math.round(n * 100) / 100;
+
+  const locate = useCallback(async (ask: boolean) => {
     setLocError(null);
     setLocating(true);
     try {
-      const perm = await Location.requestForegroundPermissionsAsync();
-      if (perm.status !== "granted") throw new Error("denied");
+      let perm = await Location.getForegroundPermissionsAsync();
+      if (perm.status !== "granted" && ask) perm = await Location.requestForegroundPermissionsAsync();
+      if (perm.status !== "granted") {
+        if (ask) setLocError(perm.canAskAgain ? "Location wasn't allowed. Search by city instead." : "Location is blocked for Lunee. Turn it on in your phone's settings, or search by city.");
+        return;
+      }
+      // A last known spot shows results instantly while a fresh fix is fetched.
+      const last = await Location.getLastKnownPositionAsync();
+      if (last) setCoords({ lat: round(last.coords.latitude), lng: round(last.coords.longitude) });
       const pos = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
-      setCoords({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+      setCoords({ lat: round(pos.coords.latitude), lng: round(pos.coords.longitude) });
     } catch {
-      setLocError("Couldn't get your location. Search by city instead.");
+      if (ask) setLocError("Couldn't get your location. Search by city instead.");
     } finally {
       setLocating(false);
     }
-  }
+  }, []);
+
+  // Already allowed on this phone: use it straight away, no prompt.
+  useEffect(() => {
+    locate(false);
+  }, [locate]);
+
+  const useMyLocation = () => (coords ? setCoords(null) : locate(true));
 
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
@@ -69,7 +86,7 @@ export function CareScreen({ navigation, route }: Props) {
 
       <View style={styles.searchRow}>
         <Pressable onPress={useMyLocation} disabled={locating} accessibilityRole="button" style={[styles.locBtn, coords && styles.locBtnOn]}>
-          {locating ? <ActivityIndicator color={colors.onBrand} /> : <Text style={[styles.locText, coords && { color: colors.brand700 }]}>{coords ? "Using your location" : "Use my location"}</Text>}
+          {locating ? <ActivityIndicator color={colors.onBrand} /> : <Text style={[styles.locText, coords && { color: colors.brand700 }]}>{coords ? "Near you · Turn off" : "Use my location"}</Text>}
         </Pressable>
         <TextInput
           style={styles.city}
@@ -84,6 +101,7 @@ export function CareScreen({ navigation, route }: Props) {
         />
       </View>
       {locError ? <Notice tone="warning">{locError}</Notice> : null}
+      {!coords && !locError ? <Text style={styles.locHint}>Only used to sort by distance. Never stored on our servers.</Text> : null}
 
       <View style={styles.chips}>
         {TABS.map((t) => (
@@ -155,6 +173,7 @@ function Tag({ text, tone }: { text: string; tone?: "ok" | "off" | "violet" }) {
 }
 
 const styles = StyleSheet.create({
+  locHint: { fontSize: 12, color: colors.muted },
   screen: { flex: 1, backgroundColor: colors.neutral50 },
   content: { padding: 20, paddingBottom: 48, gap: 12 },
   searchRow: { flexDirection: "row", gap: 8 },

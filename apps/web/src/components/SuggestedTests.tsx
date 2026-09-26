@@ -3,24 +3,18 @@ import { Link } from "react-router-dom";
 import { FlaskConical, LocateFixed } from "lucide-react";
 import { api, type TestSuggestion } from "@/lib/api";
 import { Button } from "@/components/ui/button";
+import { useLocation } from "@/lib/location";
 import { Rating, rupees } from "@/components/care-bits";
 
 /** Follow-up tests worth asking about for a report's flagged values, with partners that offer them. */
 export function SuggestedTests({ reportId }: { reportId: string }) {
   const [items, setItems] = useState<TestSuggestion[] | null>(null);
-  const [coords, setCoords] = useState<{ lat: number; lng: number } | undefined>();
+  const loc = useLocation();
+  const coords = loc.coords ?? undefined;
 
   useEffect(() => {
     api.suggestTests(reportId, coords).then(({ suggestions }) => setItems(suggestions)).catch(() => setItems([]));
   }, [reportId, coords]);
-
-  function locate() {
-    navigator.geolocation?.getCurrentPosition(
-      (p) => setCoords({ lat: p.coords.latitude, lng: p.coords.longitude }),
-      () => {},
-      { timeout: 10000, maximumAge: 300000 }
-    );
-  }
 
   if (!items || items.length === 0) return null;
 
@@ -32,7 +26,7 @@ export function SuggestedTests({ reportId }: { reportId: string }) {
           Tests worth asking about
         </h2>
         {!coords && (
-          <Button size="sm" variant="outline" onClick={locate}>
+          <Button size="sm" variant="outline" onClick={loc.request}>
             <LocateFixed className="h-4 w-4" aria-hidden="true" /> Sort by nearest
           </Button>
         )}

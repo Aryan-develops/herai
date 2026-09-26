@@ -6,7 +6,6 @@ import { NEEDS } from "../lib/phases";
 import { Button, Chip, ErrorText } from "./ui";
 import { INTENSITY_LABELS, MOOD_OPTIONS } from "./moodOptions";
 import { WhenPicker } from "./WhenPicker";
-import { DurationPicker } from "./DurationPicker";
 import { colors, radius, shadow } from "../theme";
 
 /** Full mood entry for the Log screen: mood, how much, an optional "I need…" signal and when it happened. */
@@ -15,7 +14,6 @@ export function MoodLogForm({ onDone }: { onDone: () => void }) {
   const [amount, setAmount] = useState<number | null>(null);
   const [need, setNeed] = useState<Need | null>(null);
   const [when, setWhen] = useState<string | undefined>(undefined);
-  const [duration, setDuration] = useState<number | undefined>(undefined);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
@@ -27,7 +25,7 @@ export function MoodLogForm({ onDone }: { onDone: () => void }) {
     setError(null);
     setSubmitting(true);
     try {
-      await api.createMoodLog({ mood, energy: amount ?? undefined, need: need ?? undefined, loggedAt: when, durationMinutes: duration });
+      await api.createMoodLog({ mood, energy: amount ?? undefined, need: need ?? undefined, loggedAt: when });
       onDone();
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Something went wrong. Please try again.");
@@ -91,9 +89,6 @@ export function MoodLogForm({ onDone }: { onDone: () => void }) {
         ))}
       </View>
 
-      <View style={{ marginTop: 18 }}>
-        <DurationPicker value={duration} onChange={setDuration} label="How long has it lasted?" />
-      </View>
 
       <ErrorText>{error}</ErrorText>
       <View style={{ marginTop: 14 }}>

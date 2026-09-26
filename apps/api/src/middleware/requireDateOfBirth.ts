@@ -1,5 +1,5 @@
 import type { Response, NextFunction } from "express";
-import { supabaseAdmin } from "../config/supabase.js";
+import { loadProfileGate } from "../lib/profileGate.js";
 import type { AuthedRequest } from "./auth.js";
 
 /**
@@ -13,13 +13,9 @@ import type { AuthedRequest } from "./auth.js";
  * status isn't trustworthy until we know the user's actual age.
  */
 export async function requireDateOfBirth(req: AuthedRequest, res: Response, next: NextFunction) {
-  const { data: profile, error } = await supabaseAdmin
-    .from("profiles")
-    .select("date_of_birth")
-    .eq("id", req.userId)
-    .single();
+  const profile = await loadProfileGate(req.userId!);
 
-  if (error || !profile) {
+  if (!profile) {
     return res.status(401).json({ error: "Not authenticated" });
   }
 

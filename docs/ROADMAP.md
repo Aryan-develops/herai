@@ -28,3 +28,5 @@ Status: master task run completed. Live at https://lunee.me (web + API on Vercel
 - Mobile editing of provider services and slots (web only today)
 - Insights and care-plan history views; observability dashboard for `client_errors`
 - Passkey sign-in inside the native app
+
+- Labs and tests partnerships and revenue: see `LAB-PARTNERSHIPS-PLAN.md`

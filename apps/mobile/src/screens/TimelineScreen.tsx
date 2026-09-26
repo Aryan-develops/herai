@@ -1,5 +1,4 @@
 import { useCallback, useState } from "react";
-import { formatDuration } from "../lib/duration";
 import { moodOption } from "../components/moodOptions";
 import { useFocusEffect } from "@react-navigation/native";
 import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
@@ -85,8 +84,6 @@ export function TimelineScreen() {
               <Text style={styles.chipText}>{event.data.flow} flow</Text>
             </View>
           )}
-
-          {formatDuration(event.data.duration_minutes) ? <Text style={styles.notes}>Lasted {formatDuration(event.data.duration_minutes)}</Text> : null}
           {event.type !== "mood" && event.data.notes ? <Text style={styles.notes}>{event.data.notes}</Text> : null}
         </View>
       )}

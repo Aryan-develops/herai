@@ -1,4 +1,17 @@
 {
-  "rewrites": [{ "source": "/(.*)", "destination": "/api" }],
-  "crons": [{ "path": "/api/cron/partner-nudges", "schedule": "30 3 * * *" }]
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/api"
+    }
+  ],
+  "crons": [
+    {
+      "path": "/api/cron/partner-nudges",
+      "schedule": "30 3 * * *"
+    }
+  ],
+  "regions": [
+    "bom1"
+  ]
 }

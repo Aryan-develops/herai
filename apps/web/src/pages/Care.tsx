@@ -10,6 +10,7 @@ import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Alert } from "@/components/ui/alert";
 import { Spinner } from "@/components/ui/spinner";
+import { useLocation } from "@/lib/location";
 import { Rating, rupees } from "@/components/care-bits";
 import { cn } from "@/lib/utils";
 
@@ -26,21 +27,19 @@ const TYPE_STYLE: Record<ProviderType, { icon: typeof FlaskConical; tone: string
   clinic: { icon: Building2, tone: "bg-sage-100 text-sage-700", label: "Clinic" },
 };
 
-type Coords = { lat: number; lng: number };
-
 export function Care() {
   const [params, setParams] = useSearchParams();
   const initialType = (params.get("type") as ProviderType | null) ?? "all";
   const [type, setType] = useState<ProviderType | "all">(TABS.some((t) => t.value === initialType) ? initialType : "all");
-  const [coords, setCoords] = useState<Coords | null>(null);
+  const loc = useLocation();
   const [city, setCity] = useState("");
+  // Typing a city takes over from GPS, so someone can look at another area.
+  const coords = city.trim() ? null : loc.coords;
   const [homeOnly, setHomeOnly] = useState(false);
   const [teleOnly, setTeleOnly] = useState(false);
   const [availOnly, setAvailOnly] = useState(false);
   const [providers, setProviders] = useState<CareProvider[] | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [locating, setLocating] = useState(false);
-  const [locError, setLocError] = useState<string | null>(null);
 
   const load = useCallback(() => {
     setProviders(null);
@@ -61,26 +60,6 @@ export function Care() {
 
   useEffect(load, [load]);
 
-  function useMyLocation() {
-    setLocError(null);
-    if (!navigator.geolocation) {
-      setLocError("Your browser can't share location. Search by city instead.");
-      return;
-    }
-    setLocating(true);
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        setCoords({ lat: pos.coords.latitude, lng: pos.coords.longitude });
-        setLocating(false);
-      },
-      () => {
-        setLocError("Couldn't get your location. Search by city instead.");
-        setLocating(false);
-      },
-      { enableHighAccuracy: false, timeout: 10000, maximumAge: 300000 }
-    );
-  }
-
   function pickType(t: ProviderType | "all") {
     setType(t);
     setParams(t === "all" ? {} : { type: t }, { replace: true });
@@ -97,15 +76,21 @@ export function Care() {
       </div>
 
       <div className="mt-6 flex flex-wrap items-center gap-2">
-        <Button type="button" variant={coords ? "soft" : "default"} onClick={useMyLocation} disabled={locating}>
-          {locating ? <Spinner /> : <LocateFixed className="h-4 w-4" aria-hidden="true" />}
-          {coords ? "Using your location" : "Use my location"}
-        </Button>
+        {loc.status === "on" && coords ? (
+          <Button type="button" variant="soft" onClick={loc.turnOff}>
+            <LocateFixed className="h-4 w-4" aria-hidden="true" />
+            Near you · Turn off
+          </Button>
+        ) : (
+          <Button type="button" onClick={loc.request} disabled={loc.status === "loading" || loc.status === "unsupported"}>
+            {loc.status === "loading" ? <Spinner /> : <LocateFixed className="h-4 w-4" aria-hidden="true" />}
+            Use my location
+          </Button>
+        )}
         <form
           className="flex min-w-0 flex-1 gap-2 sm:max-w-xs"
           onSubmit={(e: FormEvent) => {
             e.preventDefault();
-            setCoords(null);
           }}
         >
           <label htmlFor="city" className="sr-only">
@@ -116,14 +101,24 @@ export function Care() {
             value={city}
             onChange={(e) => {
               setCity(e.target.value);
-              setCoords(null);
             }}
             placeholder="Or search by city"
             icon={<Search className="h-4 w-4" aria-hidden="true" />}
           />
         </form>
       </div>
-      {locError && <Alert tone="warning" className="mt-3">{locError}</Alert>}
+      {loc.status === "denied" && (
+        <Alert tone="warning" className="mt-3">
+          Location is blocked for Lunee. Allow it in your browser's site settings, or search by city.
+        </Alert>
+      )}
+      {loc.status === "error" && <Alert tone="warning" className="mt-3">Couldn't get your location. Search by city instead.</Alert>}
+      {loc.status === "unsupported" && <Alert tone="warning" className="mt-3">This browser can't share location. Search by city instead.</Alert>}
+      {(loc.status === "prompt" || loc.status === "unknown") && (
+        <p className="mt-2 text-xs text-neutral-500">
+          Only used to sort by distance. An approximate spot (about 1 km) is kept on this device, not on our servers.
+        </p>
+      )}
 
       <div className="mt-5 flex flex-wrap items-center gap-2">
         <div role="tablist" aria-label="Provider type" className="inline-flex rounded-2xl bg-neutral-100 p-1">

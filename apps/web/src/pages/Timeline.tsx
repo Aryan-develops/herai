@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { Activity, CalendarPlus, Droplet, Trash2 } from "lucide-react";
 import { api, type TimelineEvent } from "@/lib/api";
-import { formatDuration } from "@/lib/duration";
 import { moodOption } from "@/components/partner/moodIcons";
 import { AppShell } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
@@ -124,7 +123,6 @@ export function Timeline() {
                     <div className="flex items-center justify-between gap-2">
                       <p className="text-sm font-semibold text-ink-900">
                         {event.type === "cycle" ? `${event.data.flow[0].toUpperCase()}${event.data.flow.slice(1)} flow` : event.type === "mood" ? `Mood: ${moodOption(event.data.mood).label}` : "Symptoms"}
-                        {formatDuration(event.data.duration_minutes) && <span className="ml-2 text-xs font-normal text-ink-700/60">lasted {formatDuration(event.data.duration_minutes)}</span>}
                       </p>
                       <p className="tabular text-xs text-neutral-500">
                         {new Date(event.loggedAt).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" })}

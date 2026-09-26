@@ -5,7 +5,6 @@ import { api, ApiError, type CycleLog, type SymptomEntry } from "@/lib/api";
 import { AppShell } from "@/components/AppShell";
 import { MoodLogForm } from "@/components/MoodLogForm";
 import { WhenPicker } from "@/components/WhenPicker";
-import { DurationPicker } from "@/components/DurationPicker";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -105,7 +104,6 @@ function SymptomForm({ onDone }: { onDone: () => void }) {
   const [severity, setSeverity] = useState(3);
   const [notes, setNotes] = useState("");
   const [when, setWhen] = useState<string | undefined>(undefined);
-  const [duration, setDuration] = useState<number | undefined>(undefined);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
@@ -126,7 +124,7 @@ function SymptomForm({ onDone }: { onDone: () => void }) {
     setError(null);
     setSubmitting(true);
     try {
-      await api.createSymptomLog({ symptoms: pending, notes: notes || undefined, loggedAt: when, durationMinutes: duration });
+      await api.createSymptomLog({ symptoms: pending, notes: notes || undefined, loggedAt: when });
       onDone();
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Something went wrong. Please try again.");
@@ -233,7 +231,6 @@ function SymptomForm({ onDone }: { onDone: () => void }) {
           Add details <span className="text-xs font-normal text-neutral-500">optional</span>
         </summary>
         <div className="space-y-5 border-t border-neutral-100 p-4">
-      <DurationPicker value={duration} onChange={setDuration} />
 
       <div className="space-y-1.5">
         <Label htmlFor="symptom-notes">Notes (optional)</Label>

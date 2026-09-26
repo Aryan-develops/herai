@@ -19,9 +19,35 @@ interface AuthContextValue {
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
+const USER_CACHE = "lunee.user";
+
+/** Last known profile, shown instantly on reload while /me revalidates in the background. Cleared on sign-out. */
+function readCachedUser(): AuthUser | null {
+  try {
+    if (!getSession()) return null;
+    const raw = localStorage.getItem(USER_CACHE);
+    return raw ? (JSON.parse(raw) as AuthUser) : null;
+  } catch {
+    return null;
+  }
+}
+
+function writeCachedUser(user: AuthUser | null) {
+  try {
+    if (user) localStorage.setItem(USER_CACHE, JSON.stringify(user));
+    else localStorage.removeItem(USER_CACHE);
+  } catch {
+    /* private mode: no cache, just slower */
+  }
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<AuthUser | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [user, setUserState] = useState<AuthUser | null>(readCachedUser);
+  const [loading, setLoading] = useState(() => readCachedUser() === null);
+  const setUser = (u: AuthUser | null) => {
+    setUserState(u);
+    writeCachedUser(u);
+  };
 
   useEffect(() => {
     if (!getSession()) {
@@ -33,6 +59,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       .then(({ user }) => setUser(user))
       .catch(() => setUser(null))
       .finally(() => setLoading(false));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const value: AuthContextValue = {

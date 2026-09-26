@@ -1,4 +1,4 @@
-import { Suspense, lazy } from "react";
+import { Suspense, lazy, useEffect } from "react";
 import { Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/context/AuthContext";
 import { ToastProvider } from "@/components/ui/toast";
@@ -28,12 +28,42 @@ const PartnerHome = lazy(() => import("@/pages/PartnerHome").then((m) => ({ defa
 const PartnerUpgrade = lazy(() => import("@/pages/PartnerUpgrade").then((m) => ({ default: m.PartnerUpgrade })));
 const Join = lazy(() => import("@/pages/Join").then((m) => ({ default: m.Join })));
 
+/** Shape of a page while its code loads, so the screen never flashes blank text. */
+function PageSkeleton() {
+  return (
+    <div className="mx-auto min-h-dvh max-w-3xl px-4 pt-20" aria-busy="true" aria-label="Loading">
+      <div className="skeleton mx-auto h-10 w-2/3 rounded-2xl" />
+      <div className="skeleton mx-auto mt-4 h-14 w-48 rounded-full" />
+      <div className="skeleton mt-8 h-28 w-full rounded-3xl" />
+      <div className="skeleton mt-4 h-24 w-full rounded-3xl" />
+    </div>
+  );
+}
+
+// Warm the tabs people open most once the browser is idle, so the first tap doesn't wait on a download.
+function prefetchMainTabs() {
+  const run = () => {
+    void import("@/pages/Dashboard");
+    void import("@/pages/Cycle");
+    void import("@/pages/LogEntry");
+    void import("@/pages/PartnerHome");
+    void import("@/pages/Chat");
+  };
+  const idle = (window as unknown as { requestIdleCallback?: (cb: () => void) => void }).requestIdleCallback;
+  if (idle) idle(run);
+  else setTimeout(run, 2000);
+}
+
 function App() {
+  useEffect(() => {
+    if (localStorage.getItem("herai.session")) prefetchMainTabs();
+  }, []);
+
   return (
     <AuthProvider>
       <PrefsProvider>
       <ToastProvider>
-      <Suspense fallback={<div className="flex min-h-dvh items-center justify-center bg-neutral-50 text-neutral-500">Loading…</div>}>
+      <Suspense fallback={<PageSkeleton />}>
       <Routes>
         <Route path="/" element={<Landing />} />
         <Route path="/login" element={<Login />} />

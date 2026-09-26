@@ -6,7 +6,6 @@ import { Button, Chip, ErrorText, Field, ScreenTitle } from "../components/ui";
 import { MoodLogForm } from "../components/MoodLogForm";
 import { WhenPicker } from "../components/WhenPicker";
 import { DateField } from "../components/DateField";
-import { DurationPicker } from "../components/DurationPicker";
 import { colors, radius, shadow } from "../theme";
 import type { AppStackParamList } from "../navigation/types";
 
@@ -60,7 +59,6 @@ function SymptomForm({ onDone }: { onDone: () => void }) {
   const [severity, setSeverity] = useState(3);
   const [notes, setNotes] = useState("");
   const [when, setWhen] = useState<string | undefined>(undefined);
-  const [duration, setDuration] = useState<number | undefined>(undefined);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
@@ -80,7 +78,7 @@ function SymptomForm({ onDone }: { onDone: () => void }) {
     setError(null);
     setSubmitting(true);
     try {
-      await api.createSymptomLog({ symptoms: pending, notes: notes || undefined, loggedAt: when, durationMinutes: duration });
+      await api.createSymptomLog({ symptoms: pending, notes: notes || undefined, loggedAt: when });
       onDone();
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Something went wrong. Please try again.");
@@ -155,7 +153,6 @@ function SymptomForm({ onDone }: { onDone: () => void }) {
       )}
 
       <View style={{ marginBottom: 14 }}>
-        <DurationPicker value={duration} onChange={setDuration} />
       </View>
 
       <Field label="Notes (optional)" placeholder="Anything else worth noting…" value={notes} onChangeText={setNotes} multiline />

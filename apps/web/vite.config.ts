@@ -17,6 +17,19 @@ export default defineConfig({
       '@': path.resolve(import.meta.dirname, './src'),
     },
   },
+  build: {
+    rollupOptions: {
+      output: {
+        // Stable vendor chunks cache across deploys, so a release only re-downloads the app code.
+        manualChunks(id: string) {
+          if (!id.includes('node_modules')) return undefined
+          if (/node_modules\/(react|react-dom|react-router|react-router-dom|scheduler)\//.test(id)) return 'react'
+          if (id.includes('lucide-react')) return 'icons'
+          return undefined
+        },
+      },
+    },
+  },
   server: {
     proxy: {
       '/api': {
