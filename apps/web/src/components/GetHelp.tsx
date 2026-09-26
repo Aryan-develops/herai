@@ -107,7 +107,7 @@ function HelpSheet({ onClose }: { onClose: () => void }) {
         </div>
 
         <p className="mt-4 text-xs text-neutral-500">
-          Numbers shown are for India. HERAI can't summon help for you and can't detect every emergency.
+          Numbers shown are for India. Lunee can't summon help for you and can't detect every emergency.
         </p>
       </div>
     </div>,

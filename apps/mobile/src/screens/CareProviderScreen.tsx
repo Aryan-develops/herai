@@ -123,7 +123,7 @@ export function CareProviderScreen({ navigation, route }: Props) {
       <View style={styles.card}>
         <Text style={styles.h2} accessibilityRole="header">Patient reviews</Text>
         {data.reviews.length === 0 ? (
-          <Text style={styles.muted}>No reviews yet. Reviews come only from patients who completed a visit through HERAI.</Text>
+          <Text style={styles.muted}>No reviews yet. Reviews come only from patients who completed a visit through Lunee.</Text>
         ) : (
           data.reviews.map((r, i) => (
             <View key={i} style={styles.review}>

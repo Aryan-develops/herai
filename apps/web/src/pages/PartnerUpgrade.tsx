@@ -112,7 +112,7 @@ export function PartnerUpgrade() {
       {plans && sub && (
         <div className="mt-6 space-y-5">
           <div className="rounded-3xl bg-gradient-to-br from-brand-500 to-violet-600 p-6 text-white shadow-lift">
-            <p className="text-xs font-medium tracking-wide text-white/80 uppercase">HERAI Partner</p>
+            <p className="text-xs font-medium tracking-wide text-white/80 uppercase">Lunee Partner</p>
             <p className="mt-1 font-display text-4xl font-semibold">
               ₹{plans.plan.priceInr}
               <span className="text-lg font-normal text-white/80"> / month</span>
@@ -332,7 +332,7 @@ export function PartnerUpgrade() {
               <p className="mt-1 text-sm text-ink-700/70">No invoices yet.</p>
               <p className="mt-3 flex items-start gap-1.5 text-xs text-ink-700/60">
                 <Sparkles className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-                The person being followed always uses HERAI free. Only followers pay.
+                The person being followed always uses Lunee free. Only followers pay.
               </p>
             </CardContent>
           </Card>

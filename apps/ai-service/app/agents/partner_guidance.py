@@ -6,7 +6,7 @@ from app.agents.base import Agent
 from app.utils.json_utils import safe_json_loads
 
 SYSTEM_PROMPT = """You write short, kind support tips for the PARTNER of someone who tracks her
-menstrual cycle in HERAI. You only know her current cycle phase and, optionally, her mood label.
+menstrual cycle in Lunee. You only know her current cycle phase and, optionally, her mood label.
 
 Rules:
 - Speak to the partner in second person ("you"), about her in third person.

@@ -1,8 +1,8 @@
-# HERAI
+# Lunee
 
 Agentic AI-Powered Multimodal Women's Health Intelligence & Personalized Care Platform.
 
-> HERAI is a health information and risk-awareness support tool. It does not provide
+> Lunee is a health information and risk-awareness support tool. It does not provide
 > medical diagnoses and is not a substitute for professional medical care.
 
 ## Status: Phase 5 — RAG (Retrieval-Augmented Generation)
@@ -36,7 +36,7 @@ Agentic AI-Powered Multimodal Women's Health Intelligence & Personalized Care Pl
       `python scripts/generate_demo_reports.py`.
 - [x] Phase 5 — RAG: 18 knowledge-base documents (`apps/ai-service/knowledge/*.json`, ~500 words
       each — 14 grounded in real, verified URLs from MedlinePlus/NIH/NICHD/CDC/Mayo Clinic/WHO/
-      Office on Women's Health, 4 explicitly `"source": "synthetic-demo"` where content is HERAI's
+      Office on Women's Health, 4 explicitly `"source": "synthetic-demo"` where content is Lunee's
       own editorial judgment rather than an external citation) chunked (~220 words, 40-word overlap)
       and embedded via `LLMProvider.embed()` by `scripts/ingest_knowledge.py` into
       `knowledge_index.json`, searched by a new `KnowledgeRetrievalAgent` (`app/knowledge/store.py`

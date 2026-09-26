@@ -45,7 +45,7 @@ export function MainTabs() {
       <Tab.Screen name="Dashboard" component={DashboardScreen} options={{ title: "Home" }} />
       {isPartner ? <Tab.Screen name="Partner" component={PartnerHomeScreen} options={{ title: "Partner" }} /> : <Tab.Screen name="Timeline" component={TimelineScreen} />}
       <Tab.Screen name="Cycle" component={CycleScreen} />
-      <Tab.Screen name="Chat" component={ChatScreen} options={{ title: "Ask HERAI" }} />
+      <Tab.Screen name="Chat" component={ChatScreen} options={{ title: "Ask Lunee" }} />
       <Tab.Screen name="Reports" component={ReportsStack} />
     </Tab.Navigator>
   );

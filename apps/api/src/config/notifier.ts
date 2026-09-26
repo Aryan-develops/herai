@@ -39,12 +39,12 @@ export async function sendEmail(message: OutgoingEmail): Promise<boolean> {
 export async function sendGuardianConsentEmail(message: GuardianConsentEmail): Promise<void> {
   const sent = await sendEmail({
     to: message.guardianEmail,
-    subject: `${message.minorName} needs your consent to use HERAI`,
+    subject: `${message.minorName} needs your consent to use Lunee`,
     text:
       `Hello${message.guardianName ? ` ${message.guardianName}` : ""},
 
 ` +
-      `${message.minorName} has created a HERAI account and needs a parent or guardian's consent before ` +
+      `${message.minorName} has created a Lunee account and needs a parent or guardian's consent before ` +
       `any health information is recorded.
 
 Review and decide here: ${message.consentUrl}
@@ -88,12 +88,12 @@ export interface PartnerInviteEmail {
 export async function sendPartnerInviteEmail(message: PartnerInviteEmail): Promise<boolean> {
   const ask =
     message.direction === "woman_invites_partner"
-      ? `${message.fromName} invited you to follow her cycle on HERAI so you can support her better. She controls exactly what you see and can stop sharing at any time.`
-      : `${message.fromName} would like to connect with you on HERAI. You decide whether to share anything with them.`;
+      ? `${message.fromName} invited you to follow her cycle on Lunee so you can support her better. She controls exactly what you see and can stop sharing at any time.`
+      : `${message.fromName} would like to connect with you on Lunee. You decide whether to share anything with them.`;
   try {
     const sent = await sendEmail({
       to: message.to,
-      subject: `${message.fromName} invited you to HERAI`,
+      subject: `${message.fromName} invited you to Lunee`,
       text: `${ask}
 
 Open this link: ${message.link}

@@ -72,7 +72,7 @@ export function GuardianConsent() {
 
   if (request.status === "granted") {
     return (
-      <AuthLayout title="Consent given" subtitle={`${request.minorName} can now use HERAI.`}>
+      <AuthLayout title="Consent given" subtitle={`${request.minorName} can now use Lunee.`}>
         <Alert tone="success">You approved this account. You can withdraw your consent at any time using this same link.</Alert>
         <Button variant="outline" className="mt-6 w-full" onClick={withdraw} disabled={submitting}>
           {submitting ? "Withdrawing…" : "Withdraw consent"}
@@ -86,7 +86,7 @@ export function GuardianConsent() {
     return (
       <AuthLayout
         title={request.status === "withdrawn" ? "Consent withdrawn" : "Consent declined"}
-        subtitle={`${request.minorName} cannot use HERAI's health features.`}
+        subtitle={`${request.minorName} cannot use Lunee's health features.`}
       >
         <Alert tone="warning">
             No health data is being processed for this account. If this was a mistake, ask them to
@@ -107,7 +107,7 @@ export function GuardianConsent() {
   return (
     <AuthLayout
       title="Approve this account?"
-      subtitle={`${request.minorName} is under 18 and needs your permission to use HERAI.`}
+      subtitle={`${request.minorName} is under 18 and needs your permission to use Lunee.`}
     >
       <div className="space-y-5">
         <div className="flex items-start gap-3 rounded-2xl border border-brand-200 bg-brand-50/70 p-4 text-sm text-ink-800">
@@ -123,7 +123,7 @@ export function GuardianConsent() {
         </div>
 
         <p className="text-sm text-ink-700/80">
-          HERAI does not diagnose conditions and is not a substitute for a clinician. You can
+          Lunee does not diagnose conditions and is not a substitute for a clinician. You can
           withdraw consent at any time using this link, which deletes nothing on its own but stops
           any further processing.
         </p>

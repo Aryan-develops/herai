@@ -48,7 +48,7 @@ export function PartnerShowcase() {
               <Check className="h-4 w-4 text-sage-500" aria-hidden="true" /> 14-day free trial
             </span>
             <span className="flex items-center gap-1.5">
-              <Check className="h-4 w-4 text-sage-500" aria-hidden="true" /> Partner supports HERAI for ₹100/month
+              <Check className="h-4 w-4 text-sage-500" aria-hidden="true" /> Partner supports Lunee for ₹100/month
             </span>
             <span className="flex items-center gap-1.5">
               <Gift className="h-4 w-4 text-brand-500" aria-hidden="true" /> Gift a subscription

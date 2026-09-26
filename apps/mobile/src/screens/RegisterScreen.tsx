@@ -50,7 +50,7 @@ export function RegisterScreen({ navigation }: Props) {
     <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === "ios" ? "padding" : undefined}>
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
         <Text style={styles.title}>Create your account</Text>
-        <Text style={styles.subtitle}>Set up HERAI in under a minute.</Text>
+        <Text style={styles.subtitle}>Set up Lunee in under a minute.</Text>
 
         <View style={styles.form}>
           <Field label="Name" placeholder="Jane Doe" value={name} onChangeText={setName} />
@@ -75,7 +75,7 @@ export function RegisterScreen({ navigation }: Props) {
             <View style={styles.consentBox}>
               <Text style={styles.consentTitle}>Parental consent needed</Text>
               <Text style={styles.consentBody}>
-                Since you're under 18, a parent or guardian has to approve your account before HERAI
+                Since you're under 18, a parent or guardian has to approve your account before Lunee
                 can record any health information. We'll email them a link.
               </Text>
               <Field

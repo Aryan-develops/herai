@@ -17,7 +17,7 @@ const ALCOHOL = ["none", "occasional", "regular"] as const;
 // 1.4.1 / Google Play's medical-apps policy both expect this to be explicit
 // up front, not buried inside results (see docs/COMPLIANCE-NOTES.md §4).
 const DISCLAIMER =
-  "HERAI provides health information and risk-awareness support. It does not diagnose " +
+  "Lunee provides health information and risk-awareness support. It does not diagnose " +
   "conditions and is not a substitute for professional medical care. If you're worried, " +
   "please consult a licensed clinician.";
 
@@ -75,7 +75,7 @@ export function OnboardingScreen() {
 
   async function finish() {
     if (!acknowledged) {
-      setError("Please confirm you understand HERAI's disclaimer before continuing.");
+      setError("Please confirm you understand Lunee's disclaimer before continuing.");
       return;
     }
     setError(null);
@@ -153,12 +153,12 @@ export function OnboardingScreen() {
             onPress={() => setAcknowledged((a) => !a)}
             accessibilityRole="checkbox"
             accessibilityState={{ checked: acknowledged }}
-            accessibilityLabel="I understand HERAI does not provide medical diagnoses"
+            accessibilityLabel="I understand Lunee does not provide medical diagnoses"
           >
             <View style={[styles.checkbox, acknowledged && styles.checkboxChecked]}>
               {acknowledged && <Text style={styles.checkboxMark}>✓</Text>}
             </View>
-            <Text style={styles.ackText}>I understand HERAI does not provide medical diagnoses.</Text>
+            <Text style={styles.ackText}>I understand Lunee does not provide medical diagnoses.</Text>
           </Pressable>
         </View>
 

@@ -173,7 +173,7 @@ export function CareProviderPage() {
         <section className={card} aria-labelledby="rev-h">
           <h2 id="rev-h" className="font-display text-lg font-semibold text-ink-900">Patient reviews</h2>
           {reviews.length === 0 ? (
-            <p className="mt-2 text-sm text-ink-700/70">No reviews yet. Reviews come only from patients who completed a visit through HERAI.</p>
+            <p className="mt-2 text-sm text-ink-700/70">No reviews yet. Reviews come only from patients who completed a visit through Lunee.</p>
           ) : (
             <ul className="mt-3 space-y-3">
               {reviews.map((r, i) => (

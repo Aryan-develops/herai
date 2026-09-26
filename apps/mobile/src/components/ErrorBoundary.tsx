@@ -33,7 +33,7 @@ export class ErrorBoundary extends Component<Props, State> {
         <View style={styles.screen}>
           <Text style={styles.title}>Something went wrong</Text>
           <Text style={styles.body}>
-            HERAI hit an unexpected error. Your data is safe — try restarting the app.
+            Lunee hit an unexpected error. Your data is safe — try restarting the app.
           </Text>
           <Button title="Try again" onPress={() => this.setState({ error: null })} />
         </View>

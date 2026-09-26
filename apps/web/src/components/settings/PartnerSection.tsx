@@ -54,9 +54,9 @@ function InviteBox({ created, onDone }: { created: InviteCreated; onDone: () => 
   }
 
   async function share() {
-    const text = `Join me on HERAI. Use code ${created.code} or open this link:`;
+    const text = `Join me on Lunee. Use code ${created.code} or open this link:`;
     try {
-      await navigator.share({ title: "HERAI invite", text, url: created.link });
+      await navigator.share({ title: "Lunee invite", text, url: created.link });
     } catch {
       // Cancelled or unsupported: nothing to do.
     }
@@ -359,7 +359,7 @@ export function PartnerSection() {
             {busy ? <Spinner /> : email.trim() ? <Send className="h-4 w-4" aria-hidden="true" /> : <UserPlus className="h-4 w-4" aria-hidden="true" />}
             {email.trim() ? "Create and email invite" : "Create invite"}
           </Button>
-          <p className="mt-2 text-xs text-ink-700/60">People need to be 18 or over and have a HERAI account.</p>
+          <p className="mt-2 text-xs text-ink-700/60">People need to be 18 or over and have a Lunee account.</p>
 
           {created && <div className="mt-4"><InviteBox created={created} onDone={() => setCreated(null)} /></div>}
 

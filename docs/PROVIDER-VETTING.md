@@ -27,7 +27,7 @@ Record the outcome (who checked, when, what evidence) somewhere you can find lat
 - [ ] Signed data-processing agreement (`PROVIDER-DPA-TEMPLATE.md`, after legal review).
 - [ ] The person understands: they see only what the patient shares, must not copy it elsewhere,
       and access ends when the patient cancels.
-- [ ] No referral fee or payment between the provider and HERAI unless it is disclosed to patients.
+- [ ] No referral fee or payment between the provider and Lunee unless it is disclosed to patients.
 - [ ] Add the address and coordinates when approving so distance sorting works.
 - [ ] Set up a review process for complaints; remove a listing the same day for any credible
       safety issue (set `care_providers.verified = false`).

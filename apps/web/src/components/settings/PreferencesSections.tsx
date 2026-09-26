@@ -42,7 +42,7 @@ export function NotificationsSection() {
         <div className="divide-y divide-neutral-200">
           <ToggleRow label="Daily support note" hint="A short morning note when someone you follow is in a tougher phase." checked={prefs.partnerDailyNudge} onChange={(v) => update({ partnerDailyNudge: v })} />
           <ToggleRow label="By email" checked={prefs.emailEnabled} onChange={(v) => update({ emailEnabled: v })} />
-          <ToggleRow label="On my phone" hint="Push notifications in the HERAI mobile app." checked={prefs.pushEnabled} onChange={(v) => update({ pushEnabled: v })} />
+          <ToggleRow label="On my phone" hint="Push notifications in the Lunee mobile app." checked={prefs.pushEnabled} onChange={(v) => update({ pushEnabled: v })} />
           <div className="flex items-center justify-between gap-4 py-2.5">
             <div>
               <p className="flex items-center gap-1.5 text-sm font-medium text-ink-900">
@@ -207,7 +207,7 @@ export function HelpSection() {
         </Link>
       </div>
       <p className="mt-4 text-xs text-ink-700/60">
-        HERAI gives general information, not medical advice. If you're in danger or feel very unwell, call your local emergency number.
+        Lunee gives general information, not medical advice. If you're in danger or feel very unwell, call your local emergency number.
       </p>
     </SettingsCard>
   );

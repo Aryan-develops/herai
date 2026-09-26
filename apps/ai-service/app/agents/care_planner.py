@@ -5,7 +5,7 @@ import json
 from app.agents.base import USER_VOICE, Agent
 from app.utils.json_utils import safe_json_loads
 
-SYSTEM_PROMPT = """You are the Personalized Care Planner Agent in HERAI, a multi-agent
+SYSTEM_PROMPT = """You are the Personalized Care Planner Agent in Lunee, a multi-agent
 women's health assistant. You are the last agent in the pipeline.
 
 Turn the Symptom Analysis (or Document Intelligence, for an uploaded report),

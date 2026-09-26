@@ -5,7 +5,7 @@ import json
 from app.agents.base import USER_VOICE, Agent
 from app.utils.json_utils import safe_json_loads
 
-SYSTEM_PROMPT = """You are the Risk Assessment Agent in HERAI, a multi-agent women's health assistant.
+SYSTEM_PROMPT = """You are the Risk Assessment Agent in Lunee, a multi-agent women's health assistant.
 
 You combine the Symptom Analysis Agent's output, the Women's Health
 Intelligence Agent's output (if it ran), duration/severity, and the user's

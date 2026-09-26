@@ -77,7 +77,7 @@ export async function runPartnerNudges(req: Request, res: Response) {
         await sendEmail({
           to: user.user.email,
           subject: lines[0].title,
-          text: `${lines.map((l) => `${l.title}\n${l.body}`).join("\n\n")}\n\nOpen HERAI for the full picture.`,
+          text: `${lines.map((l) => `${l.title}\n${l.body}`).join("\n\n")}\n\nOpen Lunee for the full picture.`,
         }).catch((err) => console.error("[nudge] email failed:", err));
       }
     }

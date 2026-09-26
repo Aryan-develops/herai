@@ -128,7 +128,7 @@ export function SettingsScreen({ navigation }: Props) {
     setPrivacyError(null);
     try {
       const data = await api.exportData();
-      await Share.share({ title: "My HERAI data", message: JSON.stringify(data, null, 2) });
+      await Share.share({ title: "My Lunee data", message: JSON.stringify(data, null, 2) });
     } catch (err) {
       setPrivacyError(err instanceof ApiError ? err.message : "Couldn't export your data.");
     } finally {
@@ -152,7 +152,7 @@ export function SettingsScreen({ navigation }: Props) {
     <ScrollView style={styles.screen} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
       <ScreenTitle title="Settings" subtitle="Your account, sign-in, sharing and privacy in one place." />
 
-      <SettingsCard icon="person-outline" title="Profile" description="How you appear in HERAI.">
+      <SettingsCard icon="person-outline" title="Profile" description="How you appear in Lunee.">
         <Field label="Name" value={name} onChangeText={setName} maxLength={120} autoComplete="name" />
         <Field label="Email" value={user?.email ?? ""} editable={false} />
         {nameMsg ? <Notice tone={nameMsg.tone}>{nameMsg.text}</Notice> : null}
@@ -165,7 +165,7 @@ export function SettingsScreen({ navigation }: Props) {
           <ToggleRow label={`Unlock with ${bioLabel}`} hint="Ask for it each time the app opens or returns from the background." value={bioOn} onChange={toggleBiometric} />
         ) : (
           <Notice tone="info">
-            {Platform.OS === "web" ? "Biometric unlock is available in the phone app." : "Set up Face ID or a fingerprint in your phone's settings to unlock HERAI with it."}
+            {Platform.OS === "web" ? "Biometric unlock is available in the phone app." : "Set up Face ID or a fingerprint in your phone's settings to unlock Lunee with it."}
           </Notice>
         )}
         <Text style={styles.small}>
@@ -206,7 +206,7 @@ export function SettingsScreen({ navigation }: Props) {
           onChange={changeTheme}
           options={[{ id: "light", label: "Light" }, { id: "dark", label: "Dark" }, { id: "system", label: "Match phone" }]}
         />
-        {themeChanged ? <Notice tone="info">Close and reopen HERAI to apply the new look.</Notice> : null}
+        {themeChanged ? <Notice tone="info">Close and reopen Lunee to apply the new look.</Notice> : null}
       </SettingsCard>
 
       <SettingsCard icon="lock-closed-outline" title="Privacy and your data" description="It's your data. Download it or delete it whenever you like.">
@@ -246,7 +246,7 @@ export function SettingsScreen({ navigation }: Props) {
             <Text style={styles.link}>Find labs and doctors</Text>
           </Pressable>
         </View>
-        <Text style={styles.small}>HERAI gives general information, not medical advice. If you're in danger or feel very unwell, call your local emergency number.</Text>
+        <Text style={styles.small}>Lunee gives general information, not medical advice. If you're in danger or feel very unwell, call your local emergency number.</Text>
       </SettingsCard>
 
       <Button title="Log out" variant="outline" onPress={() => logout()} />

@@ -68,14 +68,14 @@ export function AppShell({ children }: { children: ReactNode }) {
           <div className="flex items-center gap-8">
             <Link
               to="/settings"
-              aria-label="HERAI settings"
+              aria-label="Lunee settings"
               title="Settings"
               className="group flex items-center gap-2 rounded-xl font-display text-lg font-semibold text-ink-900 transition-opacity hover:opacity-80"
             >
               <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-brand-500 to-violet-500 text-white shadow-soft">
                 <HeartPulse className="h-4 w-4" aria-hidden="true" />
               </span>
-              HERAI
+              Lunee
               <Settings className="h-3.5 w-3.5 text-neutral-400 transition-transform duration-300 group-hover:rotate-90" aria-hidden="true" />
             </Link>
             <nav aria-label="Main" className="hidden items-center gap-1 lg:flex">

@@ -64,7 +64,7 @@ export function Dashboard() {
       <h1 className="font-display text-3xl font-medium text-ink-900 sm:text-4xl">
         {greeting()}, {user?.name?.split(" ")[0]}
       </h1>
-      <p className="mt-1.5 max-w-xl text-ink-700/70">How are you feeling today? Log it and HERAI keeps your timeline.</p>
+      <p className="mt-1.5 max-w-xl text-ink-700/70">How are you feeling today? Log it and Lunee keeps your timeline.</p>
 
       <CycleHero insights={insights} loading={insightsLoading} />
 
@@ -122,7 +122,7 @@ export function Dashboard() {
                 <Bot className="h-5 w-5" />
               </span>
               <div>
-                <h3 className="font-display font-semibold text-ink-900">Ask HERAI</h3>
+                <h3 className="font-display font-semibold text-ink-900">Ask Lunee</h3>
                 <p className="text-sm text-ink-700/60">Ask about symptoms and your cycle</p>
               </div>
             </CardContent>

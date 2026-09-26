@@ -310,7 +310,7 @@ export function ChatScreen() {
         ListHeaderComponent={
           <View style={styles.intro}>
             <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
-              <Text style={styles.title} accessibilityRole="header">Ask HERAI</Text>
+              <Text style={styles.title} accessibilityRole="header">Ask Lunee</Text>
               <GetHelpButton onFindCare={(type) => navigation.navigate("Care", type ? { type } : undefined)} />
             </View>
             <Text style={styles.subtitle}>Ask about your cycle, symptoms or lab reports.</Text>
@@ -356,7 +356,7 @@ export function ChatScreen() {
               {turn.status === "streaming" && turn.steps.length === 0 && (
                 <View style={styles.stepRow}>
                   <ActivityIndicator size="small" color={colors.ink700} />
-                  <Text style={styles.stepLabel}>HERAI is typing…</Text>
+                  <Text style={styles.stepLabel}>Lunee is typing…</Text>
                 </View>
               )}
             </View>
@@ -371,7 +371,7 @@ export function ChatScreen() {
           onChangeText={setInput}
           placeholder="e.g. I've been tired for two weeks"
           placeholderTextColor={colors.muted}
-          accessibilityLabel="Message to HERAI"
+          accessibilityLabel="Message to Lunee"
           multiline
           onSubmitEditing={() => send(input)}
         />

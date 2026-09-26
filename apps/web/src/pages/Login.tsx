@@ -110,7 +110,7 @@ export function Login() {
       </form>
 
       <p className="mt-7 text-center text-sm text-ink-700/75">
-        New to HERAI?{" "}
+        New to Lunee?{" "}
         <Link to="/register" className="font-semibold text-brand-600 hover:underline">
           Create an account
         </Link>

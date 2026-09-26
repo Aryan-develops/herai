@@ -143,7 +143,7 @@ export function ReportUpload() {
     <AppShell>
       <h1 className="font-display text-2xl font-semibold text-ink-900 sm:text-3xl">Lab reports</h1>
       <p className="mt-1.5 max-w-xl text-ink-700/75">
-        Upload a lab report and HERAI explains your values in plain language, flags anything worth a
+        Upload a lab report and Lunee explains your values in plain language, flags anything worth a
         clinician's attention, and suggests questions to ask.
       </p>
 

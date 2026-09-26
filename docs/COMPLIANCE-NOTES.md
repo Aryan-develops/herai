@@ -87,12 +87,12 @@ confirming it. The web onboarding flow does not yet have the equivalent checkbox
 ## 5. Emergency handling is advisory only
 
 The Safety/Triage agent raises an emergency banner. `TERMS.md` §1 states plainly that
-HERAI cannot reliably detect emergencies and must not be relied on. Keep it that way —
+Lunee cannot reliably detect emergencies and must not be relied on. Keep it that way —
 any copy implying dependable emergency detection materially raises both regulatory risk
 (medical-device classification) and real-world harm risk.
 
 The backlog item "one-tap emergency-helpline call button" is worth doing, but it must
-not be framed as HERAI summoning help.
+not be framed as Lunee summoning help.
 
 ## 6. LLM vendor terms
 
@@ -159,7 +159,7 @@ user-directed sharing. `docs/PROVIDER-VETTING.md` is the checklist to run before
   that in production.
 - Providers become data recipients of medical information: a data-processing agreement,
   and a deletion/retention rule for what they viewed, need a lawyer.
-- Referral fees or any payment between a provider and HERAI must be disclosed to patients.
+- Referral fees or any payment between a provider and Lunee must be disclosed to patients.
 - The helpline numbers in the Get help sheet are India-only and hand-entered; confirm them.
 - Reviews are limited to completed visits, but there is no moderation yet.
 

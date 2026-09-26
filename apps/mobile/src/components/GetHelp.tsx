@@ -83,7 +83,7 @@ export function GetHelpButton({ onFindCare }: { onFindCare?: (type?: "doctor") =
                   </View>
                 </View>
               )}
-              <Text style={styles.note}>Numbers shown are for India. HERAI can't summon help for you and can't detect every emergency.</Text>
+              <Text style={styles.note}>Numbers shown are for India. Lunee can't summon help for you and can't detect every emergency.</Text>
             </ScrollView>
           </View>
         </View>

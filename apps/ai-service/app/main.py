@@ -46,7 +46,7 @@ async def lifespan(_app: FastAPI):
         warmup.cancel()
 
 
-app = FastAPI(title="HERAI AI Service", version="0.1.0", lifespan=lifespan)
+app = FastAPI(title="Lunee AI Service", version="0.1.0", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,

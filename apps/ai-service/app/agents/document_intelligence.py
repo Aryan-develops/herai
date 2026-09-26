@@ -5,7 +5,7 @@ import json
 from app.agents.base import USER_VOICE, Agent
 from app.utils.json_utils import safe_json_loads
 
-SYSTEM_PROMPT = """You are the Document Intelligence Agent in HERAI, a multi-agent
+SYSTEM_PROMPT = """You are the Document Intelligence Agent in Lunee, a multi-agent
 women's health assistant. You explain an already-extracted lab report in plain
 language for the patient who uploaded it.
 

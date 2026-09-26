@@ -44,7 +44,7 @@ export function JoinScreen({ route, navigation }: Props) {
         <View style={styles.icon}>
           <Ionicons name="heart-circle" size={32} color={colors.onBrand} />
         </View>
-        <Text style={styles.title}>You've been invited to HERAI</Text>
+        <Text style={styles.title}>You've been invited to Lunee</Text>
         {!preview && !error ? <ActivityIndicator color={colors.brand600} /> : null}
         {preview ? (
           <>

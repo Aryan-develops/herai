@@ -564,7 +564,7 @@ class MockLLMProvider(LLMProvider):
             today.append(f"Re-read the {names} result(s) on your report and note any symptoms that might connect to them.")
         if not today:
             today.append(_DEFAULT_TODAY_TIP)
-        today.append("Log this in HERAI's timeline so it's easy to spot patterns later.")
+        today.append("Log this in Lunee's timeline so it's easy to spot patterns later.")
 
         this_week = [
             "Keep tracking symptoms daily — note severity, timing, and any triggers.",

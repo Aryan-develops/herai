@@ -9,7 +9,7 @@ export function MinorConsentNotice({ value, onChange }: { value: string; onChang
       <div className="flex items-start gap-2.5 text-sm text-ink-800">
         <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-brand-600" aria-hidden="true" />
         <p>
-          Since you're under 18, a parent or guardian needs to approve your account before HERAI records any
+          Since you're under 18, a parent or guardian needs to approve your account before Lunee records any
           health information. We'll email them a link.
         </p>
       </div>

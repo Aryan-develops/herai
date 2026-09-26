@@ -91,7 +91,7 @@ export function Care() {
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h1 className="font-display text-2xl font-semibold text-ink-900 sm:text-3xl">Find care near you</h1>
-          <p className="mt-1.5 max-w-xl text-ink-700/75">Labs and doctors in the HERAI partner network.</p>
+          <p className="mt-1.5 max-w-xl text-ink-700/75">Labs and doctors in the Lunee partner network.</p>
         </div>
         <Link to="/care/requests"><Button variant="outline" size="sm"><CalendarCheck className="h-4 w-4" aria-hidden="true" /> My requests</Button></Link>
       </div>
@@ -272,7 +272,7 @@ function ProviderApplication() {
   return (
     <section className="mt-10 rounded-3xl border border-brand-100 bg-gradient-to-br from-white to-brand-50/70 p-6 shadow-soft" aria-labelledby="prov-h">
       <h2 id="prov-h" className="font-display text-lg font-semibold text-ink-900">Are you a lab or doctor?</h2>
-      <p className="mt-1 text-sm text-ink-700/75">Join the HERAI partner network and receive referrals from patients in your area.</p>
+      <p className="mt-1 text-sm text-ink-700/75">Join the Lunee partner network and receive referrals from patients in your area.</p>
 
       {state === "done" ? (
         <Alert tone="success" className="mt-4">Thanks! We'll be in touch soon.</Alert>

@@ -24,7 +24,7 @@ export function Landing() {
             <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-brand-500 to-violet-500 text-white shadow-soft">
               <HeartPulse className="h-4.5 w-4.5" aria-hidden="true" />
             </span>
-            HERAI
+            Lunee
           </div>
           <nav aria-label="Account" className="flex items-center gap-1 sm:gap-2">
             <Link to="/login">
@@ -73,7 +73,7 @@ export function Landing() {
         </div>
 
         <ul
-          aria-label="Cycle phases HERAI tracks"
+          aria-label="Cycle phases Lunee tracks"
           className="animate-fade-up mt-12 flex flex-wrap items-center justify-center gap-2 [animation-delay:300ms]"
         >
           {PHASES.map((p) => (
@@ -116,7 +116,7 @@ export function Landing() {
 
       <footer className="relative z-10 border-t border-neutral-200 bg-white/60 py-8">
         <p className="mx-auto max-w-2xl px-6 text-center text-xs text-neutral-500">
-          HERAI is a health information and risk-awareness support tool. It does not provide medical diagnoses
+          Lunee is a health information and risk-awareness support tool. It does not provide medical diagnoses
           and is not a substitute for professional medical care.
         </p>
       </footer>

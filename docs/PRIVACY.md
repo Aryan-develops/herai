@@ -1,4 +1,4 @@
-# HERAI — Privacy Policy
+# Lunee — Privacy Policy
 
 **Status: DRAFT. Not legally reviewed.**
 
@@ -11,7 +11,7 @@ Fill every `[BRACKETED]` value before publishing:
 
 | Placeholder | What it is |
 |---|---|
-| `[LEGAL ENTITY]` | Registered company/individual operating HERAI |
+| `[LEGAL ENTITY]` | Registered company/individual operating Lunee |
 | `[REGISTERED ADDRESS]` | Business address |
 | `[CONTACT EMAIL]` | Privacy contact inbox |
 | `[GRIEVANCE OFFICER NAME]` / `[GRIEVANCE EMAIL]` | Required named contact under the DPDP Act |
@@ -23,7 +23,7 @@ Fill every `[BRACKETED]` value before publishing:
 **Effective date:** `[EFFECTIVE DATE]`
 **Operated by:** `[LEGAL ENTITY]`, `[REGISTERED ADDRESS]`
 
-HERAI is a women's health information and risk-awareness tool. It does **not** diagnose
+Lunee is a women's health information and risk-awareness tool. It does **not** diagnose
 conditions and is not a substitute for professional medical care.
 
 This policy explains what we collect, why, who it is shared with, and how you control it.
@@ -201,7 +201,7 @@ purged on our provider's rolling backup schedule.
 
 ## 9. Users under 18
 
-Anyone under 18 needs a parent or guardian's consent before HERAI processes any of
+Anyone under 18 needs a parent or guardian's consent before Lunee processes any of
 their health data.
 
 How it works:

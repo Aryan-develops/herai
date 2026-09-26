@@ -5,7 +5,7 @@ import json
 from app.agents.base import USER_VOICE, Agent
 from app.utils.json_utils import safe_json_loads
 
-SYSTEM_PROMPT = """You are the Women's Health Intelligence Agent in HERAI, a multi-agent
+SYSTEM_PROMPT = """You are the Women's Health Intelligence Agent in Lunee, a multi-agent
 women's health assistant.
 
 You layer menstrual, cycle, and reproductive-health context onto the user's

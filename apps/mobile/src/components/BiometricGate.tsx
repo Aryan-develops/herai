@@ -24,7 +24,7 @@ export function BiometricGate({ children }: { children: ReactNode }) {
     if (prompting.current) return;
     prompting.current = true;
     setFailed(false);
-    const ok = await authenticate("Unlock HERAI");
+    const ok = await authenticate("Unlock Lunee");
     prompting.current = false;
     if (ok) setLocked(false);
     else setFailed(true);
@@ -58,7 +58,7 @@ export function BiometricGate({ children }: { children: ReactNode }) {
       <View style={styles.icon}>
         <Ionicons name="lock-closed" size={30} color={colors.onBrand} />
       </View>
-      <Text style={styles.title}>HERAI is locked</Text>
+      <Text style={styles.title}>Lunee is locked</Text>
       <Text style={styles.body}>{failed ? `That didn't work. Try ${label} again.` : `Use ${label} to open your private health data.`}</Text>
       <View style={styles.actions}>
         <Button title={`Unlock with ${label}`} onPress={unlock} />

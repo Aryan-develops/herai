@@ -46,7 +46,7 @@ export function ConfirmDateOfBirth() {
   }
 
   return (
-    <AuthLayout title="One last thing" subtitle="We need your date of birth before HERAI can record any health information.">
+    <AuthLayout title="One last thing" subtitle="We need your date of birth before Lunee can record any health information.">
       <form onSubmit={onSubmit} className="space-y-4">
         <div className="space-y-1.5">
           <Label htmlFor="dateOfBirth">Date of birth</Label>

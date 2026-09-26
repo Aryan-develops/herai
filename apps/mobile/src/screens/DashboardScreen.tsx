@@ -58,11 +58,11 @@ export function DashboardScreen({ navigation }: Props) {
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
       <View style={styles.topBar}>
-        <Pressable onPress={openSettings} accessibilityRole="button" accessibilityLabel="HERAI settings" style={({ pressed }) => [styles.brand, pressed && { opacity: 0.7 }]}>
+        <Pressable onPress={openSettings} accessibilityRole="button" accessibilityLabel="Lunee settings" style={({ pressed }) => [styles.brand, pressed && { opacity: 0.7 }]}>
           <View style={styles.logo}>
             <Ionicons name="heart" size={16} color={colors.onBrand} />
           </View>
-          <Text style={styles.brandText}>HERAI</Text>
+          <Text style={styles.brandText}>Lunee</Text>
           <Ionicons name="settings-outline" size={14} color={colors.muted} />
         </Pressable>
         <Pressable onPress={openSettings} accessibilityRole="button" accessibilityLabel="Settings" style={styles.avatar}>
@@ -97,7 +97,7 @@ export function DashboardScreen({ navigation }: Props) {
       ) : null}
 
       <View style={styles.quickLinks}>
-        <QuickLink icon="chatbubble-ellipses" tint={colors.brand100} fg={colors.brand600} label="Ask HERAI" onPress={() => navigation.navigate("Chat")} />
+        <QuickLink icon="chatbubble-ellipses" tint={colors.brand100} fg={colors.brand600} label="Ask Lunee" onPress={() => navigation.navigate("Chat")} />
         <QuickLink icon="add-circle" tint={colors.violet50} fg={colors.violet700} label="Log entry" onPress={openLogEntry} />
         <QuickLink icon="document-text" tint={colors.sage100} fg={colors.sage700} label="Reports" onPress={() => navigation.navigate("Reports")} />
         <QuickLink icon="time" tint={colors.peach100} fg={colors.peach600} label="Timeline" onPress={() => openTimeline()} />

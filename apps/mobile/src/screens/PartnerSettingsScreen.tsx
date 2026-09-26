@@ -45,7 +45,7 @@ function InviteBox({ created, onDone }: { created: InviteCreated; onDone: () => 
       </View>
       <Button
         title="Share"
-        onPress={() => Share.share({ message: `Join me on HERAI. Use code ${created.code} or open this link: ${created.link}` })}
+        onPress={() => Share.share({ message: `Join me on Lunee. Use code ${created.code} or open this link: ${created.link}` })}
       />
       <Text style={styles.small}>{created.emailSent ? "We also emailed it to them." : "Send it to them yourself, the way you normally would."}</Text>
       <Button title="Done" variant="ghost" onPress={onDone} />
@@ -251,7 +251,7 @@ export function PartnerSettingsScreen() {
         <Field label="Email them (optional)" value={email} onChangeText={setEmail} keyboardType="email-address" autoCapitalize="none" placeholder="name@example.com" />
         <ErrorText>{error}</ErrorText>
         <Button title={email.trim() ? "Create and email invite" : "Create invite"} onPress={createInvite} loading={busy} />
-        <Text style={styles.small}>People need to be 18 or over and have a HERAI account.</Text>
+        <Text style={styles.small}>People need to be 18 or over and have a Lunee account.</Text>
         {created ? <InviteBox created={created} onDone={() => setCreated(null)} /> : null}
         {invites.map((i) => (
           <View key={i.id} style={styles.openInvite}>

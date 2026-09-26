@@ -38,13 +38,13 @@ export function ConsentPending() {
       title={declined ? "Account not approved" : "Waiting for approval"}
       subtitle={
         declined
-          ? "A parent or guardian needs to approve this account before you can use HERAI."
+          ? "A parent or guardian needs to approve this account before you can use Lunee."
           : "We've sent a request to your parent or guardian."
       }
     >
       <div className="space-y-6">
         <Alert tone={declined ? "warning" : "info"}>
-          Because you're under 18, HERAI needs a parent or guardian's permission before it can record or analyse
+          Because you're under 18, Lunee needs a parent or guardian's permission before it can record or analyse
           any health information. Nothing is processed until they approve.
         </Alert>
 

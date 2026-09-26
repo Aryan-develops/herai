@@ -57,7 +57,7 @@ export function Join() {
         <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-brand-500 to-violet-500 text-white shadow-soft">
           <HeartHandshake className="h-7 w-7" aria-hidden="true" />
         </span>
-        <h1 className="mt-4 font-display text-2xl font-semibold text-ink-900">You've been invited to HERAI</h1>
+        <h1 className="mt-4 font-display text-2xl font-semibold text-ink-900">You've been invited to Lunee</h1>
 
         {(loading || (user && !preview && !error)) && (
           <p className="mt-4 flex items-center justify-center gap-2 text-sm text-ink-700/70">
@@ -102,7 +102,7 @@ export function Join() {
           <>
             <Alert tone="error" className="mt-4 text-left">{error}</Alert>
             <Link to="/dashboard" className="mt-4 inline-block text-sm font-medium text-brand-600 hover:underline">
-              Go to HERAI
+              Go to Lunee
             </Link>
           </>
         )}

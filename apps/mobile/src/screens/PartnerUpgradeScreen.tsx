@@ -99,7 +99,7 @@ export function PartnerUpgradeScreen() {
       {plans && sub ? (
         <>
           <View style={styles.hero}>
-            <Text style={styles.eyebrow}>HERAI PARTNER</Text>
+            <Text style={styles.eyebrow}>Lunee PARTNER</Text>
             <Text style={styles.price}>
               ₹{plans.plan.priceInr}
               <Text style={styles.per}> / month</Text>
@@ -229,7 +229,7 @@ export function PartnerUpgradeScreen() {
           <View style={styles.card}>
             <Text style={styles.cardTitle}>Invoices</Text>
             <Text style={styles.body}>No invoices yet.</Text>
-            <Text style={styles.tiny}>The person being followed always uses HERAI free. Only followers pay.</Text>
+            <Text style={styles.tiny}>The person being followed always uses Lunee free. Only followers pay.</Text>
           </View>
         </>
       ) : null}

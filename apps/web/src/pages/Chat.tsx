@@ -353,7 +353,7 @@ export function Chat() {
           <Bot className="h-5 w-5" aria-hidden="true" />
         </span>
         <div>
-          <h1 className="font-display text-2xl font-semibold text-ink-900">Ask HERAI</h1>
+          <h1 className="font-display text-2xl font-semibold text-ink-900">Ask Lunee</h1>
           <p className="text-sm text-ink-700/70">Ask about your cycle, symptoms or lab reports.</p>
         </div>
       </div>
@@ -410,7 +410,7 @@ export function Chat() {
                   <details className="group mb-4 border-b border-neutral-100 pb-3">
                     <summary className="flex cursor-pointer list-none items-center gap-1.5 text-xs font-medium text-neutral-500 hover:text-ink-900">
                       <CheckCircle2 className="h-3.5 w-3.5 text-sage-500" aria-hidden="true" />
-                      How HERAI worked this out ({turn.steps.length} steps)
+                      How Lunee worked this out ({turn.steps.length} steps)
                     </summary>
                     <div className="mt-3 space-y-1.5">
                       {turn.steps.map((step) => (
@@ -443,7 +443,7 @@ export function Chat() {
                       <span className="h-2 w-2 animate-bounce rounded-full bg-brand-400 [animation-delay:-0.1s]" />
                       <span className="h-2 w-2 animate-bounce rounded-full bg-brand-500" />
                     </span>
-                    HERAI is typing…
+                    Lunee is typing…
                   </div>
                 )}
               </div>
@@ -482,7 +482,7 @@ export function Chat() {
           </Button>
         </form>
         <p className="mt-2 text-center text-[11px] text-neutral-500">
-          HERAI shares health information, not diagnoses. In an emergency, tap <span className="font-semibold">Get help</span>.
+          Lunee shares health information, not diagnoses. In an emergency, tap <span className="font-semibold">Get help</span>.
         </p>
         </div>
       </div>

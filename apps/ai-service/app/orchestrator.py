@@ -45,7 +45,7 @@ from app.utils.ocr import extract_text
 logger = logging.getLogger("herai.orchestrator")
 
 DISCLAIMER = (
-    "HERAI provides health information and risk-awareness support. It does not diagnose "
+    "Lunee provides health information and risk-awareness support. It does not diagnose "
     "conditions and is not a substitute for professional medical care. If you're worried, "
     "please consult a licensed clinician."
 )
@@ -111,7 +111,7 @@ def _compute_confidence(ctx: dict) -> tuple[float, list[str]]:
         reasons.append("No health profile on file to personalize this further")
 
     confidence = max(0.3, min(0.95, round(confidence, 2)))
-    reasons.append("HERAI never provides a confirmed diagnosis — treat this as a starting point for a clinician conversation")
+    reasons.append("Lunee never provides a confirmed diagnosis — treat this as a starting point for a clinician conversation")
     return confidence, reasons
 
 
@@ -238,7 +238,7 @@ def _compute_document_confidence(ctx: dict) -> tuple[float, list[str]]:
         reasons.append("No health profile on file to personalize this further")
 
     confidence = max(0.2, min(0.95, round(confidence, 2)))
-    reasons.append("HERAI never provides a confirmed diagnosis — treat this as a starting point for a clinician conversation")
+    reasons.append("Lunee never provides a confirmed diagnosis — treat this as a starting point for a clinician conversation")
     return confidence, reasons
 
 

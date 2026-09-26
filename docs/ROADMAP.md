@@ -1,4 +1,4 @@
-# HERAI roadmap
+# Lunee roadmap
 
 Status: master task run completed. Live at herai-web-kappa.vercel.app (web + API on Vercel, AI service on Render).
 
@@ -6,7 +6,7 @@ Status: master task run completed. Live at herai-web-kappa.vercel.app (web + API
 - Cycle module, Google OAuth, passkeys (built-in authenticator: Face ID / Touch ID / Windows Hello), DOB gate, guardian consent
 - Soft-and-warm redesign on web and mobile, including dark mode on both (mobile applies on next app start)
 - Conversational chat, Get help, care referrals (labs/doctors, consent-first sharing, reviews, slots, teleconsult, provider dashboard)
-- Settings (tap the HERAI logo or the avatar): profile, sign-in and passkey management, password, partner sharing, notifications and language, appearance, data export, account deletion, help. Web and mobile.
+- Settings (tap the Lunee logo or the avatar): profile, sign-in and passkey management, password, partner sharing, notifications and language, appearance, data export, account deletion, help. Web and mobile.
 - Partner Mode phases 1-5: invites by code and link in both directions, many-to-many links, per-item sharing scopes, derived summaries only, pause/remove, access log, mood check-ins with "I need..." signals, comfort list, cycle sub-phases (PMS, cramps) with confidence, curated tips in English and Hindi with safety filter and optional AI rewording, daily tasks with streak, 14-day outlook, plans that flag tougher days, feedback, daily support note (email/push), payments UI with provider fallback (unconnected), 14-day trial, gift codes
 - Mobile: biometric app lock, push registration, invite deep links, partner home/sharing/upgrade screens
 - Security: RLS on all tables, throttled invite codes, AI service rate limit, function hardening, first-party crash reporting

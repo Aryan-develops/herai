@@ -31,7 +31,7 @@ export function ProfileSection() {
   }
 
   return (
-    <SettingsCard id="profile" icon={UserRound} title="Profile" description="How you appear in HERAI.">
+    <SettingsCard id="profile" icon={UserRound} title="Profile" description="How you appear in Lunee.">
       <div className="space-y-4">
         <div className="space-y-1.5">
           <Label htmlFor="settings-name">Name</Label>

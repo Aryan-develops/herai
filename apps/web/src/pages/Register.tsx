@@ -128,7 +128,7 @@ export function Register() {
         </Button>
 
         <p className="text-center text-xs text-neutral-500">
-          By continuing you agree that HERAI provides health information, not medical diagnosis.
+          By continuing you agree that Lunee provides health information, not medical diagnosis.
         </p>
       </form>
 

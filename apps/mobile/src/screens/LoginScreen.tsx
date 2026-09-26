@@ -67,7 +67,7 @@ export function LoginScreen({ navigation }: Props) {
         </View>
 
         <Text style={styles.footer}>
-          New to HERAI?{" "}
+          New to Lunee?{" "}
           <Text style={styles.link} accessibilityRole="link" onPress={() => navigation.navigate("Register")}>
             Create an account
           </Text>

@@ -31,7 +31,7 @@ def _render(filename: str, title: str, patient: str, lines: list[str]) -> None:
     c.setFont("Helvetica", 10)
     c.drawString(50, y, f"Patient: {patient} (synthetic)")
     y -= 14
-    c.drawString(50, y, "Lab: HERAI Demo Laboratory")
+    c.drawString(50, y, "Lab: Lunee Demo Laboratory")
     y -= 28
 
     c.setFont("Helvetica-Bold", 10)

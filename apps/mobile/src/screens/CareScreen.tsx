@@ -63,7 +63,7 @@ export function CareScreen({ navigation, route }: Props) {
 
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-      <ScreenTitle title="Find care near you" subtitle="Labs and doctors in the HERAI partner network." />
+      <ScreenTitle title="Find care near you" subtitle="Labs and doctors in the Lunee partner network." />
 
       <Button title="My requests" variant="outline" onPress={() => navigation.navigate("MyRequests")} />
 

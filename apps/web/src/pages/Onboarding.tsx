@@ -13,13 +13,13 @@ import { Spinner } from "@/components/ui/spinner";
 import { cn } from "@/lib/utils";
 
 const STEPS = [
-  { title: "Basics", heading: "Tell us the basics", blurb: "Helps HERAI tailor insight to your body." },
+  { title: "Basics", heading: "Tell us the basics", blurb: "Helps Lunee tailor insight to your body." },
   { title: "Cycle", heading: "Your cycle", blurb: "Optional, but it powers your phase and period predictions." },
   { title: "Health", heading: "Lifestyle & health", blurb: "Context our agents use to ground their advice. It stays private to you." },
 ] as const;
 
 const DISCLAIMER =
-  "HERAI provides health information and risk-awareness support. It does not diagnose conditions and is not a substitute for professional medical care. If you're worried, please consult a licensed clinician.";
+  "Lunee provides health information and risk-awareness support. It does not diagnose conditions and is not a substitute for professional medical care. If you're worried, please consult a licensed clinician.";
 
 interface FormState {
   ageRange: string;
@@ -133,7 +133,7 @@ export function Onboarding() {
           <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-brand-500 to-violet-500 text-white shadow-soft">
             <HeartPulse className="h-4.5 w-4.5" aria-hidden="true" />
           </span>
-          HERAI
+          Lunee
         </div>
 
         <ol className="mb-8 flex items-center" aria-label="Progress">
@@ -205,7 +205,7 @@ export function Onboarding() {
                   <Label htmlFor="cycleLength">Average cycle length (days)</Label>
                   <Input id="cycleLength" type="number" inputMode="numeric" value={form.cycleLengthDays} onChange={(e) => update("cycleLengthDays", e.target.value)} placeholder="28" aria-describedby="cycle-hint" />
                   <p id="cycle-hint" className="text-xs text-neutral-500">
-                    Not sure? Leave it blank. HERAI learns it from your logs.
+                    Not sure? Leave it blank. Lunee learns it from your logs.
                   </p>
                 </div>
                 <div className="space-y-1.5">
@@ -257,7 +257,7 @@ export function Onboarding() {
                       onChange={(e) => setAcknowledged(e.target.checked)}
                       className="mt-0.5 h-5 w-5 shrink-0 cursor-pointer rounded border-neutral-300 accent-brand-600"
                     />
-                    I understand HERAI does not provide medical diagnoses.
+                    I understand Lunee does not provide medical diagnoses.
                   </label>
                 </div>
               </>

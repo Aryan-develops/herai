@@ -59,7 +59,7 @@ export function Cycle() {
           </span>
           <p className="mt-4 font-display text-lg font-semibold text-ink-900">Let's map your cycle</p>
           <p className="mt-1 text-sm text-ink-700/70">
-            Log the days of your last period and HERAI will start predicting your phase, fertile window and next period.
+            Log the days of your last period and Lunee will start predicting your phase, fertile window and next period.
           </p>
           <Link to="/log" className="mt-5 inline-block">
             <Button>Log your first period</Button>

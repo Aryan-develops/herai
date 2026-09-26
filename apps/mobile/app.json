@@ -1,8 +1,8 @@
 {
   "expo": {
-    "name": "HERAI",
+    "name": "Lunee",
     "slug": "herai",
-    "scheme": "herai",
+    "scheme": "lunee",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -18,7 +18,7 @@
       "bundleIdentifier": "com.herai.app",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
-        "NSFaceIDUsageDescription": "HERAI uses Face ID to unlock the app and keep your health data private."
+        "NSFaceIDUsageDescription": "Lunee uses Face ID to unlock the app and keep your health data private."
       }
     },
     "android": {
@@ -39,13 +39,13 @@
       [
         "expo-location",
         {
-          "locationWhenInUsePermission": "HERAI uses your location to show labs and doctors near you."
+          "locationWhenInUsePermission": "Lunee uses your location to show labs and doctors near you."
         }
       ],
       [
         "expo-local-authentication",
         {
-          "faceIDPermission": "HERAI uses Face ID to unlock the app and keep your health data private."
+          "faceIDPermission": "Lunee uses Face ID to unlock the app and keep your health data private."
         }
       ],
       [
