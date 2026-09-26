@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Linking, Modal, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { SupportForm } from "./SupportForm";
 import { colors, radius } from "../theme";
 
 // India national numbers; each row dials with one tap.
@@ -41,7 +42,7 @@ export function GetHelpButton({ onFindCare }: { onFindCare?: (type?: "doctor") =
               </Pressable>
             </View>
 
-            <ScrollView>
+            <ScrollView keyboardShouldPersistTaps="handled">
               {HELPLINES.map((h) => (
                 <Pressable
                   key={h.number}
@@ -83,6 +84,7 @@ export function GetHelpButton({ onFindCare }: { onFindCare?: (type?: "doctor") =
                   </View>
                 </View>
               )}
+              <SupportForm />
               <Text style={styles.note}>Numbers shown are for India. Lunee can't summon help for you and can't detect every emergency.</Text>
             </ScrollView>
           </View>

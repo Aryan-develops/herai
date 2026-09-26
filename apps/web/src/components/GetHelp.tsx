@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Link } from "react-router-dom";
 import { Ambulance, HeartHandshake, LifeBuoy, MapPin, Phone, ShieldAlert, Stethoscope, X } from "lucide-react";
+import { SupportForm } from "@/components/SupportForm";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -105,6 +106,8 @@ function HelpSheet({ onClose }: { onClose: () => void }) {
             </Link>
           </div>
         </div>
+
+        <SupportForm />
 
         <p className="mt-4 text-xs text-neutral-500">
           Numbers shown are for India. Lunee can't summon help for you and can't detect every emergency.

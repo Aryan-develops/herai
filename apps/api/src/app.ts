@@ -11,6 +11,8 @@ import { careRouter, providerRouter } from "./routes/care.js";
 import { partnerRouter } from "./routes/partner.js";
 import { paymentsRouter } from "./routes/payments.js";
 import { settingsRouter } from "./routes/settings.js";
+import { createSupportRequest, supportInfo } from "./controllers/supportController.js";
+import { requireAuth } from "./middleware/auth.js";
 import { reportClientError } from "./controllers/clientErrorsController.js";
 import { runPartnerNudges } from "./controllers/nudgeController.js";
 import { asyncHandler } from "./utils/asyncHandler.js";
@@ -50,6 +52,8 @@ export function createApp() {
   app.use("/api/partner", partnerRouter);
   app.use("/api/payments", paymentsRouter);
   app.use("/api/settings", settingsRouter);
+  app.get("/api/support/info", supportInfo);
+  app.post("/api/support", requireAuth, asyncHandler(createSupportRequest));
   app.post("/api/client-errors", asyncHandler(reportClientError));
   app.get("/api/cron/partner-nudges", asyncHandler(runPartnerNudges));
 

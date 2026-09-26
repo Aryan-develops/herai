@@ -248,6 +248,14 @@ try {
   const fut = await call(she.token, "POST", "/logs/cycles/range", { days: [{ date: "2999-01-01", flow: "light" }] });
   check("future period days rejected", fut.status === 400);
 
+  // ---- support
+  const sup = await call(she.token, "POST", "/support", { topic: "bug", message: "The calendar does not open on my phone." });
+  check("support request saved", sup.status === 201 && sup.json.ok === true);
+  const supBad = await call(she.token, "POST", "/support", { topic: "bug", message: "short" });
+  check("too-short support message rejected", supBad.status === 400);
+  const supRow = await admin.from("support_requests").select("id").eq("user_id", she.id);
+  check("support request stored for her", (supRow.data?.length ?? 0) === 1);
+
   // ---- cascade
   const linkBefore = await admin.from("partner_links").select("id").eq("partner_id", he.id);
   await admin.auth.admin.deleteUser(he.id);

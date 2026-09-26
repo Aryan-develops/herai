@@ -368,6 +368,8 @@ export interface SharedScopes {
   fertility: boolean;
 }
 
+export type SupportTopic = "account" | "cycle_tracking" | "partner" | "payments" | "bug" | "other";
+
 export interface PartnerLink {
   id: string;
   firstName: string;
@@ -579,6 +581,9 @@ export const api = {
   },
   acceptInvite: (data: { code?: string; token?: string }) =>
     request<{ linkId: string; role: "woman" | "partner" }>("/partner/invites/accept", { method: "POST", body: JSON.stringify(data) }),
+  supportInfo: () => request<{ email: string | null }>("/support/info"),
+  sendSupport: (data: { topic: SupportTopic; message: string }) =>
+    request<{ ok: true; id: string; forwarded: boolean }>("/support", { method: "POST", body: JSON.stringify(data) }),
   listMyPartners: () => request<{ partners: PartnerLink[] }>("/partner/links"),
   updatePartnerLink: (id: string, data: { status?: "active" | "paused"; scopes?: Partial<SharedScopes>; nickname?: string | null }) =>
     request<{ partner: PartnerLink }>(`/partner/links/${id}`, { method: "PATCH", body: JSON.stringify(data) }),

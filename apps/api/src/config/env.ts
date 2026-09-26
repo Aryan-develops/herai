@@ -39,6 +39,8 @@ export const env = {
   cronSecret: process.env.CRON_SECRET,
   // Optional transactional email (Resend). Without it, non-critical email is skipped.
   resendApiKey: process.env.RESEND_API_KEY,
+  // Inbox that receives support requests and is shown to people as the way to reach us.
+  supportEmail: process.env.SUPPORT_EMAIL,
   emailFrom: process.env.EMAIL_FROM ?? "Lunee <onboarding@resend.dev>",
   // Optional: personalises partner wording. Falls back to the curated bank when unset or slow.
   aiServiceUrl: process.env.AI_SERVICE_URL,
