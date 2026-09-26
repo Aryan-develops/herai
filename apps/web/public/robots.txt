@@ -1,0 +1,12 @@
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /ai/
+Disallow: /admin
+Disallow: /dashboard
+Disallow: /settings
+Disallow: /consent/
+Disallow: /join/
+Disallow: /oauth/
+
+Sitemap: https://lunee.me/sitemap.xml
