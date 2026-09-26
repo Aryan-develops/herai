@@ -126,6 +126,17 @@ html {
 .dark .bg-white {
   background-color: var(--surface);
 }
+/* Gradient stops set to white (from-white, via-white, to-white) must follow the surface too, otherwise a
+   card stays white in dark mode while its text turns light. */
+.dark .from-white {
+  --tw-gradient-from: var(--surface);
+}
+.dark .via-white {
+  --tw-gradient-via: var(--surface);
+}
+.dark .to-white {
+  --tw-gradient-to: var(--surface);
+}
 .dark [class*="bg-white/"] {
   background-color: color-mix(in srgb, var(--surface) 82%, transparent);
 }
