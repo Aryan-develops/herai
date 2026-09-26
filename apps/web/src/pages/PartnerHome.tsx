@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { Gift, Globe, HeartHandshake, Plus, Sparkles, UserPlus } from "lucide-react";
-import { api, ApiError, type Lang, type SubscriptionView, type SummaryResponse, type WomanCard } from "@/lib/api";
+import { api, ApiError, type Lang, type PartnerLink, type SubscriptionView, type SummaryResponse, type WomanCard } from "@/lib/api";
 import { PARTNER_PHASE_STYLE } from "@/lib/phases";
 import { AppShell } from "@/components/AppShell";
 import { usePrefs } from "@/context/PrefsContext";
+import { CircleCard } from "@/components/partner/CircleCard";
 import { WomanView } from "@/components/partner/WomanView";
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -56,6 +57,7 @@ function Empty() {
 export function PartnerHome() {
   const [params, setParams] = useSearchParams();
   const [women, setWomen] = useState<WomanCard[] | null>(null);
+  const [supporters, setSupporters] = useState<PartnerLink[] | null>(null);
   const [subscription, setSubscription] = useState<SubscriptionView | null>(null);
   const [summary, setSummary] = useState<SummaryResponse | null>(null);
   const [summaryError, setSummaryError] = useState<{ status: number; message: string } | null>(null);
@@ -75,6 +77,10 @@ export function PartnerHome() {
       })
       .catch(() => setWomen([]));
   }, [lang, langReady]);
+
+  useEffect(() => {
+    api.listMyPartners().then(({ partners }) => setSupporters(partners)).catch(() => setSupporters([]));
+  }, []);
 
   const loadSummary = useCallback(() => {
     if (!selected) return;
@@ -101,6 +107,7 @@ export function PartnerHome() {
       if (document.visibilityState !== "visible") return;
       loadSummary();
       api.listWomen(lang).then(({ women, subscription }) => { setWomen(women); setSubscription(subscription); }).catch(() => {});
+      api.listMyPartners().then(({ partners }) => setSupporters(partners)).catch(() => {});
     };
     const timer = setInterval(refresh, 60_000);
     document.addEventListener("visibilitychange", refresh);
@@ -153,7 +160,9 @@ export function PartnerHome() {
       {subscription && <SubscriptionBanner sub={subscription} />}
 
       {women === null && <div className="skeleton mt-6 h-40 rounded-3xl" aria-hidden="true" />}
-      {women?.length === 0 && <Empty />}
+      {women?.length === 0 && supporters?.filter((p) => p.status !== "revoked").length === 0 && <Empty />}
+
+      <CircleCard supporters={supporters} following={women} selected={selected} onSelect={(id) => setParams({ w: id })} />
 
       {women && women.length > 0 && (
         <>

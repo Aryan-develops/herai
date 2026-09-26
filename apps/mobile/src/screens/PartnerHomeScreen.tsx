@@ -5,10 +5,11 @@ import { useNavigation } from "@react-navigation/native";
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View, useWindowDimensions } from "react-native";
 import * as Clipboard from "expo-clipboard";
 import { Ionicons } from "@expo/vector-icons";
-import { api, ApiError, type Lang, type SubscriptionView, type SummaryResponse, type WomanCard, type WomanSummary } from "../lib/api";
+import { api, ApiError, type Lang, type PartnerLink, type SubscriptionView, type SummaryResponse, type WomanCard, type WomanSummary } from "../lib/api";
 import { DAY_PHASE_COLOR, PARTNER_PHASE_LOOK, shortDate } from "../lib/phases";
 import { Button, ErrorText, Notice, ScreenTitle } from "../components/ui";
 import { usePrefs } from "../context/PrefsContext";
+import { CircleCard } from "../components/CircleCard";
 import { InsightCards } from "../components/InsightCards";
 import { moodOption } from "../components/moodOptions";
 import { colors, radius, shadow } from "../theme";
@@ -378,6 +379,7 @@ function WomanView({ summary, lang, onRefresh }: { summary: WomanSummary; lang: 
 export function PartnerHomeScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<AppStackParamList>>();
   const [women, setWomen] = useState<WomanCard[] | null>(null);
+  const [supporters, setSupporters] = useState<PartnerLink[] | null>(null);
   const [subscription, setSubscription] = useState<SubscriptionView | null>(null);
   const [selected, setSelected] = useState<string | null>(null);
   const [summary, setSummary] = useState<SummaryResponse | null>(null);
@@ -397,6 +399,13 @@ export function PartnerHomeScreen() {
           setSelected((cur) => (cur && women.some((w) => w.linkId === cur) ? cur : women[0]?.linkId ?? null));
         })
         .catch(() => setWomen([]));
+      const refreshLists = () => {
+        api.listMyPartners().then(({ partners }) => setSupporters(partners)).catch(() => setSupporters((cur) => cur ?? []));
+        api.listWomen(lang).then(({ women, subscription }) => { setWomen(women); setSubscription(subscription); }).catch(() => {});
+      };
+      refreshLists();
+      const timer = setInterval(refreshLists, 60_000);
+      return () => clearInterval(timer);
     }, [lang, langReady]),
   );
 
@@ -461,7 +470,7 @@ export function PartnerHomeScreen() {
       ) : null}
 
       {women === null ? <View style={styles.skeleton} /> : null}
-      {women?.length === 0 ? (
+      {women?.length === 0 && supporters?.filter((p) => p.status !== "revoked").length === 0 ? (
         <View style={styles.empty}>
           <View style={styles.emptyIcon}>
             <Ionicons name="heart-circle" size={30} color={colors.onBrand} />
@@ -471,6 +480,8 @@ export function PartnerHomeScreen() {
           <Button title="Invite or enter a code" onPress={() => navigation.navigate("PartnerSettings")} />
         </View>
       ) : null}
+
+      <CircleCard supporters={supporters} following={women} selected={selected} onSelect={setSelected} onManage={() => navigation.navigate("PartnerSettings")} />
 
       {women && women.length > 1 ? (
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }} accessibilityRole="tablist">
