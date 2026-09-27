@@ -3,6 +3,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
 import type { PartnerLink, WomanCard } from "../lib/api";
 import { PARTNER_PHASE_LOOK } from "../lib/phases";
+import { NicknameEditor } from "./NicknameEditor";
 import { colors, radius, shadow } from "../theme";
 
 const REL: Record<string, string> = { partner: "Partner", family: "Family", friend: "Friend" };
@@ -14,12 +15,18 @@ export function CircleCard({
   selected,
   onSelect,
   onManage,
+  onRenameSupporter,
+  onRenameFollowing,
 }: {
   supporters: PartnerLink[] | null;
   following: WomanCard[] | null;
   selected: string | null;
   onSelect: (linkId: string) => void;
   onManage: () => void;
+  /** Sets what SHE calls this supporter — private to her. */
+  onRenameSupporter?: (linkId: string, nickname: string | null) => Promise<void> | void;
+  /** Sets what HE calls this woman he follows — private to him. */
+  onRenameFollowing?: (linkId: string, nickname: string | null) => Promise<void> | void;
 }) {
   const live = (supporters ?? []).filter((s) => s.status !== "revoked");
   if (!live.length && !following?.length) return null;
@@ -46,6 +53,9 @@ export function CircleCard({
                   <Text style={s.name}>{p.nickname ?? p.firstName}</Text>
                   <Text style={s.sub}>{REL[p.relationship] ?? p.relationship} · sees {shared} of {Object.keys(p.scopes).length} things</Text>
                 </View>
+                {onRenameSupporter && (
+                  <NicknameEditor value={p.nickname} placeholder={p.firstName} onSave={(nickname) => onRenameSupporter(p.id, nickname)} />
+                )}
                 <View style={[s.pill, { backgroundColor: active ? colors.sage100 : colors.amber50 }]}>
                   <Text style={[s.pillText, { color: active ? colors.sage700 : colors.amber900 }]}>{active ? "Active" : "Paused"}</Text>
                 </View>
@@ -62,23 +72,28 @@ export function CircleCard({
             const look = w.phaseKey ? PARTNER_PHASE_LOOK[w.phaseKey] : null;
             const on = w.linkId === selected;
             return (
-              <Pressable key={w.linkId} onPress={() => onSelect(w.linkId)} accessibilityRole="button" accessibilityState={{ selected: on }} style={[s.row, on && s.rowOn]}>
-                <Avatar name={w.firstName} />
-                <View style={{ flex: 1 }}>
-                  <Text style={s.name}>{w.firstName}</Text>
-                  <Text style={s.sub}>{REL[w.relationship] ?? w.relationship}</Text>
-                </View>
-                {w.available && w.cycleDay ? (
-                  <View style={s.dayWrap}>
-                    <View style={[s.dot, { backgroundColor: look?.solid ?? colors.neutral300 }]} />
-                    <Text style={s.day}>Day {w.cycleDay}</Text>
+              <View key={w.linkId} style={[s.row, on && s.rowOn]}>
+                <Pressable onPress={() => onSelect(w.linkId)} accessibilityRole="button" accessibilityState={{ selected: on }} style={{ flex: 1, flexDirection: "row", alignItems: "center", gap: 10 }}>
+                  <Avatar name={w.firstName} />
+                  <View style={{ flex: 1 }}>
+                    <Text style={s.name}>{w.firstName}</Text>
+                    <Text style={s.sub}>{REL[w.relationship] ?? w.relationship}</Text>
                   </View>
-                ) : (
-                  <View style={[s.pill, { backgroundColor: colors.neutral200 }]}>
-                    <Text style={[s.pillText, { color: colors.ink700 }]}>{w.available ? "Synced" : "Not sharing now"}</Text>
-                  </View>
+                  {w.available && w.cycleDay ? (
+                    <View style={s.dayWrap}>
+                      <View style={[s.dot, { backgroundColor: look?.solid ?? colors.neutral300 }]} />
+                      <Text style={s.day}>Day {w.cycleDay}</Text>
+                    </View>
+                  ) : (
+                    <View style={[s.pill, { backgroundColor: colors.neutral200 }]}>
+                      <Text style={[s.pillText, { color: colors.ink700 }]}>{w.available ? "Synced" : "Not sharing now"}</Text>
+                    </View>
+                  )}
+                </Pressable>
+                {onRenameFollowing && (
+                  <NicknameEditor value={w.nickname} placeholder={w.firstName} onSave={(nickname) => onRenameFollowing(w.linkId, nickname)} />
                 )}
-              </Pressable>
+              </View>
             );
           })}
         </View>

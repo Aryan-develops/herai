@@ -68,20 +68,32 @@ export function PartnerHome() {
 
   const selected = params.get("w") ?? women?.[0]?.linkId ?? null;
 
-  useEffect(() => {
+  const loadWomen = useCallback(() => {
     if (!langReady) return;
-    api
-      .listWomen(lang)
-      .then(({ women, subscription }) => {
-        setWomen(women);
-        setSubscription(subscription);
-      })
-      .catch(() => setWomen([]));
+    api.listWomen(lang).then(({ women, subscription }) => { setWomen(women); setSubscription(subscription); }).catch(() => setWomen([]));
   }, [lang, langReady]);
 
   useEffect(() => {
+    loadWomen();
+  }, [loadWomen]);
+
+  const loadSupporters = useCallback(() => {
     api.listMyPartners().then(({ partners }) => setSupporters(partners)).catch(() => setSupporters([]));
   }, []);
+
+  useEffect(() => {
+    loadSupporters();
+  }, [loadSupporters]);
+
+  async function renameSupporter(id: string, nickname: string | null) {
+    await api.updatePartnerLink(id, { nickname });
+    loadSupporters();
+  }
+
+  async function renameFollowing(linkId: string, nickname: string | null) {
+    await api.setWomanNickname(linkId, nickname);
+    loadWomen();
+  }
 
   const loadSummary = useCallback(() => {
     if (!selected) return;
@@ -107,8 +119,8 @@ export function PartnerHome() {
     const refresh = () => {
       if (document.visibilityState !== "visible") return;
       loadSummary();
-      api.listWomen(lang).then(({ women, subscription }) => { setWomen(women); setSubscription(subscription); }).catch(() => {});
-      api.listMyPartners().then(({ partners }) => setSupporters(partners)).catch(() => {});
+      loadWomen();
+      loadSupporters();
     };
     const timer = setInterval(refresh, 60_000);
     document.addEventListener("visibilitychange", refresh);
@@ -118,7 +130,7 @@ export function PartnerHome() {
       document.removeEventListener("visibilitychange", refresh);
       window.removeEventListener("focus", refresh);
     };
-  }, [loadSummary, lang]);
+  }, [loadSummary, loadWomen, loadSupporters]);
 
   function switchLang(next: Lang) {
     update({ language: next });
@@ -227,7 +239,14 @@ export function PartnerHome() {
           <ChevronDown className="h-4 w-4 text-neutral-400 transition-transform group-open:rotate-180" aria-hidden="true" />
         </summary>
         <div className="px-4 pb-3">
-          <CircleCard supporters={supporters} following={women} selected={selected} onSelect={(id) => setParams({ w: id })} />
+          <CircleCard
+            supporters={supporters}
+            following={women}
+            selected={selected}
+            onSelect={(id) => setParams({ w: id })}
+            onRenameSupporter={renameSupporter}
+            onRenameFollowing={renameFollowing}
+          />
           <div className="mt-4 flex flex-wrap gap-3">
             <Link to="/settings#partner">
               <Button variant="outline" size="sm">

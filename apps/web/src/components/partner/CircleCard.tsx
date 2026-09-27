@@ -3,6 +3,7 @@ import { HeartHandshake, Users } from "lucide-react";
 import type { PartnerLink, WomanCard } from "@/lib/api";
 import { PARTNER_PHASE_STYLE } from "@/lib/phases";
 import { Badge } from "@/components/ui/badge";
+import { NicknameEditor } from "@/components/partner/NicknameEditor";
 import { cn } from "@/lib/utils";
 
 const REL: Record<string, string> = { partner: "Partner", family: "Family", friend: "Friend" };
@@ -17,11 +18,17 @@ export function CircleCard({
   following,
   selected,
   onSelect,
+  onRenameSupporter,
+  onRenameFollowing,
 }: {
   supporters: PartnerLink[] | null;
   following: WomanCard[] | null;
   selected: string | null;
   onSelect: (linkId: string) => void;
+  /** Sets what SHE calls this supporter — private to her. */
+  onRenameSupporter?: (linkId: string, nickname: string | null) => Promise<void> | void;
+  /** Sets what HE calls this woman he follows — private to him. */
+  onRenameFollowing?: (linkId: string, nickname: string | null) => Promise<void> | void;
 }) {
   const live = (supporters ?? []).filter((s) => s.status !== "revoked");
   if (!live.length && !(following?.length)) return null;
@@ -53,6 +60,13 @@ export function CircleCard({
                       {REL[s.relationship] ?? s.relationship} · sees {shared} of {Object.keys(s.scopes).length} things
                     </p>
                   </div>
+                  {onRenameSupporter && (
+                    <NicknameEditor
+                      value={s.nickname}
+                      placeholder={s.firstName}
+                      onSave={(nickname) => onRenameSupporter(s.id, nickname)}
+                    />
+                  )}
                   <Badge tone={s.status === "active" ? "sage" : "amber"}>{s.status === "active" ? "Active" : "Paused"}</Badge>
                 </li>
               );
@@ -69,15 +83,18 @@ export function CircleCard({
               const style = w.phaseKey ? PARTNER_PHASE_STYLE[w.phaseKey] : null;
               const active = w.linkId === selected;
               return (
-                <li key={w.linkId}>
+                <li
+                  key={w.linkId}
+                  className={cn(
+                    "flex items-center gap-1 rounded-2xl border p-1.5 pl-2.5 transition-colors",
+                    active ? "border-brand-300 bg-brand-50" : "border-neutral-100",
+                  )}
+                >
                   <button
                     type="button"
                     onClick={() => onSelect(w.linkId)}
                     aria-pressed={active}
-                    className={cn(
-                      "flex w-full cursor-pointer items-center gap-3 rounded-2xl border p-2.5 text-left transition-colors",
-                      active ? "border-brand-300 bg-brand-50" : "border-neutral-100 hover:border-brand-200",
-                    )}
+                    className="flex min-w-0 flex-1 cursor-pointer items-center gap-3 rounded-xl p-1 text-left hover:bg-brand-50/60"
                   >
                     <Avatar name={w.firstName} />
                     <div className="min-w-0 flex-1">
@@ -93,6 +110,9 @@ export function CircleCard({
                       <Badge tone="neutral">{w.available ? "Synced" : "Not sharing now"}</Badge>
                     )}
                   </button>
+                  {onRenameFollowing && (
+                    <NicknameEditor value={w.nickname} placeholder={w.firstName} onSave={(nickname) => onRenameFollowing(w.linkId, nickname)} />
+                  )}
                 </li>
               );
             })}

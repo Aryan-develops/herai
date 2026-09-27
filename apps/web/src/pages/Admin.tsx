@@ -24,8 +24,11 @@ const fmtDate = (s: string | null) => (s ? new Date(s).toLocaleDateString(undefi
 
 /** Admin-only console. The server returns 404 for anyone not in app_admins; this page also hides itself. */
 export function Admin() {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
   const [tab, setTab] = useState<Tab>("dashboard");
+  // Don't redirect on the loading flash — a fresh session (no cached user yet) briefly has
+  // user === null while /me is in flight, which would otherwise bounce a real admin away.
+  if (loading) return null;
   if (!user?.isAdmin) return <Navigate to="/dashboard" replace />;
 
   return (

@@ -18,6 +18,7 @@ import {
   previewInvite,
   revokeLink,
   setTask,
+  setWomanNickname,
   submitFeedback,
   updateLink,
   womanSummary,
@@ -48,6 +49,7 @@ partnerRouter.get("/links/:id/access-log", asyncHandler(accessLog));
 // Partner side: everyone who shares with them
 partnerRouter.get("/subscription", asyncHandler(mySubscription));
 partnerRouter.get("/women", asyncHandler(listWomen));
+partnerRouter.put("/women/:linkId/nickname", asyncHandler(setWomanNickname));
 partnerRouter.get("/women/:linkId/summary", requirePartnerSubscription, asyncHandler(womanSummary));
 partnerRouter.post("/women/:linkId/feedback", requirePartnerSubscription, asyncHandler(submitFeedback));
 partnerRouter.post("/women/:linkId/tasks", requirePartnerSubscription, asyncHandler(setTask));

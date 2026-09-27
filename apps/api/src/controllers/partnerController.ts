@@ -248,7 +248,7 @@ function linkView(l: LinkRow, name: string) {
   return {
     id: l.id,
     firstName: name,
-    nickname: l.nickname,
+    nickname: l.partner_nickname,
     relationship: l.relationship,
     status: l.status,
     scopes: normaliseScopes(l.shared_scopes),
@@ -296,12 +296,29 @@ export async function updateLink(req: AuthedRequest, res: Response) {
   const patch: Record<string, unknown> = { updated_at: new Date().toISOString() };
   if (parsed.data.status) patch.status = parsed.data.status;
   if (parsed.data.scopes) patch.shared_scopes = { ...normaliseScopes(link.shared_scopes), ...parsed.data.scopes };
-  if (parsed.data.nickname !== undefined) patch.nickname = parsed.data.nickname || null;
+  // This is what SHE calls HIM — shown only on her side (linkView above).
+  if (parsed.data.nickname !== undefined) patch.partner_nickname = parsed.data.nickname || null;
 
   const { data, error } = await supabaseAdmin.from("partner_links").update(patch).eq("id", link.id).select("*").single();
   if (error || !data) throw new HttpError(500, "Failed to update");
   const names = await namesFor([link.partner_id]);
   res.json({ partner: linkView(data as LinkRow, names.get(link.partner_id) ?? "Partner") });
+}
+
+const setWomanNicknameSchema = z.object({ nickname: z.string().trim().max(40).nullable() });
+
+/** His side: what he calls her, shown only to him. Separate from her nickname for him (updateLink above). */
+export async function setWomanNickname(req: AuthedRequest, res: Response) {
+  const parsed = setWomanNicknameSchema.safeParse(req.body ?? {});
+  if (!parsed.success) throw new HttpError(400, parsed.error.issues[0]?.message ?? "Invalid input");
+  const link = await loadLink(req.params.linkId, req.userId!);
+  if (link.partner_id !== req.userId) throw new HttpError(404, "Not found");
+
+  await supabaseAdmin
+    .from("partner_links")
+    .update({ woman_nickname: parsed.data.nickname || null, updated_at: new Date().toISOString() })
+    .eq("id", link.id);
+  res.json({ nickname: parsed.data.nickname || null });
 }
 
 /** Either side can end the connection. Revoking is immediate: the next partner request 404s. */
@@ -397,7 +414,8 @@ export async function listWomen(req: AuthedRequest, res: Response) {
     rows.map(async (l) => {
       const base = {
         linkId: l.id,
-        firstName: l.nickname || names.get(l.woman_id) || "Her",
+        firstName: l.woman_nickname || names.get(l.woman_id) || "Her",
+        nickname: l.woman_nickname,
         relationship: l.relationship,
       };
       const scopes = normaliseScopes(l.shared_scopes);
@@ -507,7 +525,8 @@ export async function womanSummary(req: AuthedRequest, res: Response) {
     available: true,
     link: {
       id: link.id,
-      firstName: link.nickname || names.get(link.woman_id) || "Her",
+      firstName: link.woman_nickname || names.get(link.woman_id) || "Her",
+      nickname: link.woman_nickname,
       relationship: link.relationship,
       since: link.created_at,
     },

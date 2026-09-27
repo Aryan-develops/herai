@@ -40,6 +40,10 @@ export interface LinkRow {
   status: "active" | "paused" | "revoked";
   shared_scopes: unknown;
   nickname: string | null;
+  /** What she calls him, set by her, shown only to her. */
+  partner_nickname: string | null;
+  /** What he calls her, set by him, shown only to him. */
+  woman_nickname: string | null;
   created_at: string;
 }
 

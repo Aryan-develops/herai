@@ -405,6 +405,7 @@ export interface SubscriptionView {
 export interface WomanCard {
   linkId: string;
   firstName: string;
+  nickname: string | null;
   relationship: Relationship;
   available: boolean;
   phaseKey?: PhaseKey | null;
@@ -431,7 +432,7 @@ export interface PartnerGuidance {
 
 export interface WomanSummary {
   available: true;
-  link: { id: string; firstName: string; relationship: Relationship; since: string };
+  link: { id: string; firstName: string; nickname: string | null; relationship: Relationship; since: string };
   phase: {
     key: PhaseKey | null;
     cycleDay: number | null;
@@ -602,6 +603,8 @@ export const api = {
   revokePartnerLink: (id: string) => request<void>(`/partner/links/${id}`, { method: "DELETE" }),
   partnerAccessLog: (id: string) => request<{ entries: { action: string; at: string }[] }>(`/partner/links/${id}/access-log`),
   listWomen: (lang?: Lang) => request<{ women: WomanCard[]; subscription: SubscriptionView }>(`/partner/women${lang ? `?lang=${lang}` : ""}`),
+  setWomanNickname: (linkId: string, nickname: string | null) =>
+    request<{ nickname: string | null }>(`/partner/women/${linkId}/nickname`, { method: "PUT", body: JSON.stringify({ nickname }) }),
   womanSummary: (linkId: string, lang?: Lang) => request<SummaryResponse>(`/partner/women/${linkId}/summary${lang ? `?lang=${lang}` : ""}`),
   partnerFeedback: (linkId: string, data: { guidanceKey: string; helpful: boolean }) =>
     request<{ ok: true }>(`/partner/women/${linkId}/feedback`, { method: "POST", body: JSON.stringify(data) }),

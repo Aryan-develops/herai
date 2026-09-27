@@ -442,6 +442,16 @@ export function PartnerHomeScreen() {
     update({ language: next });
   }
 
+  async function renameSupporter(id: string, nickname: string | null) {
+    await api.updatePartnerLink(id, { nickname });
+    api.listMyPartners().then(({ partners }) => setSupporters(partners)).catch(() => {});
+  }
+
+  async function renameFollowing(linkId: string, nickname: string | null) {
+    await api.setWomanNickname(linkId, nickname);
+    api.listWomen(lang).then(({ women, subscription }) => { setWomen(women); setSubscription(subscription); }).catch(() => {});
+  }
+
   const threads = [
     ...(women ?? []).map((w) => ({ linkId: w.linkId, name: w.firstName })),
     ...(supporters ?? []).filter((p) => p.status !== "revoked").map((p) => ({ linkId: p.id, name: p.nickname ?? p.firstName })),
@@ -488,7 +498,15 @@ export function PartnerHomeScreen() {
         </View>
       ) : null}
 
-      <CircleCard supporters={supporters} following={women} selected={selected} onSelect={setSelected} onManage={() => navigation.navigate("PartnerSettings")} />
+      <CircleCard
+        supporters={supporters}
+        following={women}
+        selected={selected}
+        onSelect={setSelected}
+        onManage={() => navigation.navigate("PartnerSettings")}
+        onRenameSupporter={renameSupporter}
+        onRenameFollowing={renameFollowing}
+      />
 
       {women && women.length > 1 ? (
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }} accessibilityRole="tablist">
