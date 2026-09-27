@@ -42,6 +42,7 @@ from app.lang import current_language, emergency_copy, normalize
 from app.llm import get_llm_provider
 from app.utils import lab_values as lv
 from app.utils.ocr import extract_text
+from app.utils.text_analysis import is_health_query
 
 logger = logging.getLogger("herai.orchestrator")
 
@@ -428,6 +429,26 @@ async def run_pipeline(
     yield {"type": "pipeline_start"}
 
     try:
+        # 0. Topic filter — deterministic hard block, no LLM call.
+        if not is_health_query(message) and not _SMALL_TALK.match(message):
+            yield {
+                "type": "final",
+                "data": {
+                    "kind": "reply",
+                    "emergency": False,
+                    "reply": OFF_TOPIC_REPLY,
+                    "intake": None,
+                    "follow_up_questions": OFF_TOPIC_SUGGESTIONS,
+                    "sources": [],
+                    "suggest_help": False,
+                    "confidence": None,
+                    "disclaimer": DISCLAIMER,
+                    "agent_trace": [],
+                },
+            }
+            logger.info("[%s] pipeline=chat status=complete outcome=topic_blocked", request_id)
+            return
+
         # 1. Intake
         intake_agent = IntakeAgent(llm)
         yield _step_event(intake_agent.name, intake_agent.label, "start")

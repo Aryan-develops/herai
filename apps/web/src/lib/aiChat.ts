@@ -1,4 +1,5 @@
 import type { HealthProfile } from "@/lib/api";
+import { getSession } from "@/lib/session";
 import { streamSSE } from "@/lib/sse";
 
 export interface AgentStepEvent {
@@ -136,9 +137,12 @@ export async function streamChat(
   onEvent: (event: PipelineEvent) => void,
   signal?: AbortSignal
 ): Promise<void> {
+  const session = getSession();
+  const headers: Record<string, string> = { "Content-Type": "application/json" };
+  if (session) headers.Authorization = `Bearer ${session.accessToken}`;
   await streamSSE(
-    "/ai/chat/stream",
-    { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) },
+    "/api/ai/chat/stream",
+    { method: "POST", headers, body: JSON.stringify(payload) },
     (data) => onEvent(data as PipelineEvent),
     { signal, idleTimeoutMs: 45000 }
   );

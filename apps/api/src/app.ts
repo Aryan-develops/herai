@@ -18,6 +18,7 @@ import { reportClientError } from "./controllers/clientErrorsController.js";
 import { runPartnerNudges } from "./controllers/nudgeController.js";
 import { asyncHandler } from "./utils/asyncHandler.js";
 import { errorHandler } from "./middleware/errorHandler.js";
+import { aiRouter } from "./routes/ai.js";
 
 export function createApp() {
   const app = express();
@@ -54,6 +55,7 @@ export function createApp() {
   app.use("/api/payments", paymentsRouter);
   app.use("/api/settings", settingsRouter);
   app.use("/api/admin", adminRouter);
+  app.use("/api/ai", aiRouter);
   app.get("/api/support/info", supportInfo);
   app.post("/api/support", requireAuth, asyncHandler(createSupportRequest));
   app.post("/api/client-errors", asyncHandler(reportClientError));

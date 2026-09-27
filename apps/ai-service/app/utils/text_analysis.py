@@ -258,3 +258,51 @@ def detect_emergency(text: str) -> EmergencyCheck:
             if matched:
                 return EmergencyCheck(is_emergency=True, matched_signals=matched, category=category)
     return EmergencyCheck(is_emergency=False)
+
+
+# --- topic filter (hard gate) --------------------------------------------------
+
+# Broad health vocabulary: symptoms, body, medical actions, wellbeing, lifestyle
+_HEALTH_TOPIC_RE = re.compile(
+    r"\b("
+    # General body / medical
+    r"symptom|doctor|clinic|hospital|medicine|medication|pill|tablet|capsule|prescription|diagnos\w*|"
+    r"test|scan|ultrasound|blood|urine|lab|report|result|treatment|therapy|surgery|"
+    # Wellness / body signals
+    r"pain|ache|fever|headache|dizzy|nausea|vomit|fatigue|tired|sleep|stress|anxiety|mood|"
+    r"weight|diet|exercise|nutrition|vitamin|supplement|immune|allerg\w*|infection|inflam\w*|"
+    # Women's health (already covered by _WOMENS_HEALTH_KEYWORDS but kept together here)
+    r"period|cycle|menstrual|menstruation|pcos|hormon\w*|ovulat\w*|pms|pregnan\w*|contracepti\w*|"
+    r"birth control|vaginal|uterus|ovary|cervix|endometri\w*|thyroid|"
+    # Mental health
+    r"mental health|depression|depressed|panic|trauma|eating disorder|"
+    # Lab / numbers people paste
+    r"mg/dl|mmol|ng/ml|iu/l|bpm|mmhg|hba1c|tsh|fsh|lh|amh|prolactin|ferritin|hemoglobin|"
+    # Common Indian health terms
+    r"sugar|bp|pressure|cholesterol|pcod|thyroid|anemia|anaemia|calcium|iron"
+    r")\b",
+    re.IGNORECASE,
+)
+
+# Very short messages (≤4 tokens) are ambiguous — allow them through so greetings
+# and follow-up replies ("yes", "tell me more") don't get hard-blocked.
+_TOKEN_RE = re.compile(r"\S+")
+
+
+def is_health_query(text: str) -> bool:
+    """Return True when the message contains any health-related signal.
+
+    Uses deterministic pattern matching so this runs before any LLM call.
+    Short messages (≤4 words) are considered health-adjacent by default so
+    follow-up replies like "yes" or "what does that mean?" pass through.
+    """
+    tokens = _TOKEN_RE.findall(text)
+    if len(tokens) <= 4:
+        return True
+    if _HEALTH_TOPIC_RE.search(text):
+        return True
+    if _WOMENS_HEALTH_KEYWORDS.search(text):
+        return True
+    if extract_symptoms(text):
+        return True
+    return False

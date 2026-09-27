@@ -1,10 +1,11 @@
 import type { HealthProfile } from "./api";
+import { getSession } from "./session";
 import { streamSSE } from "./sse";
-import { AI_SERVICE_URL } from "../config";
+import { API_URL } from "../config";
 
-/** Ported from apps/web/src/lib/aiChat.ts — identical event/result shapes,
- * since both clients parse the same ai-service SSE stream. Only the target
- * URL differs (absolute AI_SERVICE_URL instead of Vite's `/ai` proxy). */
+/** Ported from apps/web/src/lib/aiChat.ts — identical event/result shapes.
+ * Routes through the Express gateway (/api/ai/chat/stream) so auth +
+ * rate-limiting + PII redaction apply, same as the web client. */
 
 export interface AgentStepEvent {
   type: "agent_step";
@@ -140,9 +141,12 @@ export async function streamChat(
   onEvent: (event: PipelineEvent) => void,
   signal?: AbortSignal
 ): Promise<void> {
+  const session = await getSession();
+  const headers: Record<string, string> = { "Content-Type": "application/json" };
+  if (session) headers.Authorization = `Bearer ${session.accessToken}`;
   await streamSSE(
-    `${AI_SERVICE_URL}/chat/stream`,
-    { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) },
+    `${API_URL}/ai/chat/stream`,
+    { method: "POST", headers, body: JSON.stringify(payload) },
     (data) => onEvent(data as PipelineEvent),
     { signal, idleTimeoutMs: 45000 }
   );
