@@ -120,6 +120,14 @@ export function Landing() {
           Lunee is a health information and risk-awareness support tool. It does not provide medical diagnoses
           and is not a substitute for professional medical care.
         </p>
+        <p className="mt-3 flex items-center justify-center gap-4 text-xs text-neutral-500">
+          <Link to="/privacy" className="hover:underline">
+            Privacy Policy
+          </Link>
+          <Link to="/legal" className="hover:underline">
+            Terms of Service
+          </Link>
+        </p>
       </footer>
     </div>
   );

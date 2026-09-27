@@ -28,6 +28,8 @@ const PartnerHome = lazy(() => import("@/pages/PartnerHome").then((m) => ({ defa
 const PartnerUpgrade = lazy(() => import("@/pages/PartnerUpgrade").then((m) => ({ default: m.PartnerUpgrade })));
 const Admin = lazy(() => import("@/pages/Admin").then((m) => ({ default: m.Admin })));
 const Join = lazy(() => import("@/pages/Join").then((m) => ({ default: m.Join })));
+const Privacy = lazy(() => import("@/pages/Privacy").then((m) => ({ default: m.Privacy })));
+const Terms = lazy(() => import("@/pages/Terms").then((m) => ({ default: m.Terms })));
 
 /** Shape of a page while its code loads, so the screen never flashes blank text. */
 function PageSkeleton() {
@@ -69,6 +71,8 @@ function App() {
         <Route path="/" element={<Landing />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/privacy" element={<Privacy />} />
+        <Route path="/legal" element={<Terms />} />
         {/* Guardian-facing: reached from an emailed link, no account needed. */}
         <Route path="/consent/:token" element={<GuardianConsent />} />
         {/* Creates the session itself (Supabase OAuth code exchange) — must sit
