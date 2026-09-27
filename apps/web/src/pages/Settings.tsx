@@ -4,7 +4,7 @@ import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button";
 import { useLocation } from "react-router-dom";
 import { Link } from "react-router-dom";
-import { CalendarCheck, ChevronRight, ShieldCheck, FileText, History, MapPin } from "lucide-react";
+import { CalendarCheck, ChevronRight, ShieldCheck, FileText, History } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { ProfileSection } from "@/components/settings/ProfileSection";
 import { SecuritySection } from "@/components/settings/SecuritySection";
@@ -24,7 +24,6 @@ const SECTIONS = [
 const MORE = [
   { to: "/timeline", label: "History", hint: "Everything you've logged", icon: History },
   { to: "/reports", label: "Lab reports", hint: "Upload and understand reports", icon: FileText },
-  { to: "/care", label: "Find care", hint: "Labs and doctors near you", icon: MapPin },
   { to: "/care/requests", label: "My requests", hint: "Tests and appointments you asked for", icon: CalendarCheck },
 ];
 
