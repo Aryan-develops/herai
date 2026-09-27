@@ -1,9 +1,10 @@
 import { useEffect, type ReactNode } from "react";
 import { LogoMark } from "@/components/LogoMark";
 import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
-import { BookOpen, CalendarDays, HeartHandshake, Plus, Settings, Sparkles, Store, Sun } from "lucide-react";
+import { BookOpen, CalendarDays, HeartHandshake, Plus, Settings, Store, Sun } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { GetHelpButton } from "@/components/GetHelp";
+import { FloatingChat } from "@/components/FloatingChat";
 import { takePendingJoin } from "@/lib/join";
 import { isPartnerOnly } from "@/lib/gender";
 import { cn } from "@/lib/utils";
@@ -15,21 +16,19 @@ interface NavItem {
   center?: boolean;
 }
 
-// Five destinations everywhere; Log is the raised centre button on phones. Reports, Care and Timeline
-// live under Settings > More so the bar stays calm.
+// Ask now lives in the floating chat bubble on every screen, so it's no longer a nav destination.
+// Log is the raised centre button on phones. Reports, Care and Timeline live under Settings > More.
 const NAV: NavItem[] = [
   { to: "/dashboard", label: "Today", icon: Sun },
   { to: "/cycle", label: "Calendar", icon: CalendarDays },
   { to: "/log", label: "Log", icon: Plus, center: true },
   { to: "/partner", label: "Partner", icon: HeartHandshake },
-  { to: "/chat", label: "Ask", icon: Sparkles },
 ];
 
-// Partner-only accounts don't track a cycle, so no Log, Calendar or Today — just their circle, the guide and Ask.
+// Partner-only accounts don't track a cycle, so no Log, Calendar or Today — just their circle and the guide.
 const PARTNER_ONLY_NAV: NavItem[] = [
   { to: "/partner", label: "Home", icon: HeartHandshake },
   { to: "/guide", label: "Guide", icon: BookOpen },
-  { to: "/chat", label: "Ask", icon: Sparkles },
 ];
 
 export function AppShell({ children }: { children: ReactNode }) {
@@ -136,6 +135,8 @@ export function AppShell({ children }: { children: ReactNode }) {
           ))}
         </ul>
       </nav>
+
+      {pathname !== "/chat" && <FloatingChat />}
     </div>
   );
 }

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { Gift, Globe, HeartHandshake, Plus, Sparkles, UserPlus } from "lucide-react";
+import { ChevronDown, Gift, Globe, HeartHandshake, Plus, Sparkles, UserPlus } from "lucide-react";
 import { api, ApiError, type Lang, type PartnerLink, type SubscriptionView, type SummaryResponse, type WomanCard } from "@/lib/api";
 import { PARTNER_PHASE_STYLE } from "@/lib/phases";
 import { AppShell } from "@/components/AppShell";
@@ -221,22 +221,29 @@ export function PartnerHome() {
         ]}
       />
 
-      <CircleCard supporters={supporters} following={women} selected={selected} onSelect={(id) => setParams({ w: id })} />
-
-      <div className="mt-8 flex flex-wrap gap-3">
-        <Link to="/settings#partner">
-          <Button variant="outline" size="sm">
-            <Plus className="h-4 w-4" aria-hidden="true" />
-            Follow someone else
-          </Button>
-        </Link>
-        <Link to="/partner/upgrade">
-          <Button variant="ghost" size="sm">
-            <Gift className="h-4 w-4" aria-hidden="true" />
-            Plan and gifts
-          </Button>
-        </Link>
-      </div>
+      <details className="group mt-5 rounded-3xl border border-neutral-200 bg-white shadow-soft open:pb-1">
+        <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between rounded-3xl px-4 py-3 text-sm font-semibold text-ink-900 select-none">
+          More
+          <ChevronDown className="h-4 w-4 text-neutral-400 transition-transform group-open:rotate-180" aria-hidden="true" />
+        </summary>
+        <div className="px-4 pb-3">
+          <CircleCard supporters={supporters} following={women} selected={selected} onSelect={(id) => setParams({ w: id })} />
+          <div className="mt-4 flex flex-wrap gap-3">
+            <Link to="/settings#partner">
+              <Button variant="outline" size="sm">
+                <Plus className="h-4 w-4" aria-hidden="true" />
+                Follow someone else
+              </Button>
+            </Link>
+            <Link to="/partner/upgrade">
+              <Button variant="ghost" size="sm">
+                <Gift className="h-4 w-4" aria-hidden="true" />
+                Plan and gifts
+              </Button>
+            </Link>
+          </div>
+        </div>
+      </details>
     </AppShell>
   );
 }
