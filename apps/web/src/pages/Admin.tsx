@@ -132,12 +132,33 @@ function Dashboard() {
           </div>
         </div>
       </Section>
+      <Section title="Growth & retention">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          <Stat label="DAU / WAU / MAU" value={`${o.growth.dau} / ${o.growth.wau} / ${o.growth.mau}`} />
+          <Stat
+            label="Day-7 retention"
+            value={o.growth.retentionD7.rate === null ? "—" : `${o.growth.retentionD7.rate}%`}
+            sub={o.growth.retentionD7.cohortSize ? `of ${o.growth.retentionD7.cohortSize} signups` : "no cohort yet"}
+          />
+          <Stat
+            label="Day-30 retention"
+            value={o.growth.retentionD30.rate === null ? "—" : `${o.growth.retentionD30.rate}%`}
+            sub={o.growth.retentionD30.cohortSize ? `of ${o.growth.retentionD30.cohortSize} signups` : "no cohort yet"}
+          />
+          <Stat label="Invite accept rate" value={o.growth.inviteAcceptRate === null ? "—" : `${o.growth.inviteAcceptRate}%`} />
+          <Stat label="Viral coefficient" value={o.growth.viralCoefficient ?? "—"} sub="active links per onboarded user" />
+          {Object.entries(o.growth.signupSource).map(([src, n]) => (
+            <Stat key={src} label={`Signed up via ${src}`} value={n} />
+          ))}
+        </div>
+      </Section>
       <Section title="Premium (Partner plan)">
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           <Stat icon={<BadgeIndianRupee className={i} />} label="Paying" value={o.premium.active} sub={`≈ ₹${o.premium.mrrInr.toLocaleString("en-IN")}/month`} />
           <Stat label="On trial" value={o.premium.trialing} />
-          <Stat label="Canceled / expired" value={o.premium.canceled + o.premium.expired} />
-          <Stat label="Gift codes" value={`${o.premium.giftsRedeemed}/${o.premium.giftsIssued}`} sub="redeemed / issued" />
+          <Stat label="Canceled / expired" value={o.premium.canceled + o.premium.expired} sub={o.premium.churnRate === null ? undefined : `${o.premium.churnRate}% churn`} />
+          <Stat label="Gift codes" value={`${o.premium.giftsRedeemed}/${o.premium.giftsIssued}`} sub={o.premium.giftRedemptionRate === null ? "redeemed / issued" : `${o.premium.giftRedemptionRate}% redeemed`} />
+          <Stat label="Trial → paid" value={o.premium.trialConversionRate === null ? "—" : `${o.premium.trialConversionRate}%`} />
         </div>
         <p className="mt-2 text-xs text-neutral-500">
           Paywall is <span className="font-semibold">{o.premium.paywallOn ? "ON" : "OFF (everyone has access)"}</span>. Price ₹{o.premium.priceInr}/month. Payments aren't connected yet, so "paying" means granted by an admin.
@@ -146,7 +167,11 @@ function Dashboard() {
       <Section title="Care network">
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           <Stat icon={<Stethoscope className={i} />} label="Providers" value={o.care.providers} sub={`${o.care.providersLive} live`} />
-          <Stat label="New applications" value={o.care.applicationsNew} />
+          <Stat
+            label="New applications"
+            value={o.care.applicationsNew}
+            sub={o.care.applicationBacklogAvgAgeDays === null ? undefined : `avg ${o.care.applicationBacklogAvgAgeDays}d waiting`}
+          />
           <Stat label="Care requests" value={o.care.requestsTotal} sub={`${o.care.requestsNew} new`} />
           <Stat icon={<LifeBuoy className={i} />} label="Open support" value={o.ops.supportOpen} />
         </div>
@@ -156,7 +181,18 @@ function Dashboard() {
           <Stat icon={<Activity className={i} />} label="Period logs" value={o.activity.cycleLogs7} />
           <Stat label="Mood logs" value={o.activity.moodLogs7} />
           <Stat label="AI chats" value={o.activity.chats7} />
+          <Stat label="Lab reports uploaded" value={o.activity.reportsUploaded} />
           <Stat icon={<AlertTriangle className={i} />} label="App errors, 24h" value={o.ops.errors24h} />
+        </div>
+      </Section>
+      <Section title="Safety">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          <Stat icon={<AlertTriangle className={i} />} label="Emergency flags, 7 days" value={o.safety.emergencyFlags7} />
+          <Stat
+            label="Guardian consent pending"
+            value={o.safety.consentPendingCount}
+            sub={o.safety.consentPendingAvgAgeDays === null ? undefined : `avg ${o.safety.consentPendingAvgAgeDays}d waiting`}
+          />
         </div>
       </Section>
     </>

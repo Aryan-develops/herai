@@ -3,11 +3,35 @@ import { request } from "@/lib/api";
 export interface AdminOverview {
   users: { total: number; last7: number; last30: number; onboarded: number };
   partner: { linksActive: number; linksPaused: number; followers: number };
-  premium: { paywallOn: boolean; priceInr: number; trialing: number; active: number; canceled: number; expired: number; giftsIssued: number; giftsRedeemed: number; mrrInr: number };
-  care: { providers: number; providersLive: number; applicationsNew: number; requestsTotal: number; requestsNew: number };
+  premium: {
+    paywallOn: boolean;
+    priceInr: number;
+    trialing: number;
+    active: number;
+    canceled: number;
+    expired: number;
+    giftsIssued: number;
+    giftsRedeemed: number;
+    giftRedemptionRate: number | null;
+    mrrInr: number;
+    churnRate: number | null;
+    trialConversionRate: number | null;
+  };
+  care: { providers: number; providersLive: number; applicationsNew: number; requestsTotal: number; requestsNew: number; applicationBacklogAvgAgeDays: number | null };
   ops: { supportOpen: number; errors24h: number };
-  activity: { cycleLogs7: number; moodLogs7: number; chats7: number };
+  activity: { cycleLogs7: number; moodLogs7: number; chats7: number; reportsUploaded: number };
   signups: { day: string; count: number }[];
+  growth: {
+    dau: number;
+    wau: number;
+    mau: number;
+    retentionD7: { cohortSize: number; rate: number | null };
+    retentionD30: { cohortSize: number; rate: number | null };
+    signupSource: Record<string, number>;
+    inviteAcceptRate: number | null;
+    viralCoefficient: number | null;
+  };
+  safety: { emergencyFlags7: number; consentPendingCount: number; consentPendingAvgAgeDays: number | null };
 }
 
 export interface AdminUser {

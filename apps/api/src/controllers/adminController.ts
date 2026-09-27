@@ -16,6 +16,41 @@ async function count(table: string, apply?: (q: any) => any): Promise<number> {
   return n ?? 0;
 }
 
+/** Distinct user ids active (logged, moved mood, or chatted) since a cutoff — pulled and unioned in JS since it spans three tables. */
+async function activeUsers(daysAgo: number): Promise<Set<string>> {
+  const cutoff = since(daysAgo);
+  const [logs, moods, chats] = await Promise.all([
+    supabaseAdmin.from("cycle_logs").select("user_id").gte("created_at", cutoff),
+    supabaseAdmin.from("mood_logs").select("user_id").gte("created_at", cutoff),
+    supabaseAdmin.from("agent_executions").select("user_id").gte("created_at", cutoff),
+  ]);
+  const ids = new Set<string>();
+  for (const row of [...(logs.data ?? []), ...(moods.data ?? []), ...(chats.data ?? [])]) ids.add(row.user_id as string);
+  return ids;
+}
+
+/** % of a signup cohort (created between `from` and `to` days ago) that has shown any activity since `activeWithinDays`. */
+async function retentionRate(cohortFromDays: number, cohortToDays: number, activeWithinDays: number): Promise<{ cohortSize: number; rate: number | null }> {
+  const { data: cohort } = await supabaseAdmin
+    .from("profiles")
+    .select("id")
+    .gte("created_at", since(cohortFromDays))
+    .lt("created_at", since(cohortToDays));
+  const cohortIds = (cohort ?? []).map((r) => r.id as string);
+  if (cohortIds.length === 0) return { cohortSize: 0, rate: null };
+  const active = await activeUsers(activeWithinDays);
+  const retained = cohortIds.filter((id) => active.has(id)).length;
+  return { cohortSize: cohortIds.length, rate: Math.round((retained / cohortIds.length) * 1000) / 10 };
+}
+
+/** Average age in days of rows still in a "waiting" state — a pending consent, a new provider application. */
+function avgAgeDays(rows: { created_at: string }[]): number | null {
+  if (rows.length === 0) return null;
+  const now = Date.now();
+  const totalDays = rows.reduce((sum, r) => sum + (now - new Date(r.created_at).getTime()) / DAY, 0);
+  return Math.round((totalDays / rows.length) * 10) / 10;
+}
+
 /** Headline numbers for the admin dashboard. Counts only, no health data. */
 export async function overview(_req: AuthedRequest, res: Response) {
   const [
@@ -27,6 +62,11 @@ export async function overview(_req: AuthedRequest, res: Response) {
     requestsTotal, requestsNew,
     supportOpen, errors24h,
     cycleLogs7, moodLogs7, chats7,
+    reportsUploaded,
+    invitesTotal, invitesAccepted,
+    emergencyFlags7,
+    dau, wau, mau,
+    d7, d30,
   ] = await Promise.all([
     count("profiles"),
     count("profiles", (q) => q.gte("created_at", since(7))),
@@ -51,6 +91,15 @@ export async function overview(_req: AuthedRequest, res: Response) {
     count("cycle_logs", (q) => q.gte("created_at", since(7))),
     count("mood_logs", (q) => q.gte("created_at", since(7))),
     count("agent_executions", (q) => q.gte("created_at", since(7))),
+    count("health_reports"),
+    count("partner_invites"),
+    count("partner_invites", (q) => q.eq("status", "accepted")),
+    count("agent_executions", (q) => q.eq("emergency", true).gte("created_at", since(7))),
+    activeUsers(1).then((s) => s.size),
+    activeUsers(7).then((s) => s.size),
+    activeUsers(30).then((s) => s.size),
+    retentionRate(13, 7, 7),
+    retentionRate(36, 30, 30),
   ]);
 
   // Sign-ups per day for the last 14 days.
@@ -60,6 +109,24 @@ export async function overview(_req: AuthedRequest, res: Response) {
     const day = new Date(Date.now() - i * DAY).toISOString().slice(0, 10);
     signups.push({ day, count: (recent ?? []).filter((r) => r.created_at.slice(0, 10) === day).length });
   }
+
+  // Signup source: paged through the auth user list once (fine at this scale; revisit if it ever exceeds a few thousand users).
+  const bySource = new Map<string, number>();
+  for (let page = 1; ; page++) {
+    const { data } = await supabaseAdmin.auth.admin.listUsers({ page, perPage: 1000 });
+    for (const u of data.users) {
+      const src = (u.app_metadata?.provider as string | undefined) ?? "email";
+      bySource.set(src, (bySource.get(src) ?? 0) + 1);
+    }
+    if (data.users.length < 1000) break;
+  }
+
+  const [pendingConsents, backlogApplications] = await Promise.all([
+    supabaseAdmin.from("parental_consents").select("created_at").eq("status", "pending"),
+    supabaseAdmin.from("provider_applications").select("created_at").eq("status", "new"),
+  ]);
+
+  const subsEverActive = subActive + subCanceled + subExpired;
 
   res.json({
     users: { total: users, last7: users7, last30: users30, onboarded },
@@ -73,12 +140,30 @@ export async function overview(_req: AuthedRequest, res: Response) {
       expired: subExpired,
       giftsIssued,
       giftsRedeemed,
+      giftRedemptionRate: giftsIssued > 0 ? Math.round((giftsRedeemed / giftsIssued) * 1000) / 10 : null,
       mrrInr: subActive * env.partnerPriceInr,
+      churnRate: subsEverActive > 0 ? Math.round((subCanceled / subsEverActive) * 1000) / 10 : null,
+      trialConversionRate: subActive + subExpired > 0 ? Math.round((subActive / (subActive + subExpired)) * 1000) / 10 : null,
     },
-    care: { providers, providersLive, applicationsNew, requestsTotal, requestsNew },
+    care: { providers, providersLive, applicationsNew, requestsTotal, requestsNew, applicationBacklogAvgAgeDays: avgAgeDays(backlogApplications.data ?? []) },
     ops: { supportOpen, errors24h },
-    activity: { cycleLogs7, moodLogs7, chats7 },
+    activity: { cycleLogs7, moodLogs7, chats7, reportsUploaded },
     signups,
+    growth: {
+      dau,
+      wau,
+      mau,
+      retentionD7: d7,
+      retentionD30: d30,
+      signupSource: Object.fromEntries(bySource),
+      inviteAcceptRate: invitesTotal > 0 ? Math.round((invitesAccepted / invitesTotal) * 1000) / 10 : null,
+      viralCoefficient: onboarded > 0 ? Math.round((linksActive / onboarded) * 100) / 100 : null,
+    },
+    safety: {
+      emergencyFlags7,
+      consentPendingCount: (pendingConsents.data ?? []).length,
+      consentPendingAvgAgeDays: avgAgeDays(pendingConsents.data ?? []),
+    },
   });
 }
 
