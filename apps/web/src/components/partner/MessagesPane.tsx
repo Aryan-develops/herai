@@ -9,6 +9,8 @@ export interface Thread {
   name: string;
 }
 
+const STARTERS = ["Hey, thinking of you 💗", "How are you feeling today?", "Sending love", "Let me know if you need anything"];
+
 /** Private text thread between the two people on a link. Polls every 15 seconds while visible. */
 export function MessagesPane({ threads }: { threads: Thread[] }) {
   const [active, setActive] = useState<string | null>(threads[0]?.linkId ?? null);
@@ -42,14 +44,12 @@ export function MessagesPane({ threads }: { threads: Thread[] }) {
     endRef.current?.scrollIntoView({ block: "nearest" });
   }, [messages]);
 
-  async function send(e: FormEvent) {
-    e.preventDefault();
-    const body = text.trim();
-    if (!body || !active) return;
+  async function sendText(body: string) {
+    if (!body.trim() || !active) return;
     setSending(true);
     setError(null);
     try {
-      const { message } = await api.sendMessage(active, body);
+      const { message } = await api.sendMessage(active, body.trim());
       setMessages((m) => [...(m ?? []), message]);
       setText("");
     } catch (err) {
@@ -57,6 +57,11 @@ export function MessagesPane({ threads }: { threads: Thread[] }) {
     } finally {
       setSending(false);
     }
+  }
+
+  function send(e: FormEvent) {
+    e.preventDefault();
+    sendText(text);
   }
 
   if (threads.length === 0) return null;
@@ -90,7 +95,24 @@ export function MessagesPane({ threads }: { threads: Thread[] }) {
 
       <div className="mt-3 max-h-80 min-h-32 space-y-2 overflow-y-auto rounded-2xl bg-neutral-50 p-3" aria-live="polite">
         {messages === null && <div className="skeleton h-10 w-2/3 rounded-2xl" aria-hidden="true" />}
-        {messages?.length === 0 && <p className="py-6 text-center text-sm text-neutral-500">No messages yet. Say hi.</p>}
+        {messages?.length === 0 && (
+          <div className="py-4 text-center">
+            <p className="text-sm text-neutral-500">No messages yet. Try:</p>
+            <div className="mt-2 flex flex-wrap justify-center gap-1.5">
+              {STARTERS.map((s) => (
+                <button
+                  key={s}
+                  type="button"
+                  onClick={() => sendText(s)}
+                  disabled={sending}
+                  className="rounded-full border border-brand-200 bg-white px-3 py-1.5 text-xs font-medium text-brand-700 transition-colors hover:bg-brand-50 disabled:opacity-50"
+                >
+                  {s}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
         {messages?.map((m) => (
           <div key={m.id} className={cn("flex", m.mine ? "justify-end" : "justify-start")}>
             <div
