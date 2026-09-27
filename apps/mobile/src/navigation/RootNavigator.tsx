@@ -5,6 +5,7 @@ import { AppStack } from "./AppStack";
 import { ConsentPendingScreen } from "../screens/ConsentPendingScreen";
 import { OnboardingScreen } from "../screens/OnboardingScreen";
 import { BiometricGate } from "../components/BiometricGate";
+import { isPartnerOnly } from "../lib/gender";
 import { colors } from "../theme";
 
 /**
@@ -32,7 +33,8 @@ export function RootNavigator() {
     return <ConsentPendingScreen />;
   }
 
-  if (!user.onboardingComplete) return <OnboardingScreen />;
+  // Partner-only accounts never see the health-profile onboarding — they have no cycle to track.
+  if (!user.onboardingComplete && !isPartnerOnly(user)) return <OnboardingScreen />;
 
   return (
     <BiometricGate>

@@ -30,6 +30,13 @@ export type MainTabsParamList = {
   Chat: undefined;
 };
 
+/** Shown instead of MainTabs for partner-only accounts (no cycle to track). */
+export type PartnerTabsParamList = {
+  PartnerHome: undefined;
+  Guide: undefined;
+  ChatTab: undefined;
+};
+
 /** Reports gets its own nested stack (list → detail with an id param),
  * mirrored under the "Reports" tab — same nesting pattern as AppStack
  * wrapping MainTabs for LogEntry. */

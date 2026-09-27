@@ -12,6 +12,9 @@ import { ageFromDateOfBirth, isMinor } from "../utils/consent.js";
 // matching provider enabled in the Supabase dashboard, not just a code change.
 const OAUTH_PROVIDERS = new Set(["google"]);
 
+// null (never asked) is treated as "woman", so accounts made before this question existed keep the full app.
+const genderSchema = z.enum(["woman", "man", "non_binary", "undisclosed"]);
+
 type ConsentStatus = "not_required" | "pending" | "granted" | "declined" | "withdrawn";
 
 const registerSchema = z
@@ -25,6 +28,7 @@ const registerSchema = z
     dateOfBirth: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Date of birth must be YYYY-MM-DD"),
     guardianEmail: z.string().email().optional(),
     guardianName: z.string().min(1).max(120).optional(),
+    gender: genderSchema.optional(),
   })
   .refine((data) => !isMinor(data.dateOfBirth) || !!data.guardianEmail, {
     message: "A parent or guardian's email is required to create an account for someone under 18",
@@ -55,6 +59,8 @@ interface AuthPayload {
   isPartner: boolean;
   // Only for emails listed in app_admins. Shows the admin area link.
   isAdmin: boolean;
+  // null = never asked (full app). Anything but "woman" gets the partner-only experience.
+  gender: z.infer<typeof genderSchema> | null;
 }
 
 interface SessionPayload {
@@ -66,7 +72,7 @@ interface SessionPayload {
 async function loadAuthPayload(userId: string, email: string): Promise<AuthPayload> {
   const { data: profile, error } = await supabaseAdmin
     .from("profiles")
-    .select("name, onboarding_complete, consent_status, date_of_birth")
+    .select("name, onboarding_complete, consent_status, date_of_birth, gender")
     .eq("id", userId)
     .single();
 
@@ -92,6 +98,7 @@ async function loadAuthPayload(userId: string, email: string): Promise<AuthPaylo
     isProvider: !!owned,
     isPartner: (following?.length ?? 0) > 0,
     isAdmin: await isAdminEmail(email),
+    gender: profile.gender ?? null,
   };
 }
 
@@ -103,7 +110,7 @@ export async function register(req: AuthedRequest, res: Response) {
   if (!parsed.success) {
     throw new HttpError(400, parsed.error.issues[0]?.message ?? "Invalid input");
   }
-  const { name, email, password, dateOfBirth, guardianEmail, guardianName } = parsed.data;
+  const { name, email, password, dateOfBirth, guardianEmail, guardianName, gender } = parsed.data;
   const minor = isMinor(dateOfBirth);
 
   const { data: created, error: createError } = await supabaseAdmin.auth.admin.createUser({
@@ -126,6 +133,7 @@ export async function register(req: AuthedRequest, res: Response) {
     .update({
       date_of_birth: dateOfBirth,
       consent_status: minor ? "pending" : "not_required",
+      ...(gender ? { gender } : {}),
     })
     .eq("id", created.user.id);
 
@@ -222,6 +230,7 @@ const dateOfBirthSchema = z
     name: z.string().min(1).max(120).optional(),
     guardianEmail: z.string().email().optional(),
     guardianName: z.string().min(1).max(120).optional(),
+    gender: genderSchema.optional(),
   })
   .refine((data) => !isMinor(data.dateOfBirth) || !!data.guardianEmail, {
     message: "A parent or guardian's email is required for someone under 18",
@@ -241,7 +250,7 @@ export async function submitDateOfBirth(req: AuthedRequest, res: Response) {
   if (!parsed.success) {
     throw new HttpError(400, parsed.error.issues[0]?.message ?? "Invalid input");
   }
-  const { dateOfBirth, name, guardianEmail, guardianName } = parsed.data;
+  const { dateOfBirth, name, guardianEmail, guardianName, gender } = parsed.data;
   const minor = isMinor(dateOfBirth);
 
   const { data: existing } = await supabaseAdmin
@@ -260,6 +269,7 @@ export async function submitDateOfBirth(req: AuthedRequest, res: Response) {
       date_of_birth: dateOfBirth,
       consent_status: minor ? "pending" : "not_required",
       ...(name && !existing?.name ? { name } : {}),
+      ...(gender ? { gender } : {}),
     })
     .eq("id", req.userId);
 
@@ -276,6 +286,22 @@ export async function submitDateOfBirth(req: AuthedRequest, res: Response) {
     });
   }
 
+  const user = await loadAuthPayload(req.userId, req.userEmail);
+  res.json({ user });
+}
+
+export async function setGender(req: AuthedRequest, res: Response) {
+  if (!req.userId || !req.userEmail) {
+    throw new HttpError(401, "Not authenticated");
+  }
+  const parsed = z.object({ gender: genderSchema }).safeParse(req.body);
+  if (!parsed.success) {
+    throw new HttpError(400, "Choose one of: woman, man, non_binary, undisclosed");
+  }
+  const { error } = await supabaseAdmin.from("profiles").update({ gender: parsed.data.gender }).eq("id", req.userId);
+  if (error) {
+    throw new HttpError(500, "Failed to save");
+  }
   const user = await loadAuthPayload(req.userId, req.userEmail);
   res.json({ user });
 }

@@ -1,15 +1,23 @@
 import { useEffect, type ReactNode } from "react";
 import { LogoMark } from "@/components/LogoMark";
 import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
-import { CalendarDays, HeartHandshake, Plus, Settings, Sparkles, Store, Sun } from "lucide-react";
+import { BookOpen, CalendarDays, HeartHandshake, Plus, Settings, Sparkles, Store, Sun } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { GetHelpButton } from "@/components/GetHelp";
 import { takePendingJoin } from "@/lib/join";
+import { isPartnerOnly } from "@/lib/gender";
 import { cn } from "@/lib/utils";
+
+interface NavItem {
+  to: string;
+  label: string;
+  icon: typeof Sun;
+  center?: boolean;
+}
 
 // Five destinations everywhere; Log is the raised centre button on phones. Reports, Care and Timeline
 // live under Settings > More so the bar stays calm.
-const NAV = [
+const NAV: NavItem[] = [
   { to: "/dashboard", label: "Today", icon: Sun },
   { to: "/cycle", label: "Calendar", icon: CalendarDays },
   { to: "/log", label: "Log", icon: Plus, center: true },
@@ -17,10 +25,18 @@ const NAV = [
   { to: "/chat", label: "Ask", icon: Sparkles },
 ];
 
+// Partner-only accounts don't track a cycle, so no Log, Calendar or Today — just their circle, the guide and Ask.
+const PARTNER_ONLY_NAV: NavItem[] = [
+  { to: "/partner", label: "Home", icon: HeartHandshake },
+  { to: "/guide", label: "Guide", icon: BookOpen },
+  { to: "/chat", label: "Ask", icon: Sparkles },
+];
+
 export function AppShell({ children }: { children: ReactNode }) {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { pathname } = useLocation();
+  const nav = isPartnerOnly(user) ? PARTNER_ONLY_NAV : NAV;
 
   // An invite link opened while signed out is resumed once they're in.
   useEffect(() => {
@@ -49,7 +65,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             <Settings className="h-5.5 w-5.5" aria-hidden="true" />
           </Link>
           <nav aria-label="Main" className="hidden items-center gap-1 lg:flex">
-            {NAV.map(({ to, label, icon: Icon }) => (
+            {nav.map(({ to, label, icon: Icon }) => (
               <NavLink
                 key={to}
                 to={to}
@@ -91,7 +107,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         className="fixed inset-x-0 bottom-0 z-30 border-t border-neutral-200/80 bg-white/90 pb-[env(safe-area-inset-bottom)] backdrop-blur-xl lg:hidden"
       >
         <ul className="mx-auto flex max-w-md items-end justify-around px-2">
-          {NAV.map(({ to, label, icon: Icon, center }) => (
+          {nav.map(({ to, label, icon: Icon, center }) => (
             <li key={to} className="flex-1">
               {center ? (
                 <NavLink to={to} aria-label="Log" className="-mt-6 flex flex-col items-center">

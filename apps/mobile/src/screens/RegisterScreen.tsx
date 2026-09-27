@@ -2,8 +2,9 @@ import { useState } from "react";
 import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View } from "react-native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { useAuth } from "../context/AuthContext";
-import { ApiError } from "../lib/api";
-import { Button, ErrorText, Field } from "../components/ui";
+import { ApiError, type Gender } from "../lib/api";
+import { GENDER_OPTIONS } from "../lib/gender";
+import { Button, Chip, ErrorText, Field } from "../components/ui";
 import { colors } from "../theme";
 import { isMinor, isValidDateString } from "../lib/age";
 import type { AuthStackParamList } from "../navigation/types";
@@ -16,6 +17,7 @@ export function RegisterScreen({ navigation }: Props) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [dateOfBirth, setDateOfBirth] = useState("");
+  const [gender, setGender] = useState<Gender | null>(null);
   const [guardianEmail, setGuardianEmail] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -38,6 +40,7 @@ export function RegisterScreen({ navigation }: Props) {
         password,
         dateOfBirth,
         guardianEmail: minor ? guardianEmail : undefined,
+        gender: gender ?? undefined,
       });
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Something went wrong");
@@ -70,6 +73,14 @@ export function RegisterScreen({ navigation }: Props) {
             onChangeText={setDateOfBirth}
             keyboardType={Platform.OS === "ios" ? "numbers-and-punctuation" : "default"}
           />
+
+          <Text style={styles.label}>I am a</Text>
+          <View style={styles.genderRow}>
+            {GENDER_OPTIONS.map((g) => (
+              <Chip key={g.value} label={g.label} selected={gender === g.value} onPress={() => setGender(g.value)} />
+            ))}
+          </View>
+          <Text style={styles.hint}>Lets us show you the right experience. Change it anytime in Settings.</Text>
 
           {minor && (
             <View style={styles.consentBox}>
@@ -118,6 +129,9 @@ const styles = StyleSheet.create({
     padding: 14,
     marginBottom: 16,
   },
+  label: { fontSize: 13, fontWeight: "600", color: colors.ink900, marginBottom: 8 },
+  genderRow: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginBottom: 6 },
+  hint: { fontSize: 12, color: colors.muted, marginBottom: 16 },
   consentTitle: { fontWeight: "700", color: colors.ink900, marginBottom: 4 },
   consentBody: { fontSize: 13, color: colors.ink700, marginBottom: 10, lineHeight: 18 },
   footer: { marginTop: 24, textAlign: "center", color: colors.ink700 },

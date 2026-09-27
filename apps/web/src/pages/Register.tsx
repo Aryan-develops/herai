@@ -2,11 +2,13 @@ import { useState, type FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { CalendarDays, Mail, User } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
-import { ApiError } from "@/lib/api";
+import { ApiError, type Gender } from "@/lib/api";
 import { isMinor } from "@/lib/age";
+import { GENDER_OPTIONS } from "@/lib/gender";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select } from "@/components/ui/select";
 import { Alert } from "@/components/ui/alert";
 import { Spinner } from "@/components/ui/spinner";
 import { PasswordInput } from "@/components/ui/password-input";
@@ -21,6 +23,7 @@ export function Register() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [dateOfBirth, setDateOfBirth] = useState("");
+  const [gender, setGender] = useState<Gender | "">("");
   const [guardianEmail, setGuardianEmail] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -38,6 +41,7 @@ export function Register() {
         password,
         dateOfBirth,
         guardianEmail: minor ? guardianEmail : undefined,
+        gender: gender || undefined,
       });
       // A minor can't reach the app until a guardian approves.
       navigate(user.consentStatus === "pending" ? "/consent-pending" : "/dashboard");
@@ -116,6 +120,19 @@ export function Register() {
           <p id="dob-hint" className="text-xs text-neutral-500">
             Used to keep the app safe for your age. Never shown to anyone else.
           </p>
+        </div>
+
+        <div className="space-y-1.5">
+          <Label htmlFor="gender">I am a</Label>
+          <Select id="gender" value={gender} onChange={(e) => setGender(e.target.value as Gender)}>
+            <option value="">Select…</option>
+            {GENDER_OPTIONS.map((g) => (
+              <option key={g.value} value={g.value}>
+                {g.label}
+              </option>
+            ))}
+          </Select>
+          <p className="text-xs text-neutral-500">Lets us show you the right experience. Change it anytime in Settings.</p>
         </div>
 
         {minor && <MinorConsentNotice value={guardianEmail} onChange={setGuardianEmail} />}

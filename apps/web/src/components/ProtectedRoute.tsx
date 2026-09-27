@@ -1,5 +1,6 @@
 import { Navigate, Outlet } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
+import { isPartnerOnly } from "@/lib/gender";
 
 export function ProtectedRoute() {
   const { user, loading } = useAuth();
@@ -48,8 +49,24 @@ export function RequireConsent() {
 export function RequireOnboarding() {
   const { user } = useAuth();
 
+  // Partner-only accounts never see the health-profile onboarding — they have no cycle to track.
+  if (user && isPartnerOnly(user)) {
+    return <Outlet />;
+  }
+
   if (user && !user.onboardingComplete) {
     return <Navigate to="/onboarding" replace />;
+  }
+
+  return <Outlet />;
+}
+
+/** Keeps partner-only accounts off the tracking pages (Today, Log, Cycle, Timeline, Care, Reports). */
+export function RequireTracking() {
+  const { user } = useAuth();
+
+  if (user && isPartnerOnly(user)) {
+    return <Navigate to="/partner" replace />;
   }
 
   return <Outlet />;

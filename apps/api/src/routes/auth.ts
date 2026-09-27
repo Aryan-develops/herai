@@ -7,6 +7,7 @@ import {
   oauthStart,
   refresh,
   register,
+  setGender,
   submitDateOfBirth,
 } from "../controllers/authController.js";
 import { requireAuth } from "../middleware/auth.js";
@@ -23,3 +24,4 @@ authRouter.delete("/account", requireAuth, asyncHandler(deleteAccount));
 
 authRouter.get("/oauth/:provider", asyncHandler(oauthStart));
 authRouter.post("/date-of-birth", requireAuth, asyncHandler(submitDateOfBirth));
+authRouter.put("/gender", requireAuth, asyncHandler(setGender));

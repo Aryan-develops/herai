@@ -108,6 +108,7 @@ async function requestForm<T>(path: string, formData: FormData, _retried = false
 }
 
 export type ConsentStatus = "not_required" | "pending" | "granted" | "declined" | "withdrawn";
+export type Gender = "woman" | "man" | "non_binary" | "undisclosed";
 
 export interface AuthUser {
   id: string;
@@ -118,6 +119,8 @@ export interface AuthUser {
   isProvider?: boolean;
   isPartner?: boolean;
   isAdmin?: boolean;
+  /** null = never asked (treated as full app). Anything but "woman" gets the partner-only experience. */
+  gender: Gender | null;
 }
 
 export interface ConsentRequest {
@@ -511,6 +514,7 @@ export const api = {
     dateOfBirth: string;
     guardianEmail?: string;
     guardianName?: string;
+    gender?: Gender;
   }) => {
     const res = await request<{ user: AuthUser; session: Session }>("/auth/register", {
       method: "POST",
@@ -532,6 +536,7 @@ export const api = {
     await clearSession();
   },
   me: () => request<{ user: AuthUser }>("/auth/me"),
+  setGender: (gender: Gender) => request<{ user: AuthUser }>("/auth/gender", { method: "PUT", body: JSON.stringify({ gender }) }),
   deleteAccount: async () => {
     await request<void>("/auth/account", { method: "DELETE" });
     await clearSession();

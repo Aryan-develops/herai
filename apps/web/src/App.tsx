@@ -3,7 +3,7 @@ import { Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/context/AuthContext";
 import { ToastProvider } from "@/components/ui/toast";
 import { PrefsProvider } from "@/context/PrefsContext";
-import { ProtectedRoute, RequireConsent, RequireDateOfBirth, RequireOnboarding } from "@/components/ProtectedRoute";
+import { ProtectedRoute, RequireConsent, RequireDateOfBirth, RequireOnboarding, RequireTracking } from "@/components/ProtectedRoute";
 const GuardianConsent = lazy(() => import("@/pages/GuardianConsent").then((m) => ({ default: m.GuardianConsent })));
 const ConsentPending = lazy(() => import("@/pages/ConsentPending").then((m) => ({ default: m.ConsentPending })));
 import { Landing } from "@/pages/Landing";
@@ -28,6 +28,7 @@ const PartnerHome = lazy(() => import("@/pages/PartnerHome").then((m) => ({ defa
 const PartnerUpgrade = lazy(() => import("@/pages/PartnerUpgrade").then((m) => ({ default: m.PartnerUpgrade })));
 const Admin = lazy(() => import("@/pages/Admin").then((m) => ({ default: m.Admin })));
 const Join = lazy(() => import("@/pages/Join").then((m) => ({ default: m.Join })));
+const Guide = lazy(() => import("@/pages/Guide").then((m) => ({ default: m.Guide })));
 const Privacy = lazy(() => import("@/pages/Privacy").then((m) => ({ default: m.Privacy })));
 const Terms = lazy(() => import("@/pages/Terms").then((m) => ({ default: m.Terms })));
 
@@ -87,21 +88,24 @@ function App() {
             <Route element={<RequireConsent />}>
               <Route path="/onboarding" element={<Onboarding />} />
               <Route element={<RequireOnboarding />}>
-                <Route path="/dashboard" element={<Dashboard />} />
-                <Route path="/log" element={<LogEntry />} />
-                <Route path="/timeline" element={<Timeline />} />
-                <Route path="/cycle" element={<Cycle />} />
-                <Route path="/care" element={<Care />} />
-                <Route path="/care/requests" element={<MyRequests />} />
-                <Route path="/care/:id" element={<CareProviderPage />} />
+                <Route element={<RequireTracking />}>
+                  <Route path="/dashboard" element={<Dashboard />} />
+                  <Route path="/log" element={<LogEntry />} />
+                  <Route path="/timeline" element={<Timeline />} />
+                  <Route path="/cycle" element={<Cycle />} />
+                  <Route path="/care" element={<Care />} />
+                  <Route path="/care/requests" element={<MyRequests />} />
+                  <Route path="/care/:id" element={<CareProviderPage />} />
+                  <Route path="/reports" element={<ReportUpload />} />
+                  <Route path="/reports/:id" element={<ReportDetail />} />
+                </Route>
                 <Route path="/provider" element={<ProviderDashboard />} />
                 <Route path="/chat" element={<Chat />} />
                 <Route path="/settings" element={<Settings />} />
                 <Route path="/admin" element={<Admin />} />
                 <Route path="/partner" element={<PartnerHome />} />
                 <Route path="/partner/upgrade" element={<PartnerUpgrade />} />
-                <Route path="/reports" element={<ReportUpload />} />
-                <Route path="/reports/:id" element={<ReportDetail />} />
+                <Route path="/guide" element={<Guide />} />
               </Route>
             </Route>
           </Route>

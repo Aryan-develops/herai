@@ -6,10 +6,41 @@ import { DashboardScreen } from "../screens/DashboardScreen";
 import { CycleScreen } from "../screens/CycleScreen";
 import { ChatScreen } from "../screens/ChatScreen";
 import { PartnerHomeScreen } from "../screens/PartnerHomeScreen";
+import { GuideScreen } from "../screens/GuideScreen";
 import { colors } from "../theme";
-import type { MainTabsParamList } from "./types";
+import type { MainTabsParamList, PartnerTabsParamList } from "./types";
 
 const Tab = createBottomTabNavigator<MainTabsParamList>();
+const PartnerTab = createBottomTabNavigator<PartnerTabsParamList>();
+
+const PARTNER_ICONS: Record<keyof PartnerTabsParamList, [IconName, IconName]> = {
+  PartnerHome: ["heart-circle-outline", "heart-circle"],
+  Guide: ["book-outline", "book"],
+  ChatTab: ["sparkles-outline", "sparkles"],
+};
+
+// Partner-only accounts don't track a cycle, so no Log, Calendar or Today — just their circle, the guide and Ask.
+export function PartnerOnlyTabs() {
+  return (
+    <PartnerTab.Navigator
+      screenOptions={({ route }) => ({
+        headerShown: false,
+        tabBarActiveTintColor: colors.brand600,
+        tabBarInactiveTintColor: colors.muted,
+        tabBarLabelStyle: { fontSize: 11, fontWeight: "600" },
+        tabBarStyle: { backgroundColor: colors.white, borderTopColor: colors.neutral200, height: 64, paddingTop: 6 },
+        tabBarIcon: ({ focused, color }) => {
+          const [off, on] = PARTNER_ICONS[route.name as keyof PartnerTabsParamList];
+          return <Ionicons name={focused ? on : off} size={22} color={color} />;
+        },
+      })}
+    >
+      <PartnerTab.Screen name="PartnerHome" component={PartnerHomeScreen} options={{ title: "Home" }} />
+      <PartnerTab.Screen name="Guide" component={GuideScreen} options={{ title: "Guide" }} />
+      <PartnerTab.Screen name="ChatTab" component={ChatScreen} options={{ title: "Ask" }} />
+    </PartnerTab.Navigator>
+  );
+}
 
 type IconName = React.ComponentProps<typeof Ionicons>["name"];
 

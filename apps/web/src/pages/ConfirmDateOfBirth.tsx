@@ -2,11 +2,13 @@ import { useState, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { CalendarDays } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
-import { api, ApiError } from "@/lib/api";
+import { api, ApiError, type Gender } from "@/lib/api";
 import { isMinor } from "@/lib/age";
+import { GENDER_OPTIONS } from "@/lib/gender";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select } from "@/components/ui/select";
 import { Alert } from "@/components/ui/alert";
 import { Spinner } from "@/components/ui/spinner";
 import { AuthLayout } from "@/components/AuthLayout";
@@ -21,6 +23,7 @@ export function ConfirmDateOfBirth() {
   const { refreshUser } = useAuth();
   const navigate = useNavigate();
   const [dateOfBirth, setDateOfBirth] = useState("");
+  const [gender, setGender] = useState<Gender | "">("");
   const [guardianEmail, setGuardianEmail] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -35,6 +38,7 @@ export function ConfirmDateOfBirth() {
       const { user } = await api.submitDateOfBirth({
         dateOfBirth,
         guardianEmail: minor ? guardianEmail : undefined,
+        gender: gender || undefined,
       });
       await refreshUser();
       navigate(user.consentStatus === "pending" ? "/consent-pending" : "/dashboard");
@@ -60,6 +64,18 @@ export function ConfirmDateOfBirth() {
             value={dateOfBirth}
             onChange={(e) => setDateOfBirth(e.target.value)}
           />
+        </div>
+
+        <div className="space-y-1.5">
+          <Label htmlFor="gender">I am a</Label>
+          <Select id="gender" value={gender} onChange={(e) => setGender(e.target.value as Gender)}>
+            <option value="">Select…</option>
+            {GENDER_OPTIONS.map((g) => (
+              <option key={g.value} value={g.value}>
+                {g.label}
+              </option>
+            ))}
+          </Select>
         </div>
 
         {minor && <MinorConsentNotice value={guardianEmail} onChange={setGuardianEmail} />}

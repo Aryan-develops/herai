@@ -88,6 +88,7 @@ async function requestForm<T>(path: string, formData: FormData, _retried = false
 }
 
 export type ConsentStatus = "not_required" | "pending" | "granted" | "declined" | "withdrawn";
+export type Gender = "woman" | "man" | "non_binary" | "undisclosed";
 
 export interface AuthUser {
   id: string;
@@ -101,6 +102,8 @@ export interface AuthUser {
   isProvider?: boolean;
   isPartner?: boolean;
   isAdmin?: boolean;
+  /** null = never asked (treated as full app). Anything but "woman" gets the partner-only experience. */
+  gender: Gender | null;
 }
 
 export interface ConsentRequest {
@@ -494,6 +497,7 @@ export const api = {
     dateOfBirth: string;
     guardianEmail?: string;
     guardianName?: string;
+    gender?: Gender;
   }) => {
     const res = await request<{ user: AuthUser; session: Session }>("/auth/register", {
       method: "POST",
@@ -518,8 +522,9 @@ export const api = {
   // Full page navigation, not fetch — the gateway 302s straight to the
   // provider's consent screen, which fetch() can't follow cross-origin.
   oauthUrl: (provider: "google") => `/api/auth/oauth/${provider}`,
-  submitDateOfBirth: (data: { dateOfBirth: string; name?: string; guardianEmail?: string; guardianName?: string }) =>
+  submitDateOfBirth: (data: { dateOfBirth: string; name?: string; guardianEmail?: string; guardianName?: string; gender?: Gender }) =>
     request<{ user: AuthUser }>("/auth/date-of-birth", { method: "POST", body: JSON.stringify(data) }),
+  setGender: (gender: Gender) => request<{ user: AuthUser }>("/auth/gender", { method: "PUT", body: JSON.stringify({ gender }) }),
   // Passkey auth (lib/supabaseBrowser.ts) yields a Supabase session directly
   // in the browser, with no gateway round-trip — this just hands it to the
   // same local session store password/OAuth logins use, so every other call

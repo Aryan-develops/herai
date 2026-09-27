@@ -3,12 +3,13 @@ import { Alert, Platform, Pressable, ScrollView, Share, StyleSheet, Text, TextIn
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { Ionicons } from "@expo/vector-icons";
 import { useAuth } from "../context/AuthContext";
-import { api, ApiError } from "../lib/api";
+import { api, ApiError, type Gender } from "../lib/api";
+import { GENDER_OPTIONS } from "../lib/gender";
 import { usePrefs } from "../context/PrefsContext";
 import { authenticate, biometricAvailable, biometricLabel, biometricLockEnabled, setBiometricLockEnabled } from "../lib/biometric";
 import { registerForPush } from "../lib/push";
 import { readThemePreference, writeThemePreference, type ThemePreference } from "../themePref";
-import { Button, ErrorText, Field, Notice, ScreenTitle } from "../components/ui";
+import { Button, Chip, ErrorText, Field, Notice, ScreenTitle } from "../components/ui";
 import { SettingsCard, ToggleRow } from "../components/settingsBits";
 import { GetHelpButton } from "../components/GetHelp";
 import { colors, radius } from "../theme";
@@ -39,6 +40,17 @@ export function SettingsScreen({ navigation }: Props) {
 
   const [name, setName] = useState(user?.name ?? "");
   const [nameMsg, setNameMsg] = useState<{ tone: "success" | "warning"; text: string } | null>(null);
+  const [savingGender, setSavingGender] = useState(false);
+
+  async function saveGender(gender: Gender) {
+    setSavingGender(true);
+    try {
+      await api.setGender(gender);
+      await refreshUser();
+    } finally {
+      setSavingGender(false);
+    }
+  }
 
   const [bioAvailable, setBioAvailable] = useState(false);
   const [bioLabel, setBioLabel] = useState("Face ID");
@@ -170,6 +182,16 @@ export function SettingsScreen({ navigation }: Props) {
         {nameMsg ? <Notice tone={nameMsg.tone}>{nameMsg.text}</Notice> : null}
         <Button title="Save name" onPress={saveName} disabled={!name.trim() || name.trim() === user?.name} />
         <Button title="Edit health profile" variant="outline" onPress={() => navigation.navigate("Onboarding")} />
+        <Text style={styles.subhead}>I use Lunee as</Text>
+        <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
+          {GENDER_OPTIONS.map((g) => (
+            <Chip key={g.value} label={g.label} selected={user?.gender === g.value} onPress={() => !savingGender && saveGender(g.value)} />
+          ))}
+        </View>
+        <Text style={styles.small}>
+          Choosing "Woman" gives you the full tracking app. Any other choice switches you to the partner experience —
+          supporting someone else, with no cycle logging.
+        </Text>
       </SettingsCard>
 
       <SettingsCard icon="shield-checkmark-outline" title="Sign-in and security" description="Keep your health data private on this phone.">

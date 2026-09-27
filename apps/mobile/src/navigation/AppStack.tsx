@@ -1,7 +1,9 @@
 import { useEffect } from "react";
 import { useNavigation } from "@react-navigation/native";
 import { createNativeStackNavigator, type NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { MainTabs } from "./MainTabs";
+import { MainTabs, PartnerOnlyTabs } from "./MainTabs";
+import { useAuth } from "../context/AuthContext";
+import { isPartnerOnly } from "../lib/gender";
 import { ReportsListScreen } from "../screens/ReportsListScreen";
 import { ReportDetailScreen } from "../screens/ReportDetailScreen";
 import { LogEntryScreen } from "../screens/LogEntryScreen";
@@ -38,6 +40,7 @@ function PendingJoinWatcher() {
 }
 
 export function AppStack() {
+  const { user } = useAuth();
   return (
     <>
     <PendingJoinWatcher />
@@ -50,7 +53,7 @@ export function AppStack() {
         contentStyle: { backgroundColor: colors.neutral50 },
       }}
     >
-      <Stack.Screen name="Tabs" component={MainTabs} options={{ headerShown: false }} />
+      <Stack.Screen name="Tabs" component={isPartnerOnly(user) ? PartnerOnlyTabs : MainTabs} options={{ headerShown: false }} />
       <Stack.Screen name="LogEntry" component={LogEntryScreen} options={{ title: "Log", presentation: "modal" }} />
       <Stack.Screen name="Reports" component={ReportsListScreen as never} options={{ title: "Lab reports" }} />
       <Stack.Screen name="ReportDetail" component={ReportDetailScreen as never} options={{ title: "Report" }} />

@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
-import { api, type AuthUser } from "@/lib/api";
+import { api, type AuthUser, type Gender } from "@/lib/api";
 import { getSession } from "@/lib/session";
 
 interface AuthContextValue {
@@ -12,6 +12,7 @@ interface AuthContextValue {
     password: string;
     dateOfBirth: string;
     guardianEmail?: string;
+    gender?: Gender;
   }) => Promise<AuthUser>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;

@@ -2,11 +2,13 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { UserRound } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
-import { api, ApiError } from "@/lib/api";
+import { api, ApiError, type Gender } from "@/lib/api";
+import { GENDER_OPTIONS } from "@/lib/gender";
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select } from "@/components/ui/select";
 import { Spinner } from "@/components/ui/spinner";
 import { SettingsCard } from "@/components/settings/SettingsCard";
 
@@ -15,6 +17,7 @@ export function ProfileSection() {
   const [name, setName] = useState(user?.name ?? "");
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<{ tone: "success" | "error"; text: string } | null>(null);
+  const [savingGender, setSavingGender] = useState(false);
 
   async function save() {
     setSaving(true);
@@ -27,6 +30,16 @@ export function ProfileSection() {
       setMessage({ tone: "error", text: err instanceof ApiError ? err.message : "Couldn't save that." });
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function saveGender(gender: Gender) {
+    setSavingGender(true);
+    try {
+      await api.setGender(gender);
+      await refreshUser();
+    } finally {
+      setSavingGender(false);
     }
   }
 
@@ -51,6 +64,28 @@ export function ProfileSection() {
           <Link to="/onboarding" className="text-sm font-medium text-brand-600 hover:underline">
             Edit health profile
           </Link>
+        </div>
+        <div className="space-y-1.5 border-t border-neutral-100 pt-4">
+          <Label htmlFor="settings-gender">I use Lunee as</Label>
+          <Select
+            id="settings-gender"
+            value={user?.gender ?? ""}
+            disabled={savingGender}
+            onChange={(e) => saveGender(e.target.value as Gender)}
+          >
+            <option value="" disabled>
+              Select…
+            </option>
+            {GENDER_OPTIONS.map((g) => (
+              <option key={g.value} value={g.value}>
+                {g.label}
+              </option>
+            ))}
+          </Select>
+          <p className="text-xs text-ink-700/60">
+            Choosing "Woman" gives you the full tracking app. Any other choice switches you to the partner experience —
+            supporting someone else, with no cycle logging.
+          </p>
         </div>
       </div>
     </SettingsCard>
