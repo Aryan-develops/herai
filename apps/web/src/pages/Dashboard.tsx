@@ -5,6 +5,8 @@ import { api, ApiError, type CycleInsights, type HealthReportRecord, type Insigh
 import { PHASE_STYLE, shortDate } from "@/lib/phases";
 import { dayKey, addDaysKey } from "@/lib/cycleCalendar";
 import { usePrefs } from "@/context/PrefsContext";
+import { useAuth } from "@/context/AuthContext";
+import { useRealtimeSync } from "@/hooks/useRealtimeSync";
 import { AppShell } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
 import { ProgressRing } from "@/components/ui/progress-ring";
@@ -16,6 +18,7 @@ import { cn } from "@/lib/utils";
 export function Dashboard() {
   const navigate = useNavigate();
   const toast = useToast();
+  const { user } = useAuth();
   const { prefs } = usePrefs();
   const [insights, setInsights] = useState<CycleInsights | null>(null);
   const [loading, setLoading] = useState(true);
@@ -39,6 +42,17 @@ export function Dashboard() {
   useEffect(() => {
     api.dailyInsights(prefs?.language).then(({ cards }) => setCard(cards[0] ?? null)).catch(() => {});
   }, [prefs?.language]);
+
+  const userId = user?.id;
+  const cycleWatches = userId
+    ? [
+        { table: "cycle_logs", filter: "user_id=eq." + userId },
+        { table: "symptom_logs", filter: "user_id=eq." + userId },
+        { table: "health_profiles", filter: "user_id=eq." + userId },
+        { table: "partner_links", filter: "woman_id=eq." + userId },
+      ]
+    : [];
+  useRealtimeSync(cycleWatches, load, [userId]);
 
   const tracking = !!insights?.lastPeriodStart && !!insights.phase && !!insights.currentCycleDay;
   const onPeriod = tracking && insights!.phase === "menstrual";

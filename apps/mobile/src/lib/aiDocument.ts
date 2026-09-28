@@ -1,7 +1,8 @@
 import type { HealthProfile } from "./api";
 import type { CarePlan, RiskAssessment } from "./aiChat";
 import { streamSSE } from "./sse";
-import { AI_SERVICE_URL } from "../config";
+import { API_URL } from "../config";
+import { getSession } from "./session";
 import type { RNFile } from "./api";
 
 /** Ported from apps/web/src/lib/aiDocument.ts. */
@@ -141,9 +142,13 @@ export async function streamDocumentAnalysis(
     form.append("healthProfile", JSON.stringify(healthProfile));
   }
 
+  const session = await getSession();
+  const headers: Record<string, string> = {};
+  if (session) headers.Authorization = `Bearer ${session.accessToken}`;
+
   await streamSSE(
-    `${AI_SERVICE_URL}/documents/analyze`,
-    { method: "POST", body: form },
+    `${API_URL}/ai/documents/analyze`,
+    { method: "POST", headers, body: form },
     (data) => onEvent(data as DocPipelineEvent),
     { signal, idleTimeoutMs: 60000 }
   );

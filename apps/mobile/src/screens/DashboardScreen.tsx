@@ -9,6 +9,8 @@ import { api, ApiError, type CycleInsights, type InsightCard } from "../lib/api"
 import { PHASE_STYLE, shortDate } from "../lib/phases";
 import { addDaysKey, dayKey } from "../lib/cycleCalendar";
 import { usePrefs } from "../context/PrefsContext";
+import { useAuth } from "../context/AuthContext";
+import { useRealtimeSync } from "../hooks/useRealtimeSync";
 import { GetHelpButton } from "../components/GetHelp";
 import { ErrorText } from "../components/ui";
 import { colors, radius, shadow } from "../theme";
@@ -19,6 +21,7 @@ type Props = BottomTabScreenProps<MainTabsParamList, "Dashboard">;
 /** Today: one status, one action, three dates, one check-in. Everything else lives in its own tab. */
 export function DashboardScreen({ navigation }: Props) {
   const stack = () => navigation.getParent<NativeStackNavigationProp<AppStackParamList>>();
+  const { user } = useAuth();
   const { prefs } = usePrefs();
   const language = prefs?.language;
   const [insights, setInsights] = useState<CycleInsights | null>(null);
@@ -41,6 +44,17 @@ export function DashboardScreen({ navigation }: Props) {
       api.dailyInsights(language).then(({ cards }) => setCard(cards[0] ?? null)).catch(() => {});
     }, [load, language]),
   );
+
+  const userId = user?.id;
+  const cycleWatches = userId
+    ? [
+        { table: "cycle_logs", filter: "user_id=eq." + userId },
+        { table: "symptom_logs", filter: "user_id=eq." + userId },
+        { table: "health_profiles", filter: "user_id=eq." + userId },
+        { table: "partner_links", filter: "woman_id=eq." + userId },
+      ]
+    : [];
+  useRealtimeSync(cycleWatches, load, [userId]);
 
   const tracking = !!insights?.lastPeriodStart && !!insights.phase && !!insights.currentCycleDay;
   const onPeriod = tracking && insights!.phase === "menstrual";
