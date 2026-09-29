@@ -1,0 +1,190 @@
+@import 'tailwindcss';
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* Semantic tokens. Components use these names, never raw hex. */
+:root {
+  --bg: #f5f8f6;
+  --surface: #ffffff;
+  --surface-2: #f0f5f2;
+  --border: #dfe7e3;
+  --border-strong: #c7d3cd;
+  --text: #0f172a;
+  --muted: #475569;
+  --subtle: #64748b;
+
+  --primary: #0f5132;
+  --primary-hover: #0b3f27;
+  --primary-fg: #ffffff;
+  --primary-soft: #e6f2eb;
+  --primary-soft-text: #0b3f27;
+
+  /* Saffron accent: backgrounds, strips and borders only. Text uses accent-text. */
+  --accent: #e8a317;
+  --accent-soft: #fdf3dc;
+  --accent-text: #7a4f00;
+
+  /* International jurisdiction accent */
+  --intl: #1d4ed8;
+  --intl-soft: #e8efff;
+  --intl-text: #1e3a8a;
+
+  --danger: #b42318;
+  --danger-soft: #fdecea;
+  --warn-soft: #fff6e0;
+  --ring: #0f5132;
+  --shadow: 0 1px 2px rgb(15 23 42 / 0.04), 0 4px 16px -6px rgb(15 23 42 / 0.08);
+}
+
+.dark {
+  --bg: #0a110e;
+  --surface: #111a16;
+  --surface-2: #16221d;
+  --border: #22312a;
+  --border-strong: #2f4238;
+  --text: #e7eeea;
+  --muted: #a9b8b1;
+  --subtle: #8a9a93;
+
+  --primary: #4cb383;
+  --primary-hover: #63c595;
+  --primary-fg: #06140d;
+  --primary-soft: #13291f;
+  --primary-soft-text: #9fdcbd;
+
+  --accent: #f0b43c;
+  --accent-soft: #2c220d;
+  --accent-text: #f5cd7a;
+
+  --intl: #7ea6ff;
+  --intl-soft: #142038;
+  --intl-text: #b8cdff;
+
+  --danger: #f97066;
+  --danger-soft: #2d1513;
+  --warn-soft: #2a220f;
+  --ring: #63c595;
+  --shadow: 0 1px 2px rgb(0 0 0 / 0.3), 0 6px 20px -8px rgb(0 0 0 / 0.5);
+  color-scheme: dark;
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-line: var(--border);
+  --color-line-strong: var(--border-strong);
+  --color-ink: var(--text);
+  --color-muted: var(--muted);
+  --color-subtle: var(--subtle);
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-fg: var(--primary-fg);
+  --color-primary-soft: var(--primary-soft);
+  --color-primary-soft-text: var(--primary-soft-text);
+  --color-accent: var(--accent);
+  --color-accent-soft: var(--accent-soft);
+  --color-accent-text: var(--accent-text);
+  --color-intl: var(--intl);
+  --color-intl-soft: var(--intl-soft);
+  --color-intl-text: var(--intl-text);
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+  --color-warn-soft: var(--warn-soft);
+  --color-ring: var(--ring);
+  --shadow-card: var(--shadow);
+  --font-sans: 'Inter', 'Noto Sans Devanagari', ui-sans-serif, system-ui, sans-serif;
+  --font-serif: 'Fraunces', 'Noto Sans Devanagari', ui-serif, Georgia, serif;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-sans);
+  font-feature-settings: 'cv11', 'ss01';
+  -webkit-font-smoothing: antialiased;
+}
+
+:lang(hi) body,
+[lang='hi'] {
+  line-height: 1.65;
+}
+
+/* One consistent, visible focus ring for every interactive control.
+   Layered so utility classes (e.g. on the chat textarea) can override it. */
+@layer base {
+  :where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+    outline: 3px solid var(--ring);
+    outline-offset: 2px;
+  }
+}
+
+.tricolour {
+  background: linear-gradient(90deg, #ff9933 0 33.33%, #ffffff 33.33% 66.66%, #138808 66.66% 100%);
+}
+.dark .tricolour {
+  background: linear-gradient(90deg, #ff9933 0 33.33%, #e7eeea 33.33% 66.66%, #138808 66.66% 100%);
+}
+
+.skeleton {
+  background: linear-gradient(90deg, var(--surface-2) 25%, var(--border) 37%, var(--surface-2) 63%);
+  background-size: 400% 100%;
+  animation: shimmer 1.4s ease infinite;
+}
+
+@keyframes shimmer {
+  0% { background-position: 100% 50%; }
+  100% { background-position: 0 50%; }
+}
+
+@keyframes typing {
+  0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
+  30% { transform: translateY(-3px); opacity: 1; }
+}
+.typing-dot { animation: typing 1.2s ease-in-out infinite; }
+
+@keyframes rise {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-rise { animation: rise 240ms cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+
+@keyframes pulse-ring {
+  0% { box-shadow: 0 0 0 0 rgb(180 35 24 / 0.45); }
+  100% { box-shadow: 0 0 0 14px rgb(180 35 24 / 0); }
+}
+.recording { animation: pulse-ring 1.2s ease-out infinite; }
+
+@keyframes bar {
+  0%, 100% { transform: scaleY(0.3); }
+  50% { transform: scaleY(1); }
+}
+.voice-bar { animation: bar 0.9s ease-in-out infinite; transform-origin: center; }
+
+@keyframes cite-flash {
+  0% { box-shadow: 0 0 0 0 var(--accent); }
+  100% { box-shadow: 0 0 0 6px transparent; }
+}
+.cite-flash { animation: cite-flash 900ms ease-out 2; }
+
+.scrollbar-thin { scrollbar-width: thin; scrollbar-color: var(--border-strong) transparent; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+@media print {
+  body * { visibility: hidden; }
+  #print-area, #print-area * { visibility: visible; }
+  #print-area { position: absolute; inset: 0; padding: 24px; color: #000; background: #fff; }
+  .no-print { display: none !important; }
+}
