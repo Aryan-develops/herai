@@ -3,6 +3,7 @@ import { useFocusEffect } from "@react-navigation/native";
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { api, ApiError, type PartnerMessage } from "../lib/api";
+import { useRealtimeSync } from "../hooks/useRealtimeSync";
 import { Chip } from "./ui";
 import { colors, radius, shadow } from "../theme";
 
@@ -37,10 +38,13 @@ export function MessagesPane({ threads }: { threads: Thread[] }) {
   useFocusEffect(
     useCallback(() => {
       load();
-      const t = setInterval(load, 15_000);
+      // Safety-net poll in case the Realtime socket drops; live updates below do the real work.
+      const t = setInterval(load, 60_000);
       return () => clearInterval(t);
     }, [load]),
   );
+
+  useRealtimeSync(active ? [{ table: "partner_messages", filter: "link_id=eq." + active }] : [], load, [active]);
 
   async function sendText(body: string) {
     if (!body.trim() || !active) return;

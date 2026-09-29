@@ -194,18 +194,24 @@ export async function login(req: AuthedRequest, res: Response) {
 // consent screen. This uses the implicit flow on purpose — PKCE needs a code
 // verifier kept between this request and the callback, which a stateless
 // serverless gateway can't hold. Supabase returns the session in the URL hash
-// of `redirectTo`, which pages/OAuthCallback.tsx adopts client-side.
+// of `redirectTo`, which pages/OAuthCallback.tsx (web) or lib/googleAuth.ts
+// (mobile, via the app's own "lunee://" scheme) adopts client-side.
 export async function oauthStart(req: AuthedRequest, res: Response) {
   const provider = req.params.provider?.toLowerCase();
   if (!provider || !OAUTH_PROVIDERS.has(provider)) {
     throw new HttpError(400, `Unsupported OAuth provider: ${req.params.provider}`);
   }
 
+  // Mobile can't land on a web URL — there's no browser tab to hand back to
+  // the app. It passes its own custom-scheme redirect instead, registered in
+  // Supabase's redirect allowlist alongside the web one.
+  const redirectTo = req.query.redirectTo === "mobile" ? "lunee://oauth/callback" : `${env.appBaseUrl}/oauth/callback`;
+
   const { data, error } = await createAuthClient().auth.signInWithOAuth({
     // Cast is safe: membership was just checked against OAUTH_PROVIDERS.
     provider: provider as "google",
     options: {
-      redirectTo: `${env.appBaseUrl}/oauth/callback`,
+      redirectTo,
       // Without this Google silently reuses the last signed-in account, with no
       // way to pick a different one.
       queryParams: { prompt: "select_account" },

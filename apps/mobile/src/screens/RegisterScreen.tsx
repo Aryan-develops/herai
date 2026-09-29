@@ -3,8 +3,10 @@ import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View } fr
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { useAuth } from "../context/AuthContext";
 import { ApiError, type Gender } from "../lib/api";
+import { signInWithGoogle } from "../lib/googleAuth";
 import { GENDER_OPTIONS } from "../lib/gender";
 import { Button, Chip, ErrorText, Field } from "../components/ui";
+import { GoogleButton } from "../components/GoogleButton";
 import { colors } from "../theme";
 import { isMinor, isValidDateString } from "../lib/age";
 import type { AuthStackParamList } from "../navigation/types";
@@ -12,7 +14,7 @@ import type { AuthStackParamList } from "../navigation/types";
 type Props = NativeStackScreenProps<AuthStackParamList, "Register">;
 
 export function RegisterScreen({ navigation }: Props) {
-  const { register } = useAuth();
+  const { register, refreshUser } = useAuth();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -21,6 +23,7 @@ export function RegisterScreen({ navigation }: Props) {
   const [guardianEmail, setGuardianEmail] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [googleSubmitting, setGoogleSubmitting] = useState(false);
 
   const minor = isValidDateString(dateOfBirth) && isMinor(dateOfBirth);
 
@@ -49,6 +52,19 @@ export function RegisterScreen({ navigation }: Props) {
     }
   }
 
+  async function onGoogle() {
+    setError(null);
+    setGoogleSubmitting(true);
+    try {
+      await signInWithGoogle();
+      await refreshUser();
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Something went wrong");
+    } finally {
+      setGoogleSubmitting(false);
+    }
+  }
+
   return (
     <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === "ios" ? "padding" : undefined}>
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
@@ -56,6 +72,12 @@ export function RegisterScreen({ navigation }: Props) {
         <Text style={styles.subtitle}>Set up Lunee in under a minute.</Text>
 
         <View style={styles.form}>
+          <GoogleButton onPress={onGoogle} loading={googleSubmitting} />
+          <View style={styles.dividerRow}>
+            <View style={styles.dividerLine} />
+            <Text style={styles.dividerText}>or sign up with email</Text>
+            <View style={styles.dividerLine} />
+          </View>
           <Field label="Name" placeholder="Jane Doe" value={name} onChangeText={setName} />
           <Field
             label="Email"
@@ -121,6 +143,9 @@ const styles = StyleSheet.create({
   title: { fontSize: 26, fontWeight: "700", color: colors.ink900 },
   subtitle: { marginTop: 6, fontSize: 14, color: colors.ink700 },
   form: { marginTop: 28 },
+  dividerRow: { flexDirection: "row", alignItems: "center", gap: 10, marginVertical: 16 },
+  dividerLine: { flex: 1, height: 1, backgroundColor: colors.neutral200 },
+  dividerText: { fontSize: 12, color: colors.muted },
   consentBox: {
     backgroundColor: colors.brand50,
     borderRadius: 12,

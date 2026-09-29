@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
 import { MessageCircle, Send } from "lucide-react";
 import { api, ApiError, type PartnerMessage } from "@/lib/api";
+import { useRealtimeSync } from "@/hooks/useRealtimeSync";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -32,13 +33,16 @@ export function MessagesPane({ threads }: { threads: Thread[] }) {
   useEffect(() => {
     setMessages(null);
     load();
-    const t = setInterval(load, 15_000);
+    // Safety-net poll in case the Realtime socket drops; live updates below do the real work.
+    const t = setInterval(load, 60_000);
     document.addEventListener("visibilitychange", load);
     return () => {
       clearInterval(t);
       document.removeEventListener("visibilitychange", load);
     };
   }, [load]);
+
+  useRealtimeSync(active ? [{ table: "partner_messages", filter: "link_id=eq." + active }] : [], load, [active]);
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ block: "nearest" });
