@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
-import { api, type AuthUser, type Gender } from "../lib/api";
+import { api, ApiError, type AuthUser, type Gender } from "../lib/api";
 import { getSession } from "../lib/session";
 
 interface AuthContextValue {
@@ -37,8 +37,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       try {
         const { user } = await api.me();
         setUser(user);
-      } catch {
-        setUser(null);
+      } catch (err) {
+        // Real 401 = dead session, sign out. Anything else (network blip,
+        // 5xx) shouldn't log someone out — leave `user` as-is and retry later.
+        if (err instanceof ApiError && err.status === 401) setUser(null);
       } finally {
         setLoading(false);
       }

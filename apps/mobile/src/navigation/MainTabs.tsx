@@ -7,11 +7,20 @@ import { CycleScreen } from "../screens/CycleScreen";
 import { ChatScreen } from "../screens/ChatScreen";
 import { PartnerHomeScreen } from "../screens/PartnerHomeScreen";
 import { GuideScreen } from "../screens/GuideScreen";
+import { TabsMoreMenu } from "../components/MoreMenu";
 import { colors } from "../theme";
 import type { MainTabsParamList, PartnerTabsParamList } from "./types";
 
 const Tab = createBottomTabNavigator<MainTabsParamList>();
 const PartnerTab = createBottomTabNavigator<PartnerTabsParamList>();
+
+const MENU_HEADER = {
+  headerShown: true,
+  headerLeft: () => <TabsMoreMenu />,
+  headerShadowVisible: false,
+  headerStyle: { backgroundColor: colors.neutral50 },
+  headerTitleStyle: { fontSize: 17, fontWeight: "700" as const, color: colors.ink900 },
+};
 
 const PARTNER_ICONS: Record<keyof PartnerTabsParamList, [IconName, IconName]> = {
   PartnerHome: ["heart-circle-outline", "heart-circle"],
@@ -35,8 +44,8 @@ export function PartnerOnlyTabs() {
         },
       })}
     >
-      <PartnerTab.Screen name="PartnerHome" component={PartnerHomeScreen} options={{ title: "Home" }} />
-      <PartnerTab.Screen name="Guide" component={GuideScreen} options={{ title: "Guide" }} />
+      <PartnerTab.Screen name="PartnerHome" component={PartnerHomeScreen} options={{ title: "Home", ...MENU_HEADER }} />
+      <PartnerTab.Screen name="Guide" component={GuideScreen} options={{ title: "Guide", ...MENU_HEADER }} />
       <PartnerTab.Screen name="ChatTab" component={ChatScreen} options={{ title: "Ask" }} />
     </PartnerTab.Navigator>
   );
@@ -74,7 +83,7 @@ export function MainTabs() {
       })}
     >
       <Tab.Screen name="Dashboard" component={DashboardScreen} options={{ title: "Today" }} />
-      <Tab.Screen name="Cycle" component={CycleScreen} options={{ title: "Calendar" }} />
+      <Tab.Screen name="Cycle" component={CycleScreen} options={{ title: "Calendar", ...MENU_HEADER }} />
       <Tab.Screen
         name="LogTab"
         component={Empty}
@@ -97,7 +106,7 @@ export function MainTabs() {
           ),
         })}
       />
-      <Tab.Screen name="Partner" component={PartnerHomeScreen} options={{ title: "Partner" }} />
+      <Tab.Screen name="Partner" component={PartnerHomeScreen} options={{ title: "Partner", ...MENU_HEADER }} />
       <Tab.Screen name="Chat" component={ChatScreen} options={{ title: "Ask" }} />
     </Tab.Navigator>
   );

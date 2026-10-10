@@ -3,7 +3,9 @@ import { Image, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, Vi
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { useAuth } from "../context/AuthContext";
 import { ApiError } from "../lib/api";
+import { signInWithGoogle } from "../lib/googleAuth";
 import { Button, ErrorText, Field } from "../components/ui";
+import { GoogleButton } from "../components/GoogleButton";
 import { Ionicons } from "@expo/vector-icons";
 import { colors, radius } from "../theme";
 import type { AuthStackParamList } from "../navigation/types";
@@ -11,11 +13,12 @@ import type { AuthStackParamList } from "../navigation/types";
 type Props = NativeStackScreenProps<AuthStackParamList, "Login">;
 
 export function LoginScreen({ navigation }: Props) {
-  const { login } = useAuth();
+  const { login, refreshUser } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [googleSubmitting, setGoogleSubmitting] = useState(false);
 
   async function onSubmit() {
     setError(null);
@@ -31,6 +34,19 @@ export function LoginScreen({ navigation }: Props) {
     }
   }
 
+  async function onGoogle() {
+    setError(null);
+    setGoogleSubmitting(true);
+    try {
+      await signInWithGoogle();
+      await refreshUser();
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Something went wrong");
+    } finally {
+      setGoogleSubmitting(false);
+    }
+  }
+
   return (
     <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === "ios" ? "padding" : undefined}>
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
@@ -41,6 +57,12 @@ export function LoginScreen({ navigation }: Props) {
         <Text style={styles.subtitle}>Log in to pick up where you left off.</Text>
 
         <View style={styles.form}>
+          <GoogleButton onPress={onGoogle} loading={googleSubmitting} />
+          <View style={styles.dividerRow}>
+            <View style={styles.dividerLine} />
+            <Text style={styles.dividerText}>or use email</Text>
+            <View style={styles.dividerLine} />
+          </View>
           <Field
             label="Email"
             autoCapitalize="none"
@@ -82,6 +104,9 @@ const styles = StyleSheet.create({
   title: { fontSize: 30, fontWeight: "700", color: colors.ink900 },
   subtitle: { marginTop: 6, fontSize: 15, color: colors.muted },
   form: { marginTop: 28 },
+  dividerRow: { flexDirection: "row", alignItems: "center", gap: 10, marginVertical: 16 },
+  dividerLine: { flex: 1, height: 1, backgroundColor: colors.neutral200 },
+  dividerText: { fontSize: 12, color: colors.muted },
   footer: { marginTop: 24, textAlign: "center", color: colors.ink700 },
   link: { color: colors.brand600, fontWeight: "600" },
 });

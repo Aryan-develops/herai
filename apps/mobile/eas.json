@@ -14,16 +14,20 @@
       "channel": "preview",
       "android": { "buildType": "apk" },
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://herai-web-kappa.vercel.app/api",
-        "EXPO_PUBLIC_AI_SERVICE_URL": "https://herai-web-kappa.vercel.app/ai"
+        "EXPO_PUBLIC_API_URL": "https://lunee.me/api",
+        "EXPO_PUBLIC_AI_SERVICE_URL": "https://lunee.me/ai",
+        "EXPO_PUBLIC_SUPABASE_URL": "https://lcwqvrnqzchhorzxrpjl.supabase.co",
+        "EXPO_PUBLIC_SUPABASE_ANON_KEY": "sb_publishable_R49IVywQrxY7_7K05nzvwg_REXnGMc9"
       }
     },
     "production": {
       "autoIncrement": true,
       "channel": "production",
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://herai-web-kappa.vercel.app/api",
-        "EXPO_PUBLIC_AI_SERVICE_URL": "https://herai-web-kappa.vercel.app/ai"
+        "EXPO_PUBLIC_API_URL": "https://lunee.me/api",
+        "EXPO_PUBLIC_AI_SERVICE_URL": "https://lunee.me/ai",
+        "EXPO_PUBLIC_SUPABASE_URL": "https://lcwqvrnqzchhorzxrpjl.supabase.co",
+        "EXPO_PUBLIC_SUPABASE_ANON_KEY": "sb_publishable_R49IVywQrxY7_7K05nzvwg_REXnGMc9"
       }
     }
   }

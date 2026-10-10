@@ -536,6 +536,9 @@ export const api = {
     await request<void>("/auth/logout", { method: "POST" }).catch(() => {});
     await clearSession();
   },
+  // Google sign-in hands back tokens directly from the OAuth callback (no
+  // password exchange) — this just adopts them, mirroring apps/web's version.
+  adoptSession: (session: Session) => setSession(session),
   me: () => request<{ user: AuthUser }>("/auth/me"),
   setGender: (gender: Gender) => request<{ user: AuthUser }>("/auth/gender", { method: "PUT", body: JSON.stringify({ gender }) }),
   deleteAccount: async () => {

@@ -1,7 +1,8 @@
 import { useEffect, type ReactNode } from "react";
 import { LogoMark } from "@/components/LogoMark";
 import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
-import { BookOpen, CalendarDays, HeartHandshake, Plus, Settings, Stethoscope, Store, Sun } from "lucide-react";
+import { BookOpen, CalendarDays, HeartHandshake, Plus, Stethoscope, Store, Sun } from "lucide-react";
+import { MoreMenu } from "@/components/MoreMenu";
 import { useAuth } from "@/context/AuthContext";
 import { GetHelpButton } from "@/components/GetHelp";
 import { FloatingChat } from "@/components/FloatingChat";
@@ -56,14 +57,7 @@ export function AppShell({ children }: { children: ReactNode }) {
 
       <header className="sticky top-0 z-30 bg-neutral-50/80 backdrop-blur-xl">
         <div className="mx-auto flex max-w-5xl items-center justify-between gap-3 px-4 py-2.5 sm:px-6">
-          <Link
-            to="/settings"
-            aria-label="Settings"
-            title="Settings"
-            className="flex h-11 w-11 items-center justify-center rounded-full text-ink-800 transition-colors hover:bg-neutral-100"
-          >
-            <Settings className="h-5.5 w-5.5" aria-hidden="true" />
-          </Link>
+          <MoreMenu />
           <nav aria-label="Main" className="hidden items-center gap-1 lg:flex">
             {nav.map(({ to, label, icon: Icon }) => (
               <NavLink

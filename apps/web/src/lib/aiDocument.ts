@@ -1,6 +1,7 @@
 import type { HealthProfile } from "@/lib/api";
 import type { CarePlan, RiskAssessment } from "@/lib/aiChat";
 import { streamSSE } from "@/lib/sse";
+import { getSession } from "@/lib/session";
 
 export interface ExtractedValue {
   parameter: string;
@@ -135,9 +136,13 @@ export async function streamDocumentAnalysis(
     form.append("healthProfile", JSON.stringify(healthProfile));
   }
 
+  const session = getSession();
+  const headers: Record<string, string> = {};
+  if (session) headers.Authorization = `Bearer ${session.accessToken}`;
+
   await streamSSE(
-    "/ai/documents/analyze",
-    { method: "POST", body: form },
+    "/api/ai/documents/analyze",
+    { method: "POST", headers, body: form },
     (data) => onEvent(data as DocPipelineEvent),
     { signal, idleTimeoutMs: 60000 }
   );

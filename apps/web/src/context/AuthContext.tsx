@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
-import { api, type AuthUser, type Gender } from "@/lib/api";
+import { api, ApiError, type AuthUser, type Gender } from "@/lib/api";
 import { getSession } from "@/lib/session";
 
 interface AuthContextValue {
@@ -58,7 +58,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     api
       .me()
       .then(({ user }) => setUser(user))
-      .catch(() => setUser(null))
+      .catch((err) => {
+        // A real 401 means the session is dead — sign out. Anything else
+        // (network blip, 5xx, proxy hiccup) shouldn't log someone out from
+        // under them; keep the cached user and let the next successful
+        // call refresh it.
+        if (err instanceof ApiError && err.status === 401) setUser(null);
+      })
       .finally(() => setLoading(false));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
