@@ -12,6 +12,7 @@ import { usePrefs } from "../context/PrefsContext";
 import { useAuth } from "../context/AuthContext";
 import { useRealtimeSync } from "../hooks/useRealtimeSync";
 import { GetHelpButton } from "../components/GetHelp";
+import { MoreMenu } from "../components/MoreMenu";
 import { ErrorText } from "../components/ui";
 import { colors, radius, shadow } from "../theme";
 import type { AppStackParamList, MainTabsParamList } from "../navigation/types";
@@ -78,9 +79,13 @@ export function DashboardScreen({ navigation }: Props) {
     <ScrollView style={s.screen} contentContainerStyle={{ paddingBottom: 32 }}>
       <LinearGradient colors={[colors.brand100, colors.violet50, colors.neutral50]} style={s.hero}>
         <View style={s.topBar}>
-          <Pressable onPress={() => stack()?.navigate("Settings")} accessibilityRole="button" accessibilityLabel="Settings" style={s.iconBtn}>
-            <Ionicons name="settings-outline" size={24} color={colors.ink900} />
-          </Pressable>
+          <MoreMenu
+            items={[
+              { label: "Settings", icon: "settings-outline", onPress: () => stack()?.navigate("Settings") },
+              { label: "Lab reports", icon: "document-text-outline", onPress: () => stack()?.navigate("Reports") },
+              { label: "History", icon: "time-outline", onPress: () => stack()?.navigate("TimelinePage") },
+            ]}
+          />
           <GetHelpButton onFindCare={(type) => stack()?.navigate("Care", type ? { type } : undefined)} />
         </View>
 
