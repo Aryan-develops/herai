@@ -1,7 +1,7 @@
 import { useEffect, type ReactNode } from "react";
 import { LogoMark } from "@/components/LogoMark";
 import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
-import { BookOpen, CalendarDays, HeartHandshake, Plus, Stethoscope, Store, Sun } from "lucide-react";
+import { BookOpen, CalendarDays, HeartHandshake, Plus, Sparkles, Store, Sun } from "lucide-react";
 import { MoreMenu } from "@/components/MoreMenu";
 import { useAuth } from "@/context/AuthContext";
 import { GetHelpButton } from "@/components/GetHelp";
@@ -17,14 +17,13 @@ interface NavItem {
   center?: boolean;
 }
 
-// Ask now lives in the floating chat bubble on every screen, so it's no longer a nav destination.
-// Log is the raised centre button on phones. Reports and Timeline live under Settings > More.
+// Log is the raised centre button on phones. Care, Reports and History live in the 3-dots menu.
 const NAV: NavItem[] = [
   { to: "/dashboard", label: "Today", icon: Sun },
   { to: "/cycle", label: "Calendar", icon: CalendarDays },
   { to: "/log", label: "Log", icon: Plus, center: true },
   { to: "/partner", label: "Partner", icon: HeartHandshake },
-  { to: "/care", label: "Care", icon: Stethoscope },
+  { to: "/chat", label: "Ask", icon: Sparkles },
 ];
 
 // Partner-only accounts don't track a cycle, so no Log, Calendar or Today — just their circle and the guide.

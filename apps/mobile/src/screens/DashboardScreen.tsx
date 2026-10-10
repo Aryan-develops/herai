@@ -82,6 +82,7 @@ export function DashboardScreen({ navigation }: Props) {
           <MoreMenu
             items={[
               { label: "Settings", icon: "settings-outline", onPress: () => stack()?.navigate("Settings") },
+              { label: "Find care", icon: "medkit-outline", onPress: () => stack()?.navigate("Care") },
               { label: "Lab reports", icon: "document-text-outline", onPress: () => stack()?.navigate("Reports") },
               { label: "History", icon: "time-outline", onPress: () => stack()?.navigate("TimelinePage") },
             ]}

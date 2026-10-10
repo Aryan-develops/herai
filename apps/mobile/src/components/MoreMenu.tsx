@@ -56,6 +56,7 @@ export function TabsMoreMenu() {
     ...(isPartnerOnly(user)
       ? []
       : [
+          { label: "Find care", icon: "medkit-outline" as const, onPress: () => stack.navigate("Care") },
           { label: "Lab reports", icon: "document-text-outline" as const, onPress: () => stack.navigate("Reports") },
           { label: "History", icon: "time-outline" as const, onPress: () => stack.navigate("TimelinePage") },
         ]),

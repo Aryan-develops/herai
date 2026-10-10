@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { FileText, History, MoreHorizontal, Settings } from "lucide-react";
+import { FileText, History, MoreHorizontal, Settings, Stethoscope } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { isPartnerOnly } from "@/lib/gender";
 
@@ -31,6 +31,7 @@ export function MoreMenu() {
     ...(isPartnerOnly(user)
       ? []
       : [
+          { to: "/care", label: "Find care", icon: Stethoscope },
           { to: "/reports", label: "Lab reports", icon: FileText },
           { to: "/timeline", label: "History", icon: History },
         ]),
