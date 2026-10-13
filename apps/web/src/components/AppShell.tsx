@@ -56,7 +56,15 @@ export function AppShell({ children }: { children: ReactNode }) {
 
       <header className="sticky top-0 z-30 bg-neutral-50/80 backdrop-blur-xl">
         <div className="mx-auto flex max-w-5xl items-center justify-between gap-3 px-4 py-2.5 sm:px-6">
-          <MoreMenu />
+          <div className="flex items-center gap-2 max-lg:contents">
+            <MoreMenu />
+            <Link to="/dashboard" className="flex items-center gap-2 font-display text-lg font-semibold text-ink-900" aria-label="Lunee home">
+              <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-brand-500 to-violet-500 text-white">
+                <LogoMark className="h-4 w-4" />
+              </span>
+              Lunee
+            </Link>
+          </div>
           <nav aria-label="Main" className="hidden items-center gap-1 lg:flex">
             {nav.map(({ to, label, icon: Icon }) => (
               <NavLink
@@ -74,12 +82,6 @@ export function AppShell({ children }: { children: ReactNode }) {
               </NavLink>
             ))}
           </nav>
-          <Link to="/dashboard" className="flex items-center gap-2 font-display text-lg font-semibold text-ink-900 lg:hidden" aria-label="Lunee home">
-            <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-brand-500 to-violet-500 text-white">
-              <LogoMark className="h-4 w-4" />
-            </span>
-            Lunee
-          </Link>
           <div className="flex items-center gap-1">
             {user?.isProvider && (
               <NavLink to="/provider" aria-label="Provider dashboard" title="Provider dashboard" className="flex h-11 w-11 items-center justify-center rounded-full text-brand-700 hover:bg-brand-50">
