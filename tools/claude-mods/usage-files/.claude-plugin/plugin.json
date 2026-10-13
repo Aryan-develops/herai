@@ -1,0 +1,1 @@
+{ "name": "usage-files", "version": "0.1.0", "description": "Per-model token usage and a folder-grouped view of the files touched this session, in a /usage-files pane.", "types": "./types/index.d.ts" }
