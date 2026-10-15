@@ -97,7 +97,7 @@ async function loadAuthPayload(userId: string, email: string): Promise<AuthPaylo
     needsDateOfBirth: !profile.date_of_birth,
     isProvider: !!owned,
     isPartner: (following?.length ?? 0) > 0,
-    isAdmin: await isAdminEmail(email),
+    isAdmin: await isAdminEmail(userId, email),
     gender: profile.gender ?? null,
   };
 }
