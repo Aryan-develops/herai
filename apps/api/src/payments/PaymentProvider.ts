@@ -14,6 +14,7 @@ export interface CheckoutInput {
   /** UPI ID (VPA) for collect requests. */
   vpa?: string;
   autopay: boolean;
+  period: "month" | "year";
   idempotencyKey: string;
 }
 
@@ -31,6 +32,7 @@ export interface WebhookEvent {
   userId?: string;
   paymentRef?: string;
   paidInr?: number;
+  period?: "month" | "year";
 }
 
 export interface PaymentProvider {

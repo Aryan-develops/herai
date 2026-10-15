@@ -10,6 +10,7 @@ import { hitRateLimit } from "../lib/rateLimit.js";
 import { METHOD_LABELS, PROVIDERS, UPI_APPS } from "../payments/providers.js";
 import type { PaymentMethodId } from "../payments/PaymentProvider.js";
 import { createCheckoutWithFallback } from "../payments/router.js";
+import { allPrices, priceFor } from "../lib/pricing.js";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 const GIFT_TTL_DAYS = 180;
@@ -38,7 +39,9 @@ export async function getPlans(req: AuthedRequest, res: Response) {
     };
   });
   res.json({
-    plan: { id: "monthly_100_inr", priceInr: env.partnerPriceInr, period: "month", trialDays: env.partnerTrialDays },
+    plan: { id: priceFor("month").planId, priceInr: priceFor("month").payInr, period: "month", trialDays: env.partnerTrialDays },
+    // Every purchasable plan with its list price, the price payable now and any running launch discount.
+    plans: allPrices(),
     // While the paywall is off, everything is free and checkout is only a preview of the final flow.
     testingPhase: !env.partnerPaywall,
     paymentsConnected: PROVIDERS.some((p) => p.connected),
@@ -58,6 +61,7 @@ const checkoutSchema = z
       .regex(/^[\w.\-]{2,256}@[A-Za-z]{2,64}$/, "Enter a valid UPI ID, like name@bank")
       .optional(),
     autopay: z.boolean().default(false),
+    period: z.enum(["month", "year"]).default("month"),
   })
   .refine((v) => v.method !== "upi_id" || !!v.vpa, { message: "Enter your UPI ID", path: ["vpa"] });
 
@@ -69,7 +73,8 @@ export async function checkout(req: AuthedRequest, res: Response) {
 
   const { result, tried, connected } = await createCheckoutWithFallback({
     userId: req.userId!,
-    amountInr: env.partnerPriceInr,
+    amountInr: priceFor(parsed.data.period).payInr,
+    period: parsed.data.period,
     method: parsed.data.method,
     upiApp: parsed.data.upiApp,
     vpa: parsed.data.vpa,
@@ -132,7 +137,7 @@ export async function createGift(req: AuthedRequest, res: Response) {
     expires_at: new Date(Date.now() + GIFT_TTL_DAYS * DAY_MS).toISOString(),
   });
   if (error) throw new HttpError(500, "Failed to create gift");
-  res.status(201).json({ code, months: parsed.data.months, priceInr: env.partnerPriceInr * parsed.data.months, free: true });
+  res.status(201).json({ code, months: parsed.data.months, priceInr: priceFor("month").listInr * parsed.data.months, free: true });
 }
 
 const giftRedeemSchema = z.object({ code: z.string().min(8).max(40) });
@@ -183,7 +188,7 @@ export async function webhook(req: AuthedRequest, res: Response) {
   if (!event) return res.status(400).json({ error: "Invalid signature" });
 
   // Only a completed payment for the full price changes anything; other events are acknowledged and ignored.
-  if (event.type !== "payment_link.paid" || !event.userId || !event.paymentRef || (event.paidInr ?? 0) < env.partnerPriceInr) {
+  if (event.type !== "payment_link.paid" || !event.userId || !event.paymentRef || (event.paidInr ?? 0) < priceFor(event.period ?? "month").floorInr) {
     return res.json({ received: true });
   }
 
@@ -196,6 +201,7 @@ export async function webhook(req: AuthedRequest, res: Response) {
   // Providers retry deliveries; the last applied payment id makes a retry a no-op.
   if (sub?.provider_ref === event.paymentRef) return res.json({ received: true, duplicate: true });
 
+  const priced = priceFor(event.period ?? "month");
   const now = Date.now();
   const base = Math.max(now, sub?.current_period_end ? new Date(sub.current_period_end).getTime() : 0);
   const { error } = await supabaseAdmin
@@ -204,7 +210,8 @@ export async function webhook(req: AuthedRequest, res: Response) {
       status: "active",
       provider: provider.id,
       provider_ref: event.paymentRef,
-      current_period_end: new Date(base + 30 * DAY_MS).toISOString(),
+      plan: priced.planId,
+      current_period_end: new Date(base + priced.periodDays * DAY_MS).toISOString(),
       updated_at: new Date(now).toISOString(),
     })
     .eq("partner_id", event.userId);

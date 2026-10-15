@@ -33,7 +33,8 @@ export function PartnerUpgrade() {
   const [method, setMethod] = useState("upi_intent");
   const [upiApp, setUpiApp] = useState("gpay");
   const [vpa, setVpa] = useState("");
-  const [autopay, setAutopay] = useState(true);
+  const [autopay, setAutopay] = useState(false);
+  const [period, setPeriod] = useState<"month" | "year">("year");
   const [paying, setPaying] = useState(false);
   const [result, setResult] = useState<{ tone: "info" | "error"; text: string } | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -55,7 +56,7 @@ export function PartnerUpgrade() {
     setPaying(true);
     setResult(null);
     try {
-      const res = await api.checkout({ method, upiApp: method === "upi_intent" ? upiApp : undefined, vpa: method === "upi_id" ? vpa.trim() : undefined, autopay });
+      const res = await api.checkout({ method, upiApp: method === "upi_intent" ? upiApp : undefined, vpa: method === "upi_id" ? vpa.trim() : undefined, autopay, period });
       if (res.redirectUrl) window.location.assign(res.redirectUrl);
       else setResult({ tone: res.status === "failed" ? "error" : "info", text: res.message ?? "Nothing was charged." });
     } catch (err) {
@@ -95,6 +96,7 @@ export function PartnerUpgrade() {
 
   const sub = plans?.subscription;
   const current = plans?.methods.find((m) => m.id === method);
+  const chosen = plans?.plans.find((o) => o.period === period) ?? plans?.plans[0];
   const canPay = method !== "upi_id" || VPA.test(vpa.trim());
 
   return (
@@ -109,14 +111,34 @@ export function PartnerUpgrade() {
       {error && <Alert tone="error" className="mt-5">{error}</Alert>}
       {!plans && !error && <div className="skeleton mt-6 h-48 rounded-3xl" aria-hidden="true" />}
 
-      {plans && sub && (
+      {plans && sub && chosen && (
         <div className="mt-6 space-y-5">
           <div className="rounded-3xl bg-gradient-to-br from-brand-500 to-violet-600 p-6 text-white shadow-lift">
             <p className="text-xs font-medium tracking-wide text-white/80 uppercase">Lunee Partner</p>
-            <p className="mt-1 font-display text-4xl font-semibold">
-              ₹{plans.plan.priceInr}
-              <span className="text-lg font-normal text-white/80"> / month</span>
+            <div className="mt-3 inline-flex rounded-full bg-white/15 p-1 text-sm" role="group" aria-label="Billing period">
+              {plans.plans.map((o) => (
+                <button
+                  key={o.period}
+                  type="button"
+                  aria-pressed={period === o.period}
+                  onClick={() => setPeriod(o.period)}
+                  className={`rounded-full px-4 py-1.5 font-medium transition-colors ${period === o.period ? "bg-white text-brand-700" : "text-white/90"}`}
+                >
+                  {o.period === "year" ? "Yearly" : "Monthly"}
+                </button>
+              ))}
+            </div>
+            <p className="mt-3 font-display text-4xl font-semibold">
+              ₹{chosen.payInr}
+              {chosen.discountPercent && <span className="ml-2 text-lg font-normal text-white/70 line-through">₹{chosen.listInr}</span>}
+              <span className="text-lg font-normal text-white/80"> / {chosen.period}</span>
             </p>
+            {chosen.discountPercent && chosen.discountEndsAt && (
+              <p className="mt-1 text-sm font-medium text-white">
+                Launch offer: {chosen.discountPercent}% off until {niceDate(chosen.discountEndsAt)}.
+              </p>
+            )}
+            {chosen.period === "year" && <p className="mt-1 text-sm text-white/85">That's about ₹{Math.round(chosen.payInr / 12)} a month.</p>}
             <p className="mt-2 text-sm text-white/90">Follow as many people as you like. {plans.plan.trialDays}-day free trial, cancel any time.</p>
             <ul className="mt-4 space-y-1.5 text-sm text-white/95">
               {["Daily phase and mood updates, with what to do, say and avoid", "Plans that flag tougher days ahead", "Hindi and English tips"].map((t) => (
@@ -253,7 +275,7 @@ export function PartnerUpgrade() {
               </div>
 
               <div className="mt-3 divide-y divide-neutral-200">
-                <ToggleRow label="Set up AutoPay" hint="Renews monthly. Available with UPI apps, UPI ID and cards." checked={autopay} onChange={setAutopay} disabled={["upi_qr", "netbanking", "wallet"].includes(method)} />
+                <ToggleRow label="Set up AutoPay" hint="AutoPay is coming soon. For now each payment covers one period and we remind you before it ends." checked={false} onChange={setAutopay} disabled />
               </div>
 
               {current && !current.available && (
@@ -264,7 +286,7 @@ export function PartnerUpgrade() {
               {result && <Alert tone={result.tone} className="mt-3">{result.text}</Alert>}
               <Button className="mt-4 w-full sm:w-auto" onClick={pay} disabled={paying || !canPay}>
                 {paying ? <Spinner /> : <ShieldCheck className="h-4 w-4" aria-hidden="true" />}
-                Pay ₹{plans.plan.priceInr}
+                Pay ₹{chosen.payInr}
               </Button>
               <p className="mt-2 text-xs text-ink-700/60">Secure payment. We never see your bank or card details.</p>
             </CardContent>

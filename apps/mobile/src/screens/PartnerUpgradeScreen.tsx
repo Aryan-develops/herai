@@ -29,7 +29,8 @@ export function PartnerUpgradeScreen() {
   const [method, setMethod] = useState("upi_intent");
   const [upiApp, setUpiApp] = useState("gpay");
   const [vpa, setVpa] = useState("");
-  const [autopay, setAutopay] = useState(true);
+  const [autopay, setAutopay] = useState(false);
+  const [period, setPeriod] = useState<"month" | "year">("year");
   const [paying, setPaying] = useState(false);
   const [result, setResult] = useState<{ tone: "info" | "warning"; text: string } | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -50,7 +51,7 @@ export function PartnerUpgradeScreen() {
     setPaying(true);
     setResult(null);
     try {
-      const res = await api.checkout({ method, upiApp: method === "upi_intent" ? upiApp : undefined, vpa: method === "upi_id" ? vpa.trim() : undefined, autopay });
+      const res = await api.checkout({ method, upiApp: method === "upi_intent" ? upiApp : undefined, vpa: method === "upi_id" ? vpa.trim() : undefined, autopay, period });
       setResult({ tone: res.status === "failed" ? "warning" : "info", text: res.message ?? "Nothing was charged." });
     } catch (err) {
       setResult({ tone: "warning", text: err instanceof ApiError ? err.message : "Couldn't start payment." });
@@ -88,6 +89,7 @@ export function PartnerUpgradeScreen() {
   }
 
   const sub = plans?.subscription;
+  const chosen = plans?.plans.find((o) => o.period === period) ?? plans?.plans[0];
   const current = plans?.methods.find((m) => m.id === method);
   const canPay = method !== "upi_id" || VPA.test(vpa.trim());
 
@@ -96,14 +98,24 @@ export function PartnerUpgradeScreen() {
       <ErrorText>{error}</ErrorText>
       {!plans && !error ? <View style={styles.skeleton} /> : null}
 
-      {plans && sub ? (
+      {plans && sub && chosen ? (
         <>
           <View style={styles.hero}>
             <Text style={styles.eyebrow}>Lunee PARTNER</Text>
+            <View style={{ flexDirection: "row", gap: 8, marginTop: 8 }}>
+              {plans.plans.map((o) => (
+                <Chip key={o.period} label={o.period === "year" ? "Yearly" : "Monthly"} selected={period === o.period} onPress={() => setPeriod(o.period)} />
+              ))}
+            </View>
             <Text style={styles.price}>
-              ₹{plans.plan.priceInr}
-              <Text style={styles.per}> / month</Text>
+              ₹{chosen.payInr}
+              {chosen.discountPercent ? <Text style={[styles.per, { textDecorationLine: "line-through" }]}>  ₹{chosen.listInr}</Text> : null}
+              <Text style={styles.per}> / {chosen.period}</Text>
             </Text>
+            {chosen.discountPercent && chosen.discountEndsAt ? (
+              <Text style={styles.heroBody}>Launch offer: {chosen.discountPercent}% off until {niceDate(chosen.discountEndsAt)}.</Text>
+            ) : null}
+            {chosen.period === "year" ? <Text style={styles.heroBody}>That's about ₹{Math.round(chosen.payInr / 12)} a month.</Text> : null}
             <Text style={styles.heroBody}>Follow as many people as you like. {plans.plan.trialDays}-day free trial, cancel any time.</Text>
             {["Daily phase and mood updates, with what to do, say and avoid", "Plans that flag tougher days ahead", "Hindi and English tips"].map((t) => (
               <View key={t} style={styles.perk}>
@@ -126,7 +138,7 @@ export function PartnerUpgradeScreen() {
             {sub.state !== "none" ? (
               <ToggleRow
                 label="AutoPay"
-                hint="Charge ₹100 monthly through UPI AutoPay or your card. You get a reminder about a day before each charge and can stop any time."
+                hint="AutoPay is coming soon. For now each payment covers one period and you can stop any time."
                 value={sub.autopay}
                 onChange={async (v) => {
                   await api.setAutopay(v).catch(() => {});
@@ -195,10 +207,10 @@ export function PartnerUpgradeScreen() {
             {method === "netbanking" ? <Text style={styles.body}>You'll pick your bank and sign in on its own page.</Text> : null}
             {method === "wallet" ? <Text style={styles.body}>Pay with Paytm or other wallets.</Text> : null}
 
-            <ToggleRow label="Set up AutoPay" hint="Renews monthly. Available with UPI apps, UPI ID and cards." value={autopay} onChange={setAutopay} disabled={["upi_qr", "netbanking", "wallet"].includes(method)} />
+            <ToggleRow label="Set up AutoPay" hint="AutoPay is coming soon. For now each payment covers one period." value={false} onChange={setAutopay} disabled />
             {current && !current.available ? <Text style={styles.tiny}>{current.label} isn't connected yet. If one payment provider is down we automatically try another.</Text> : null}
             {result ? <Notice tone={result.tone}>{result.text}</Notice> : null}
-            <Button title={`Pay ₹${plans.plan.priceInr}`} onPress={pay} loading={paying} disabled={!canPay} />
+            <Button title={`Pay ₹${chosen.payInr}`} onPress={pay} loading={paying} disabled={!canPay} />
             <Text style={styles.tiny}>Secure payment. We never see your bank or card details.</Text>
           </View>
 
@@ -207,7 +219,7 @@ export function PartnerUpgradeScreen() {
             <Text style={styles.body}>Give someone months of Partner access. They redeem the code in their own account.</Text>
             <View style={styles.wrap}>
               {[1, 3, 6, 12].map((m) => (
-                <Chip key={m} label={`${m} mo · ₹${m * plans.plan.priceInr}`} selected={giftMonths === m} onPress={() => setGiftMonths(m)} />
+                <Chip key={m} label={`${m} mo · ₹${m * (plans.plans.find((o) => o.period === "month")?.listInr ?? plans.plan.priceInr)}`} selected={giftMonths === m} onPress={() => setGiftMonths(m)} />
               ))}
             </View>
             <Button title="Create gift code" variant="outline" onPress={makeGift} loading={giftBusy} />

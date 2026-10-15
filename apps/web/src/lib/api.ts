@@ -456,8 +456,19 @@ export interface WomanSummary {
 
 export type SummaryResponse = WomanSummary | { available: false; message: string };
 
+export interface PlanOption {
+  period: "month" | "year";
+  planId: string;
+  listInr: number;
+  /** What is payable now: the list price, or the launch price while the offer runs. */
+  payInr: number;
+  discountPercent: number | null;
+  discountEndsAt: string | null;
+}
+
 export interface PaymentPlans {
   plan: { id: string; priceInr: number; period: string; trialDays: number };
+  plans: PlanOption[];
   testingPhase: boolean;
   paymentsConnected: boolean;
   methods: { id: string; label: string; providers: string[]; available: boolean }[];
@@ -617,7 +628,7 @@ export const api = {
 
   // Payments (interface only until a provider is connected)
   paymentPlans: () => request<PaymentPlans>("/payments/plans"),
-  checkout: (data: { method: string; upiApp?: string; vpa?: string; autopay?: boolean }) =>
+  checkout: (data: { method: string; upiApp?: string; vpa?: string; autopay?: boolean; period?: "month" | "year" }) =>
     request<{ status: "not_connected" | "failed" | "requires_action" | "paid"; message?: string; redirectUrl?: string | null }>("/payments/checkout", {
       method: "POST",
       body: JSON.stringify(data),

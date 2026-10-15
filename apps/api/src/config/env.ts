@@ -34,7 +34,11 @@ export const env = {
   // Partner Mode is free while this is false (testing phase); flip to enforce trial/subscription.
   partnerPaywall: process.env.PARTNER_PAYWALL === "true",
   partnerTrialDays: Number(process.env.PARTNER_TRIAL_DAYS ?? 14),
-  partnerPriceInr: Number(process.env.PARTNER_PRICE_INR ?? 100),
+  partnerPriceInr: Number(process.env.PARTNER_PRICE_INR ?? 99),
+  partnerYearlyPriceInr: Number(process.env.PARTNER_YEARLY_PRICE_INR ?? 899),
+  // Launch offer: this percent off every plan until the end date (IST). Set LAUNCH_DISCOUNT_PERCENT=0 to end it early.
+  launchDiscountPercent: Number(process.env.LAUNCH_DISCOUNT_PERCENT ?? 20),
+  launchDiscountEnds: process.env.LAUNCH_DISCOUNT_ENDS ?? "2026-12-31T23:59:59+05:30",
   // Shared secret for scheduled jobs (Vercel Cron sends it as a Bearer token).
   cronSecret: process.env.CRON_SECRET,
   // Optional transactional email (Resend). Without it, non-critical email is skipped.

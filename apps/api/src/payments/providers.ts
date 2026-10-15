@@ -12,7 +12,7 @@ function safeEqual(a: string, b: string): boolean {
 /**
  * Razorpay via hosted Payment Links: one page that offers UPI, cards, net banking and wallets, so the
  * method the user picked in our UI doesn't need to map to a Razorpay-specific flow. One payment buys one
- * period; AutoPay needs Razorpay Subscriptions and is not wired yet (supportsAutopay stays false).
+ * period (month or year, carried in the link notes); AutoPay needs Razorpay Subscriptions and is not wired yet (supportsAutopay stays false).
  * Needs RAZORPAY_KEY_ID, RAZORPAY_KEY_SECRET and RAZORPAY_WEBHOOK_SECRET.
  */
 const razorpay: PaymentProvider = {
@@ -33,8 +33,8 @@ const razorpay: PaymentProvider = {
         amount: Math.round(input.amountInr * 100),
         currency: "INR",
         reference_id: input.idempotencyKey,
-        description: "Lunee partner plan (1 month)",
-        notes: { user_id: input.userId },
+        description: input.period === "year" ? "Lunee partner plan (1 year)" : "Lunee partner plan (1 month)",
+        notes: { user_id: input.userId, period: input.period },
         ...(appBase ? { callback_url: `${appBase}/partner/upgrade?paid=1`, callback_method: "get" } : {}),
       }),
     });
@@ -52,7 +52,7 @@ const razorpay: PaymentProvider = {
     const body = JSON.parse(rawBody) as {
       event?: string;
       payload?: {
-        payment_link?: { entity?: { notes?: { user_id?: string }; amount_paid?: number } };
+        payment_link?: { entity?: { notes?: { user_id?: string; period?: string }; amount_paid?: number } };
         payment?: { entity?: { id?: string } };
       };
     };
@@ -64,6 +64,7 @@ const razorpay: PaymentProvider = {
       userId: link?.notes?.user_id,
       paymentRef: body.payload?.payment?.entity?.id,
       paidInr: typeof link?.amount_paid === "number" ? link.amount_paid / 100 : undefined,
+      period: link?.notes?.period === "year" ? "year" : "month",
     };
   },
   async cancelSubscription() {

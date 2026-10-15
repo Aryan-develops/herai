@@ -1,12 +1,15 @@
 import type { CheckoutInput, CheckoutResult } from "./PaymentProvider.js";
 import { PROVIDERS } from "./providers.js";
 
-/** Tries each connected provider that supports the method, in priority order, until one succeeds. */
+/**
+ * Tries each connected provider that supports the method, in priority order, until one succeeds.
+ * AutoPay is a preference, not a requirement: a provider without it still takes the payment.
+ */
 export async function createCheckoutWithFallback(
   input: CheckoutInput,
 ): Promise<{ result: CheckoutResult | null; tried: string[]; connected: boolean }> {
   const candidates = PROVIDERS.filter(
-    (p) => p.connected && p.methods.includes(input.method) && (!input.autopay || p.supportsAutopay),
+    (p) => p.connected && p.methods.includes(input.method),
   );
   const tried: string[] = [];
   for (const provider of candidates) {

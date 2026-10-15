@@ -1,3 +1,4 @@
+import { priceFor } from "./pricing.js";
 import { env } from "../config/env.js";
 import { supabaseAdmin } from "../config/supabase.js";
 import { HttpError } from "../middleware/errorHandler.js";
@@ -110,7 +111,7 @@ export async function getSubscription(partnerId: string): Promise<SubscriptionVi
     currentPeriodEnd: data?.current_period_end ?? null,
     autopay: data?.autopay ?? false,
     paywallOn: env.partnerPaywall,
-    priceInr: env.partnerPriceInr,
+    priceInr: priceFor("month").payInr,
     hasAccess: !env.partnerPaywall || state === "trialing" || state === "active",
     daysLeft: endsAt ? Math.max(0, Math.ceil((endsAt - now) / DAY_MS)) : null,
   };
