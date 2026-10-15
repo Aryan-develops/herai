@@ -177,6 +177,9 @@ function DateTiles({ insights }: { insights: CycleInsights }) {
   const today = dayKey(new Date());
   const fw = insights.fertileWindow;
   const fertileNow = !!fw && fw.start <= today && today <= fw.end;
+  // A late period leaves the predicted window in the past; show a dash rather than a stale date.
+  const fertileUpcoming = !!fw && fw.end >= today;
+  const ovulationUpcoming = !!insights.ovulationDate && insights.ovulationDate >= today;
   return (
     <div className="mt-4 grid grid-cols-3 gap-3">
       <Link to="/cycle" className="flex flex-col items-center justify-center rounded-3xl bg-violet-50 p-3 text-center transition-transform hover:-translate-y-0.5">
@@ -188,13 +191,13 @@ function DateTiles({ insights }: { insights: CycleInsights }) {
       <Tile
         tone="bg-amber-50 text-amber-700"
         icon={<Sprout className="h-4 w-4" aria-hidden="true" />}
-        value={fertileNow ? "Now" : fw ? shortDate(fw.start) : "—"}
+        value={fertileNow ? "Now" : fw && fertileUpcoming ? shortDate(fw.start) : "—"}
         label={fertileNow ? "Fertile window" : "Next fertile"}
       />
       <Tile
         tone="bg-peach-100 text-peach-600"
         icon={<Sparkles className="h-4 w-4" aria-hidden="true" />}
-        value={insights.ovulationDate ? shortDate(insights.ovulationDate) : "—"}
+        value={insights.ovulationDate && ovulationUpcoming ? shortDate(insights.ovulationDate) : "—"}
         label="Ovulation"
       />
     </div>
