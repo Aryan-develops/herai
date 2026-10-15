@@ -195,7 +195,10 @@ try {
 
   // ---- payments (UI-only)
   const plans = await call(he.token, "GET", "/payments/plans");
-  check("plans list price, methods and unconnected providers", plans.status === 200 && plans.json.plan.priceInr === 100 && plans.json.methods.length >= 5 && plans.json.providers.every((p) => p.connected === false));
+  check("plans list price, methods and unconnected providers", plans.status === 200 && plans.json.methods.length >= 5 && plans.json.providers.every((p) => p.connected === false));
+  const month = plans.json.plans?.find((o) => o.period === "month");
+  const year = plans.json.plans?.find((o) => o.period === "year");
+  check("plans: Rs 99/month and Rs 899/year list prices, launch price never above list", month?.listInr === 99 && year?.listInr === 899 && month.payInr <= 99 && year.payInr <= 899 && month.payInr > 0 && year.payInr > 0);
   const co = await call(he.token, "POST", "/payments/checkout", { method: "upi_id", vpa: "rohan@okhdfc" });
   check("checkout reports not_connected (no charge)", co.status === 200 && co.json.status === "not_connected");
   const badVpa = await call(he.token, "POST", "/payments/checkout", { method: "upi_id", vpa: "nope" });
@@ -302,8 +305,8 @@ try {
   check("deleting an account removes its partner links", (linkBefore.data?.length ?? 0) > 0 && (linkAfter.data?.length ?? 0) === 0);
 } finally {
   for (const email of adminGrants) {
-    await admin.from("app_admins").delete().eq("email", email).catch(() => {});
-    await admin.from("admin_audit").delete().eq("admin_email", email).catch(() => {});
+    try { await admin.from("app_admins").delete().eq("email", email); } catch {}
+    try { await admin.from("admin_audit").delete().eq("admin_email", email); } catch {}
   }
   for (const id of created) await admin.auth.admin.deleteUser(id).catch(() => {});
   console.log(failures === 0 ? "\nALL PASSED" : `\n${failures} FAILED`);
