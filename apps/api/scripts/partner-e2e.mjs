@@ -1,7 +1,9 @@
 // Dev-only end-to-end check of Partner Mode + settings against a locally running API.
 // Usage: node scripts/partner-e2e.mjs
 import { createClient } from "@supabase/supabase-js";
+import crypto from "node:crypto";
 import dotenv from "dotenv";
+import { registerAndVerify } from "./_signup.mjs";
 dotenv.config({ path: "../../.env" });
 
 const API = process.env.API_URL ?? "http://localhost:4000/api";
@@ -29,14 +31,9 @@ async function call(token, method, path, body) {
 }
 
 async function signUp(email, name, dob = "1995-05-05", guardianEmail) {
-  const res = await fetch(API + "/auth/register", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ name, email, password: "testpass123", dateOfBirth: dob, guardianEmail }),
-  });
-  const j = await res.json();
-  await admin.from("profiles").update({ onboarding_complete: true }).eq("id", j.user.id);
-  return { id: j.user.id, token: j.session.accessToken, email };
+  const j = await registerAndVerify(API, admin, { name, email, password: "testpass123", dateOfBirth: dob, guardianEmail });
+  await admin.from("profiles").update({ onboarding_complete: true }).eq("id", j.id);
+  return { id: j.id, token: j.session.accessToken, email };
 }
 
 const stamp = Date.now();
@@ -176,6 +173,33 @@ try {
   check("partner follows more than one woman", women.status === 200 && women.json.women.length >= 2);
   const trial = women.json.subscription;
   check("14-day trial started at first link", trial.state === "trialing" && trial.daysLeft >= 13 && trial.hasAccess && trial.paywallOn === false);
+
+  // ---- email verification
+  const vEmail = `ver${stamp}@herai.test`;
+  const reg = await fetch(API + "/auth/register", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ name: "Verify Me", email: vEmail, password: "testpass123", dateOfBirth: "1995-05-05" }),
+  });
+  const regJson = await reg.json();
+  check("register asks for verification and returns no session", reg.status === 201 && regJson.needsVerification === true && !regJson.session);
+  const vUser = (await admin.auth.admin.listUsers({ page: 1, perPage: 200 })).data.users.find((u) => u.email === vEmail);
+  if (vUser) created.push(vUser.id);
+  const preLogin = await fetch(API + "/auth/login", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email: vEmail, password: "testpass123" }) });
+  const preJson = await preLogin.json();
+  check("login blocked until verified, with a machine-readable code", preLogin.status === 403 && preJson.code === "email_not_verified");
+  const resend = await fetch(API + "/auth/resend-verification", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email: vEmail }) });
+  const resendUnknown = await fetch(API + "/auth/resend-verification", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email: `nobody${stamp}@herai.test` }) });
+  check("resend answers the same for known and unknown emails", resend.status === 200 && resendUnknown.status === 200);
+  const badTok = await fetch(API + "/auth/verify-email", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ token: `${vUser?.id}.9999999999999.forged` }) });
+  check("forged verification token rejected", badTok.status === 400);
+  const expiresAt = Date.now() + 60_000;
+  const payload = `${vUser?.id}.${expiresAt}`;
+  const goodToken = `${payload}.${crypto.createHmac("sha256", process.env.EMAIL_VERIFY_SECRET ?? process.env.SUPABASE_SERVICE_ROLE_KEY).update(`verify-email:${payload}`).digest("base64url")}`;
+  const okTok = await fetch(API + "/auth/verify-email", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ token: goodToken }) });
+  check("valid verification token confirms the email", okTok.status === 200);
+  const postLogin = await fetch(API + "/auth/login", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email: vEmail, password: "testpass123" }) });
+  check("login works after verification", postLogin.status === 200 && !!(await postLogin.json()).session);
 
   // ---- minors cannot use partner features
   const minor = await signUp(`min${stamp}@herai.test`, "Young Person", new Date(Date.now() - 15 * 365.25 * 86400000).toISOString().slice(0, 10), `guardian${stamp}@herai.test`).catch(() => null);

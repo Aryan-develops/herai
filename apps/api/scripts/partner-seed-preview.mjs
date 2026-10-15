@@ -2,6 +2,7 @@
 // Usage: node scripts/partner-seed-preview.mjs [out.json]   (cleanup: node scripts/partner-seed-preview.mjs --clean out.json)
 import { createClient } from "@supabase/supabase-js";
 import dotenv from "dotenv";
+import { registerAndVerify } from "./_signup.mjs";
 import { readFileSync, writeFileSync } from "node:fs";
 dotenv.config({ path: "../../.env" });
 
@@ -16,14 +17,9 @@ if (process.argv[2] === "--clean") {
 }
 
 async function signUp(email, name) {
-  const res = await fetch(API + "/auth/register", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ name, email, password: "testpass123", dateOfBirth: "1995-05-05" }),
-  });
-  const j = await res.json();
-  await admin.from("profiles").update({ onboarding_complete: true }).eq("id", j.user.id);
-  return { id: j.user.id, email, token: j.session.accessToken };
+  const j = await registerAndVerify(API, admin, { name, email, password: "testpass123", dateOfBirth: "1995-05-05" });
+  await admin.from("profiles").update({ onboarding_complete: true }).eq("id", j.id);
+  return { id: j.id, email, token: j.session.accessToken };
 }
 
 const call = async (token, method, path, body) => {

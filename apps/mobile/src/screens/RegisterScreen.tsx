@@ -7,6 +7,7 @@ import { signInWithGoogle } from "../lib/googleAuth";
 import { GENDER_OPTIONS } from "../lib/gender";
 import { Button, Chip, ErrorText, Field } from "../components/ui";
 import { GoogleButton } from "../components/GoogleButton";
+import { VerifyEmailNotice } from "../components/VerifyEmailNotice";
 import { colors } from "../theme";
 import { isMinor, isValidDateString } from "../lib/age";
 import type { AuthStackParamList } from "../navigation/types";
@@ -24,6 +25,7 @@ export function RegisterScreen({ navigation }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [googleSubmitting, setGoogleSubmitting] = useState(false);
+  const [sentTo, setSentTo] = useState<string | null>(null);
 
   const minor = isValidDateString(dateOfBirth) && isMinor(dateOfBirth);
 
@@ -35,9 +37,8 @@ export function RegisterScreen({ navigation }: Props) {
     }
     setSubmitting(true);
     try {
-      // Consent status decides where RootNavigator sends them next — no
-      // explicit navigation call needed here, same pattern as web's Register.
-      await register({
+      // The account is locked until the emailed link is opened, so there is no session to navigate with yet.
+      const res = await register({
         name,
         email,
         password,
@@ -45,6 +46,7 @@ export function RegisterScreen({ navigation }: Props) {
         guardianEmail: minor ? guardianEmail : undefined,
         gender: gender ?? undefined,
       });
+      setSentTo(res.email);
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Something went wrong");
     } finally {
@@ -63,6 +65,21 @@ export function RegisterScreen({ navigation }: Props) {
     } finally {
       setGoogleSubmitting(false);
     }
+  }
+
+  if (sentTo) {
+    return (
+      <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+        <Text style={styles.title} accessibilityRole="header">
+          Check your email
+        </Text>
+        <Text style={styles.subtitle}>One more step to activate your account.</Text>
+        <View style={styles.form}>
+          <VerifyEmailNotice email={sentTo} />
+          <Button title="Go to log in" onPress={() => navigation.navigate("Login")} />
+        </View>
+      </ScrollView>
+    );
   }
 
   return (

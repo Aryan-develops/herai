@@ -4,6 +4,7 @@ import { createClient } from "@supabase/supabase-js";
 import dotenv from "dotenv";
 import { writeFileSync } from "node:fs";
 import { randomBytes } from "node:crypto";
+import { registerAndVerify } from "./_signup.mjs";
 dotenv.config({ path: "../../.env" });
 
 const API = process.env.API_URL ?? "http://localhost:4000/api";
@@ -16,12 +17,8 @@ if (cmd === "delete") {
   await admin.auth.admin.deleteUser(arg);
   console.log("deleted");
 } else {
-  const res = await fetch(API + "/auth/register", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ name: "Preview Tester", email: `preview${Date.now()}@herai.test`, password: randomBytes(12).toString("hex"), dateOfBirth: "1995-05-05" }),
-  });
-  const j = await res.json();
+  const reg = await registerAndVerify(API, admin, { name: "Preview Tester", email: `preview${Date.now()}@herai.test`, password: randomBytes(12).toString("hex"), dateOfBirth: "1995-05-05" });
+  const j = { user: { id: reg.id }, session: reg.session };
   await admin.from("profiles").update({ onboarding_complete: true }).eq("id", j.user.id);
   const auth = { "Content-Type": "application/json", Authorization: `Bearer ${j.session.accessToken}` };
   const day = (n) => new Date(Date.now() - n * 86400000).toISOString().slice(0, 10);

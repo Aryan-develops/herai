@@ -12,9 +12,12 @@ import { reportError } from "./errorReporting";
  */
 export class ApiError extends Error {
   status: number;
-  constructor(status: number, message: string) {
+  /** Machine-readable reason from the server, e.g. "email_not_verified". */
+  code?: string;
+  constructor(status: number, message: string, code?: string) {
     super(message);
     this.status = status;
+    this.code = code;
   }
 }
 
@@ -70,7 +73,7 @@ async function request<T>(path: string, options: RequestInit = {}, _retried = fa
     // request/response traffic the UI already handles — not a crash signal.
     // The path alone is reported, never the request body (health data).
     if (res.status >= 500) reportError(new Error(`API ${res.status}: ${path}`), { status: res.status, path });
-    throw new ApiError(res.status, body.error ?? "Something went wrong");
+    throw new ApiError(res.status, body.error ?? "Something went wrong", body.code);
   }
 
   if (res.status === 204) return undefined as T;
@@ -101,7 +104,7 @@ async function requestForm<T>(path: string, formData: FormData, _retried = false
   if (!res.ok) {
     const body = await res.json().catch(() => ({ error: res.statusText }));
     if (res.status >= 500) reportError(new Error(`API ${res.status}: ${path}`), { status: res.status, path });
-    throw new ApiError(res.status, body.error ?? "Something went wrong");
+    throw new ApiError(res.status, body.error ?? "Something went wrong", body.code);
   }
 
   return res.json() as Promise<T>;
@@ -528,13 +531,13 @@ export const api = {
     guardianName?: string;
     gender?: Gender;
   }) => {
-    const res = await request<{ user: AuthUser; session: Session }>("/auth/register", {
+    // No session yet: the account stays locked until the emailed link is opened (in the browser).
+    return request<{ needsVerification: true; email: string }>("/auth/register", {
       method: "POST",
       body: JSON.stringify(data),
     });
-    await setSession(res.session);
-    return res;
   },
+  resendVerification: (email: string) => request<{ sent: true }>("/auth/resend-verification", { method: "POST", body: JSON.stringify({ email }) }),
   login: async (data: { email: string; password: string }) => {
     const res = await request<{ user: AuthUser; session: Session }>("/auth/login", {
       method: "POST",

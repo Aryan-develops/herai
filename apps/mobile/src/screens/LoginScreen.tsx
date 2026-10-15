@@ -6,6 +6,7 @@ import { ApiError } from "../lib/api";
 import { signInWithGoogle } from "../lib/googleAuth";
 import { Button, ErrorText, Field } from "../components/ui";
 import { GoogleButton } from "../components/GoogleButton";
+import { VerifyEmailNotice } from "../components/VerifyEmailNotice";
 import { Ionicons } from "@expo/vector-icons";
 import { colors, radius } from "../theme";
 import type { AuthStackParamList } from "../navigation/types";
@@ -19,16 +20,19 @@ export function LoginScreen({ navigation }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [googleSubmitting, setGoogleSubmitting] = useState(false);
+  const [unverified, setUnverified] = useState(false);
 
   async function onSubmit() {
     setError(null);
+    setUnverified(false);
     setSubmitting(true);
     try {
       await login(email, password);
       // No navigation call needed — RootNavigator re-renders on auth state
       // change and swaps the whole stack, same as web's ProtectedRoute.
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Something went wrong");
+      if (err instanceof ApiError && err.code === "email_not_verified") setUnverified(true);
+      else setError(err instanceof ApiError ? err.message : "Something went wrong");
     } finally {
       setSubmitting(false);
     }
@@ -83,6 +87,7 @@ export function LoginScreen({ navigation }: Props) {
             onChangeText={setPassword}
           />
           <ErrorText>{error}</ErrorText>
+          {unverified ? <VerifyEmailNotice email={email} intro="Your email isn't confirmed yet. We sent a link to" /> : null}
           <Button title={submitting ? "Logging in…" : "Log in"} onPress={onSubmit} loading={submitting} />
         </View>
 

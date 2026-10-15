@@ -9,6 +9,7 @@ const ConsentPending = lazy(() => import("@/pages/ConsentPending").then((m) => (
 import { Landing } from "@/pages/Landing";
 import { Login } from "@/pages/Login";
 import { Register } from "@/pages/Register";
+const VerifyEmail = lazy(() => import("@/pages/VerifyEmail").then((m) => ({ default: m.VerifyEmail })));
 const OAuthCallback = lazy(() => import("@/pages/OAuthCallback").then((m) => ({ default: m.OAuthCallback })));
 const ConfirmDateOfBirth = lazy(() => import("@/pages/ConfirmDateOfBirth").then((m) => ({ default: m.ConfirmDateOfBirth })));
 const Onboarding = lazy(() => import("@/pages/Onboarding").then((m) => ({ default: m.Onboarding })));
@@ -72,6 +73,7 @@ function App() {
         <Route path="/" element={<Landing />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/verify-email" element={<VerifyEmail />} />
         <Route path="/privacy" element={<Privacy />} />
         <Route path="/legal" element={<Terms />} />
         <Route path="/terms" element={<Navigate to="/legal" replace />} />

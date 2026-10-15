@@ -3,15 +3,18 @@ import multer from "multer";
 
 export class HttpError extends Error {
   status: number;
-  constructor(status: number, message: string) {
+  /** Machine-readable reason clients can branch on, e.g. "email_not_verified". */
+  code?: string;
+  constructor(status: number, message: string, code?: string) {
     super(message);
     this.status = status;
+    this.code = code;
   }
 }
 
 export function errorHandler(err: unknown, _req: Request, res: Response, _next: NextFunction) {
   if (err instanceof HttpError) {
-    return res.status(err.status).json({ error: err.message });
+    return res.status(err.status).json({ error: err.message, ...(err.code ? { code: err.code } : {}) });
   }
   if (err instanceof multer.MulterError) {
     return res.status(400).json({ error: err.message });

@@ -12,6 +12,7 @@ import { Spinner } from "@/components/ui/spinner";
 import { PasswordInput } from "@/components/ui/password-input";
 import { AuthLayout } from "@/components/AuthLayout";
 import { GoogleButton } from "@/components/GoogleButton";
+import { VerifyEmailNotice } from "@/components/VerifyEmailNotice";
 
 export function Login() {
   const { login, refreshUser } = useAuth();
@@ -20,17 +21,23 @@ export function Login() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [unverified, setUnverified] = useState(false);
   const [passkeySubmitting, setPasskeySubmitting] = useState(false);
   const busy = submitting || passkeySubmitting;
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
     setError(null);
+    setUnverified(false);
     setSubmitting(true);
     try {
       await login(email, password);
       navigate("/dashboard");
     } catch (err) {
+      if (err instanceof ApiError && err.code === "email_not_verified") {
+        setUnverified(true);
+        return;
+      }
       setError(err instanceof ApiError ? err.message : "Something went wrong. Please try again.");
     } finally {
       setSubmitting(false);
@@ -102,6 +109,7 @@ export function Login() {
         </div>
 
         {error && <Alert tone="error">{error}</Alert>}
+        {unverified && <VerifyEmailNotice email={email} intro="Your email isn't confirmed yet. We sent a link to" />}
 
         <Button type="submit" size="lg" className="w-full" disabled={busy}>
           {submitting && <Spinner />}

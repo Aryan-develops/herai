@@ -2,9 +2,12 @@ import { clearSession, getSession, setSession, type Session } from "@/lib/sessio
 
 export class ApiError extends Error {
   status: number;
-  constructor(status: number, message: string) {
+  /** Machine-readable reason from the server, e.g. "email_not_verified". */
+  code?: string;
+  constructor(status: number, message: string, code?: string) {
     super(message);
     this.status = status;
+    this.code = code;
   }
 }
 
@@ -59,7 +62,7 @@ export async function request<T>(path: string, options: RequestInit = {}, _retri
 
   if (!res.ok) {
     const body = await res.json().catch(() => ({ error: res.statusText }));
-    throw new ApiError(res.status, body.error ?? "Something went wrong");
+    throw new ApiError(res.status, body.error ?? "Something went wrong", body.code);
   }
 
   if (res.status === 204) return undefined as T;
@@ -511,13 +514,14 @@ export const api = {
     guardianName?: string;
     gender?: Gender;
   }) => {
-    const res = await request<{ user: AuthUser; session: Session }>("/auth/register", {
+    // No session yet: the account stays locked until the emailed link is opened.
+    return request<{ needsVerification: true; email: string }>("/auth/register", {
       method: "POST",
       body: JSON.stringify(data),
     });
-    setSession(res.session);
-    return res;
   },
+  verifyEmail: (token: string) => request<{ verified: true }>("/auth/verify-email", { method: "POST", body: JSON.stringify({ token }) }),
+  resendVerification: (email: string) => request<{ sent: true }>("/auth/resend-verification", { method: "POST", body: JSON.stringify({ email }) }),
   login: async (data: { email: string; password: string }) => {
     const res = await request<{ user: AuthUser; session: Session }>("/auth/login", {
       method: "POST",

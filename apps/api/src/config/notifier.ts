@@ -36,6 +36,26 @@ export async function sendEmail(message: OutgoingEmail): Promise<boolean> {
   return true;
 }
 
+export async function sendVerificationEmail(args: { to: string; name?: string; verifyUrl: string }): Promise<void> {
+  const sent = await sendEmail({
+    to: args.to,
+    subject: "Confirm your email for Lunee",
+    text:
+      `Hi${args.name ? ` ${args.name}` : ""},
+
+` +
+      `Confirm your email to finish creating your Lunee account:
+
+${args.verifyUrl}
+
+` +
+      "This link works for 48 hours. If you didn't sign up, ignore this email and no account will be activated.",
+  });
+  if (sent) return;
+  if (env.isProduction) throw new Error("No email provider configured: cannot send the verification email.");
+  console.log(`[verify-email] ${args.to}: ${args.verifyUrl} (dev only, no email was sent)`);
+}
+
 export async function sendGuardianConsentEmail(message: GuardianConsentEmail): Promise<void> {
   const sent = await sendEmail({
     to: message.guardianEmail,

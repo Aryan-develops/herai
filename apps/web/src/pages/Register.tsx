@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { CalendarDays, Mail, User } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { ApiError, type Gender } from "@/lib/api";
@@ -15,10 +15,10 @@ import { PasswordInput } from "@/components/ui/password-input";
 import { AuthLayout } from "@/components/AuthLayout";
 import { GoogleButton } from "@/components/GoogleButton";
 import { MinorConsentNotice } from "@/components/MinorConsentNotice";
+import { VerifyEmailNotice } from "@/components/VerifyEmailNotice";
 
 export function Register() {
   const { register } = useAuth();
-  const navigate = useNavigate();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -27,6 +27,7 @@ export function Register() {
   const [guardianEmail, setGuardianEmail] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [sentTo, setSentTo] = useState<string | null>(null);
 
   const minor = dateOfBirth !== "" && isMinor(dateOfBirth);
 
@@ -35,7 +36,7 @@ export function Register() {
     setError(null);
     setSubmitting(true);
     try {
-      const user = await register({
+      const res = await register({
         name,
         email,
         password,
@@ -43,13 +44,26 @@ export function Register() {
         guardianEmail: minor ? guardianEmail : undefined,
         gender: gender || undefined,
       });
-      // A minor can't reach the app until a guardian approves.
-      navigate(user.consentStatus === "pending" ? "/consent-pending" : "/dashboard");
+      setSentTo(res.email);
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Something went wrong. Please try again.");
     } finally {
       setSubmitting(false);
     }
+  }
+
+  if (sentTo) {
+    return (
+      <AuthLayout title="Check your email" subtitle="One more step to activate your account.">
+        <VerifyEmailNotice email={sentTo} />
+        <p className="mt-7 text-center text-sm text-ink-700/75">
+          Already confirmed?{" "}
+          <Link to="/login" className="font-semibold text-brand-600 hover:underline">
+            Log in
+          </Link>
+        </p>
+      </AuthLayout>
+    );
   }
 
   return (

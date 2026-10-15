@@ -12,6 +12,7 @@ Status: master task run completed. Live at https://lunee.me (web + API on Vercel
 - Security: RLS on all tables, throttled invite codes, AI service rate limit, function hardening, first-party crash reporting
 - Docs: privacy, store data-safety, terms, compliance notes 10-13, provider vetting checklist, provider DPA template
 - Real app icon, splash and favicon
+- Email verification on sign-up: accounts stay locked until the emailed link (48h, signed, via Resend) is opened; login returns code `email_not_verified` with a resend option; web and mobile screens; test scripts confirm their users via the service role
 
 ## Needs the owner (cannot be done in code)
 0. **Done:** `CRON_SECRET`, `RESEND_API_KEY`, `EMAIL_FROM`, `CORS_ORIGIN`, `APP_BASE_URL` are set on the lunee-api Vercel project (it still serves the legacy alias herai-api.vercel.app, which `apps/web/vercel.json` proxies to; keep that alias until the rewrite is repointed). Still optional: `AI_SERVICE_URL` (+ `INTERNAL_API_TOKEN` on both Render and Vercel).

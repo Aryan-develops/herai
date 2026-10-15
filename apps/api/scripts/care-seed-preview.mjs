@@ -1,6 +1,7 @@
 // Dev-only: creates a patient (with a flagged report) and a provider owner for browser checks.
 import { createClient } from "@supabase/supabase-js";
 import dotenv from "dotenv";
+import { registerAndVerify } from "./_signup.mjs";
 import { writeFileSync } from "node:fs";
 dotenv.config({ path: "../../.env" });
 
@@ -8,10 +9,9 @@ const API = "http://localhost:4000/api";
 const admin = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY, { auth: { autoRefreshToken: false, persistSession: false } });
 
 async function signUp(email, name) {
-  const res = await fetch(API + "/auth/register", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name, email, password: "testpass123", dateOfBirth: "1995-05-05" }) });
-  const j = await res.json();
-  await admin.from("profiles").update({ onboarding_complete: true }).eq("id", j.user.id);
-  return { id: j.user.id, session: j.session };
+  const j = await registerAndVerify(API, admin, { name, email, password: "testpass123", dateOfBirth: "1995-05-05" });
+  await admin.from("profiles").update({ onboarding_complete: true }).eq("id", j.id);
+  return { id: j.id, session: j.session };
 }
 
 const stamp = Date.now();

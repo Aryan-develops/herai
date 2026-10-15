@@ -6,6 +6,9 @@ import { HttpError } from "../middleware/errorHandler.js";
 import type { AuthedRequest } from "../middleware/auth.js";
 import { env } from "../config/env.js";
 import { createConsentRequest } from "./consentController.js";
+import { sendVerificationEmail } from "../config/notifier.js";
+import { hitRateLimit } from "../lib/rateLimit.js";
+import { createVerificationToken, readVerificationToken } from "../utils/emailVerification.js";
 import { ageFromDateOfBirth, isMinor } from "../utils/consent.js";
 
 // Providers Supabase is actually configured for. Widening this needs a
@@ -116,7 +119,8 @@ export async function register(req: AuthedRequest, res: Response) {
   const { data: created, error: createError } = await supabaseAdmin.auth.admin.createUser({
     email,
     password,
-    email_confirm: true,
+    // Not confirmed until the emailed link is used, so nobody can claim an address they don't own.
+    email_confirm: false,
     user_metadata: { name },
   });
 
@@ -153,19 +157,63 @@ export async function register(req: AuthedRequest, res: Response) {
     });
   }
 
-  const { data: signIn, error: signInError } = await createAuthClient().auth.signInWithPassword({ email, password });
-  if (signInError || !signIn.session) {
-    throw new HttpError(500, "Account created but sign-in failed — please log in");
+  try {
+    await sendVerificationEmail({ to: email, name, verifyUrl: verifyUrlFor(created.user.id) });
+  } catch (err) {
+    // An account nobody can verify is a dead end, so undo the signup and let them retry.
+    console.error("[register] verification email failed:", err);
+    await supabaseAdmin.auth.admin.deleteUser(created.user.id).catch(() => {});
+    throw new HttpError(502, "We couldn't send the verification email. Please try again in a moment.");
   }
 
-  const user = await loadAuthPayload(created.user.id, email);
-  const session: SessionPayload = {
-    accessToken: signIn.session.access_token,
-    refreshToken: signIn.session.refresh_token,
-    expiresAt: signIn.session.expires_at ?? null,
-  };
+  res.status(201).json({ needsVerification: true, email });
+}
 
-  res.status(201).json({ user, session });
+function verifyUrlFor(userId: string): string {
+  return `${env.appBaseUrl}/verify-email?token=${encodeURIComponent(createVerificationToken(userId))}`;
+}
+
+/** Auth admin has no lookup by email, so scan the (small) user list. Only used by the rate-limited resend. */
+async function findUserByEmail(email: string) {
+  const target = email.toLowerCase();
+  for (let page = 1; page <= 20; page++) {
+    const { data, error } = await supabaseAdmin.auth.admin.listUsers({ page, perPage: 200 });
+    if (error) return null;
+    const hit = data.users.find((u) => u.email?.toLowerCase() === target);
+    if (hit) return hit;
+    if (data.users.length < 200) return null;
+  }
+  return null;
+}
+
+const verifyEmailSchema = z.object({ token: z.string().min(10).max(600) });
+
+export async function verifyEmail(req: AuthedRequest, res: Response) {
+  const parsed = verifyEmailSchema.safeParse(req.body);
+  const userId = parsed.success ? readVerificationToken(parsed.data.token) : null;
+  if (!userId) throw new HttpError(400, "This verification link is invalid or has expired. Request a new one.");
+  const { error } = await supabaseAdmin.auth.admin.updateUserById(userId, { email_confirm: true });
+  if (error) throw new HttpError(400, "This verification link is invalid or has expired. Request a new one.");
+  res.json({ verified: true });
+}
+
+const resendSchema = z.object({ email: z.string().email() });
+
+/** Always answers the same way, so it can't be used to learn which emails have accounts. */
+export async function resendVerification(req: AuthedRequest, res: Response) {
+  const parsed = resendSchema.safeParse(req.body);
+  if (!parsed.success) throw new HttpError(400, "Enter a valid email address");
+  const email = parsed.data.email.toLowerCase();
+  if (hitRateLimit(`verify-resend:${email}`, 3, 15 * 60 * 1000) || hitRateLimit(`verify-resend-ip:${req.ip}`, 20, 15 * 60 * 1000)) {
+    throw new HttpError(429, "Too many requests. Try again in a few minutes.");
+  }
+  const user = await findUserByEmail(email);
+  if (user && !user.email_confirmed_at) {
+    await sendVerificationEmail({ to: email, name: user.user_metadata?.name as string | undefined, verifyUrl: verifyUrlFor(user.id) }).catch((err) =>
+      console.error("[resend-verification] failed:", err),
+    );
+  }
+  res.json({ sent: true });
 }
 
 export async function login(req: AuthedRequest, res: Response) {
@@ -176,6 +224,9 @@ export async function login(req: AuthedRequest, res: Response) {
   const { email, password } = parsed.data;
 
   const { data, error } = await createAuthClient().auth.signInWithPassword({ email, password });
+  if (error?.code === "email_not_confirmed") {
+    throw new HttpError(403, "Please confirm your email first. Check your inbox for the verification link.", "email_not_verified");
+  }
   if (error || !data.session || !data.user) {
     throw new HttpError(401, "Invalid email or password");
   }

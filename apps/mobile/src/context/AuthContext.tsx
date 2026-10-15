@@ -14,7 +14,7 @@ interface AuthContextValue {
     guardianEmail?: string;
     guardianName?: string;
     gender?: Gender;
-  }) => Promise<AuthUser>;
+  }) => Promise<{ needsVerification: true; email: string }>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
 }
@@ -56,9 +56,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return user;
     },
     async register(data) {
-      const { user } = await api.register(data);
-      setUser(user);
-      return user;
+      return api.register(data);
     },
     async logout() {
       await api.logout();

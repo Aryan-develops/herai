@@ -7,8 +7,10 @@ import {
   oauthStart,
   refresh,
   register,
+  resendVerification,
   setGender,
   submitDateOfBirth,
+  verifyEmail,
 } from "../controllers/authController.js";
 import { requireAuth } from "../middleware/auth.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
@@ -17,6 +19,8 @@ export const authRouter = Router();
 
 authRouter.post("/register", asyncHandler(register));
 authRouter.post("/login", asyncHandler(login));
+authRouter.post("/verify-email", asyncHandler(verifyEmail));
+authRouter.post("/resend-verification", asyncHandler(resendVerification));
 authRouter.post("/refresh", asyncHandler(refresh));
 authRouter.post("/logout", asyncHandler(logout));
 authRouter.get("/me", requireAuth, asyncHandler(me));
