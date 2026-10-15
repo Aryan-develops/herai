@@ -20,7 +20,7 @@ export class ApiError extends Error {
 
 let refreshInFlight: Promise<boolean> | null = null;
 
-async function tryRefresh(): Promise<boolean> {
+export async function tryRefresh(): Promise<boolean> {
   const session = await getSession();
   if (!session) return false;
   if (!refreshInFlight) {

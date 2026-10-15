@@ -1,6 +1,16 @@
 /** Thrown when the stream goes silent for longer than the idle timeout —
  * distinct from a normal network/HTTP error so the UI can show a specific
  * "the AI service stopped responding" message instead of a generic one. */
+/** Non-2xx response before any event arrived. Carries the status so callers can react (e.g. refresh on 401). */
+export class StreamHttpError extends Error {
+  status: number;
+  constructor(status: number) {
+    super(`AI service error (${status})`);
+    this.name = "StreamHttpError";
+    this.status = status;
+  }
+}
+
 export class StreamTimeoutError extends Error {
   constructor(message = "The AI service stopped responding. Please try again.") {
     super(message);
@@ -45,7 +55,7 @@ export async function streamSSE(
     const res = await fetch(input, { ...init, signal: controller.signal });
 
     if (!res.ok || !res.body) {
-      throw new Error(`AI service error (${res.status})`);
+      throw new StreamHttpError(res.status);
     }
 
     const reader = res.body.getReader();

@@ -13,7 +13,7 @@ let refreshInFlight: Promise<boolean> | null = null;
 // Bearer-token auth (no cookies — mobile has none). On a 401 from an expired
 // access token, try the refresh token once before giving up, so a session
 // doesn't die mid-use just because the 1hr access token expired.
-async function tryRefresh(): Promise<boolean> {
+export async function tryRefresh(): Promise<boolean> {
   const session = getSession();
   if (!session) return false;
   if (!refreshInFlight) {

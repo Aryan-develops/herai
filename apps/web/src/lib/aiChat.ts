@@ -1,6 +1,7 @@
 import type { HealthProfile } from "@/lib/api";
 import { getSession } from "@/lib/session";
-import { streamSSE } from "@/lib/sse";
+import { tryRefresh } from "@/lib/api";
+import { StreamHttpError, streamSSE } from "@/lib/sse";
 
 export interface AgentStepEvent {
   type: "agent_step";
@@ -137,13 +138,22 @@ export async function streamChat(
   onEvent: (event: PipelineEvent) => void,
   signal?: AbortSignal
 ): Promise<void> {
-  const session = getSession();
-  const headers: Record<string, string> = { "Content-Type": "application/json" };
-  if (session) headers.Authorization = `Bearer ${session.accessToken}`;
-  await streamSSE(
-    "/api/ai/chat/stream",
-    { method: "POST", headers, body: JSON.stringify(payload) },
-    (data) => onEvent(data as PipelineEvent),
-    { signal, idleTimeoutMs: 45000 }
-  );
+  const attempt = () => {
+    const session = getSession();
+    const headers: Record<string, string> = { "Content-Type": "application/json" };
+    if (session) headers.Authorization = `Bearer ${session.accessToken}`;
+    return streamSSE(
+      "/api/ai/chat/stream",
+      { method: "POST", headers, body: JSON.stringify(payload) },
+      (data) => onEvent(data as PipelineEvent),
+      { signal, idleTimeoutMs: 45000 }
+    );
+  };
+  try {
+    await attempt();
+  } catch (err) {
+    // The 1h access token may have expired mid-use; a 401 arrives before any event, so retrying once is safe.
+    if (err instanceof StreamHttpError && err.status === 401 && (await tryRefresh())) return attempt();
+    throw err;
+  }
 }

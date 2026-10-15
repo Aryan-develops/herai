@@ -1,6 +1,6 @@
-import type { HealthProfile } from "./api";
+import { tryRefresh, type HealthProfile } from "./api";
 import { getSession } from "./session";
-import { streamSSE } from "./sse";
+import { StreamHttpError, streamSSE } from "./sse";
 import { API_URL } from "../config";
 
 /** Ported from apps/web/src/lib/aiChat.ts — identical event/result shapes.
@@ -141,13 +141,22 @@ export async function streamChat(
   onEvent: (event: PipelineEvent) => void,
   signal?: AbortSignal
 ): Promise<void> {
-  const session = await getSession();
-  const headers: Record<string, string> = { "Content-Type": "application/json" };
-  if (session) headers.Authorization = `Bearer ${session.accessToken}`;
-  await streamSSE(
-    `${API_URL}/ai/chat/stream`,
-    { method: "POST", headers, body: JSON.stringify(payload) },
-    (data) => onEvent(data as PipelineEvent),
-    { signal, idleTimeoutMs: 45000 }
-  );
+  const attempt = async () => {
+    const session = await getSession();
+    const headers: Record<string, string> = { "Content-Type": "application/json" };
+    if (session) headers.Authorization = `Bearer ${session.accessToken}`;
+    return streamSSE(
+      `${API_URL}/ai/chat/stream`,
+      { method: "POST", headers, body: JSON.stringify(payload) },
+      (data) => onEvent(data as PipelineEvent),
+      { signal, idleTimeoutMs: 45000 }
+    );
+  };
+  try {
+    await attempt();
+  } catch (err) {
+    // The 1h access token may have expired mid-use; a 401 arrives before any event, so retrying once is safe.
+    if (err instanceof StreamHttpError && err.status === 401 && (await tryRefresh())) return attempt();
+    throw err;
+  }
 }
