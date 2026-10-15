@@ -16,8 +16,8 @@ Status: master task run completed. Live at https://lunee.me (web + API on Vercel
 ## Needs the owner (cannot be done in code)
 0. **Done:** `CRON_SECRET`, `RESEND_API_KEY`, `EMAIL_FROM`, `CORS_ORIGIN`, `APP_BASE_URL` are set on the lunee-api Vercel project (it still serves the legacy alias herai-api.vercel.app, which `apps/web/vercel.json` proxies to; keep that alias until the rewrite is repointed). Still optional: `AI_SERVICE_URL` (+ `INTERNAL_API_TOKEN` on both Render and Vercel).
 1. **(Old note) Vercel env vars on the lunee-api project:** `CRON_SECRET` (any long random string) so the 09:00 IST support note runs; `RESEND_API_KEY` and `EMAIL_FROM` (verified domain) for guardian-consent and invite emails; optional `AI_SERVICE_URL` (+ `INTERNAL_API_TOKEN` on both Render and Vercel) to let the AI reword partner tips.
-2. **Supabase dashboard:** turn on "Leaked password protection" (Auth > Passwords).
-3. **Payments:** pick a provider account (Razorpay recommended), then implement its adapter in `apps/api/src/payments/providers.ts` and set `PARTNER_PAYWALL=true`.
+2. **Supabase:** leaked-password protection is Pro-plan only; until then password rules are min length 8 + letters and digits (set 2026-10-15).
+3. **Payments:** Razorpay adapter is built (hosted Payment Links, signed webhook at `/api/payments/webhook/razorpay` extends the plan 30 days, retries are no-ops). It stays off until you create a Razorpay account and set `RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET`, `RAZORPAY_WEBHOOK_SECRET` on the lunee-api Vercel project, add the webhook in the Razorpay dashboard (event `payment_link.paid`), test in test mode, then set `PARTNER_PAYWALL=true`. AutoPay needs Razorpay Subscriptions and is not wired.
 4. **Legal:** lawyer review of PRIVACY, TERMS and the provider DPA; confirm the India helpline numbers; DPDP verifiable parental consent standard.
 5. **Providers:** vet with `docs/PROVIDER-VETTING.md`, then `node scripts/approve-provider.mjs`.
 6. **Native builds:** real passkeys and Face ID prompts in the phone app need an EAS/dev build, not Expo Go; app-store listings and screenshots.

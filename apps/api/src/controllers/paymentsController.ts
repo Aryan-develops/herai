@@ -173,7 +173,42 @@ export async function redeemGift(req: AuthedRequest, res: Response) {
   res.json({ months: gift.months, subscription: await getSubscription(req.userId!) });
 }
 
-/** Providers post here once connected. Until then there is nothing to verify, so it says so. */
-export async function webhook(_req: AuthedRequest, res: Response) {
-  res.status(501).json({ error: "Payments are not connected yet" });
+/** Providers post here. The signature is verified over the raw body; a paid event extends the partner plan by one period. */
+export async function webhook(req: AuthedRequest, res: Response) {
+  const provider = PROVIDERS.find((p) => p.id === req.params.provider);
+  if (!provider || !provider.connected) return res.status(501).json({ error: "Payments are not connected yet" });
+
+  const rawBody = (req as unknown as { rawBody?: string }).rawBody ?? "";
+  const event = await provider.verifyWebhook(req.headers as Record<string, unknown>, rawBody).catch(() => null);
+  if (!event) return res.status(400).json({ error: "Invalid signature" });
+
+  // Only a completed payment for the full price changes anything; other events are acknowledged and ignored.
+  if (event.type !== "payment_link.paid" || !event.userId || !event.paymentRef || (event.paidInr ?? 0) < env.partnerPriceInr) {
+    return res.json({ received: true });
+  }
+
+  await ensureTrial(event.userId);
+  const { data: sub } = await supabaseAdmin
+    .from("partner_subscriptions")
+    .select("current_period_end, provider_ref")
+    .eq("partner_id", event.userId)
+    .single();
+  // Providers retry deliveries; the last applied payment id makes a retry a no-op.
+  if (sub?.provider_ref === event.paymentRef) return res.json({ received: true, duplicate: true });
+
+  const now = Date.now();
+  const base = Math.max(now, sub?.current_period_end ? new Date(sub.current_period_end).getTime() : 0);
+  const { error } = await supabaseAdmin
+    .from("partner_subscriptions")
+    .update({
+      status: "active",
+      provider: provider.id,
+      provider_ref: event.paymentRef,
+      current_period_end: new Date(base + 30 * DAY_MS).toISOString(),
+      updated_at: new Date(now).toISOString(),
+    })
+    .eq("partner_id", event.userId);
+  // 500 makes the provider retry rather than dropping a payment we failed to record.
+  if (error) throw new HttpError(500, "Could not record payment");
+  res.json({ received: true });
 }

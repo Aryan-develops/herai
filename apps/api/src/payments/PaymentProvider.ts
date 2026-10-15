@@ -25,6 +25,14 @@ export interface CheckoutResult {
   providerRef?: string;
 }
 
+export interface WebhookEvent {
+  eventId: string;
+  type: string;
+  userId?: string;
+  paymentRef?: string;
+  paidInr?: number;
+}
+
 export interface PaymentProvider {
   id: string;
   label: string;
@@ -33,7 +41,8 @@ export interface PaymentProvider {
   methods: PaymentMethodId[];
   supportsAutopay: boolean;
   createCheckout(input: CheckoutInput): Promise<CheckoutResult>;
-  verifyWebhook(headers: Record<string, unknown>, rawBody: string): Promise<{ eventId: string; type: string } | null>;
+  /** Returns null when the signature doesn't verify. `userId`/`paymentRef`/`paidInr` are set for completed payments. */
+  verifyWebhook(headers: Record<string, unknown>, rawBody: string): Promise<WebhookEvent | null>;
   cancelSubscription(providerRef: string): Promise<void>;
   refund(providerRef: string, amountInr: number): Promise<void>;
 }

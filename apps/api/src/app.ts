@@ -37,7 +37,14 @@ export function createApp() {
       },
     })
   );
-  app.use(express.json());
+  // Keep the raw body for payment webhooks: signatures are computed over the exact bytes sent.
+  app.use(
+    express.json({
+      verify: (req, _res, buf) => {
+        (req as unknown as { rawBody?: string }).rawBody = buf.toString("utf8");
+      },
+    }),
+  );
 
   app.get("/api/health", (_req, res) => {
     res.json({ status: "ok", demoMode: env.demoMode });
