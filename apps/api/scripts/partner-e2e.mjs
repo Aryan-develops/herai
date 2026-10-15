@@ -44,6 +44,8 @@ const she = await signUp(`she${stamp}@herai.test`, "Priya Sharma");
 const he = await signUp(`he${stamp}@herai.test`, "Rohan Mehta");
 const other = await signUp(`oth${stamp}@herai.test`, "Kabir Other");
 const created = [she.id, he.id, other.id];
+// Admin grants are tracked so a crashed run can't leave an admin row behind (admin access is matched by email).
+const adminGrants = [];
 
 try {
   // Give her a cycle so guidance has a phase, plus private data that must never reach him.
@@ -278,6 +280,7 @@ try {
   check("non-admin gets 404 on admin", na.status === 404);
   const meNa = await call(she.token, "GET", "/auth/me");
   check("non-admin isAdmin false", meNa.json.user.isAdmin === false);
+  adminGrants.push(other.email.toLowerCase());
   await admin.from("app_admins").insert({ email: other.email.toLowerCase() });
   await new Promise((r) => setTimeout(r, 100));
   const ov = await call(other.token, "GET", "/admin/overview");
@@ -298,6 +301,10 @@ try {
   created.splice(created.indexOf(he.id), 1);
   check("deleting an account removes its partner links", (linkBefore.data?.length ?? 0) > 0 && (linkAfter.data?.length ?? 0) === 0);
 } finally {
+  for (const email of adminGrants) {
+    await admin.from("app_admins").delete().eq("email", email).catch(() => {});
+    await admin.from("admin_audit").delete().eq("admin_email", email).catch(() => {});
+  }
   for (const id of created) await admin.auth.admin.deleteUser(id).catch(() => {});
   console.log(failures === 0 ? "\nALL PASSED" : `\n${failures} FAILED`);
   process.exit(failures === 0 ? 0 : 1);
