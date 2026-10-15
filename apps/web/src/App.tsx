@@ -1,5 +1,5 @@
 import { Suspense, lazy, useEffect } from "react";
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/context/AuthContext";
 import { ToastProvider } from "@/components/ui/toast";
 import { PrefsProvider } from "@/context/PrefsContext";
@@ -74,6 +74,7 @@ function App() {
         <Route path="/register" element={<Register />} />
         <Route path="/privacy" element={<Privacy />} />
         <Route path="/legal" element={<Terms />} />
+        <Route path="/terms" element={<Navigate to="/legal" replace />} />
         {/* Guardian-facing: reached from an emailed link, no account needed. */}
         <Route path="/consent/:token" element={<GuardianConsent />} />
         {/* Creates the session itself (Supabase OAuth code exchange) — must sit
@@ -110,6 +111,7 @@ function App() {
             </Route>
           </Route>
         </Route>
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
       </Suspense>
       </ToastProvider>

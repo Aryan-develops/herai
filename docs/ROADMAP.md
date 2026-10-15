@@ -14,8 +14,8 @@ Status: master task run completed. Live at https://lunee.me (web + API on Vercel
 - Real app icon, splash and favicon
 
 ## Needs the owner (cannot be done in code)
-0. **Done:** `CRON_SECRET`, `RESEND_API_KEY`, `EMAIL_FROM`, `CORS_ORIGIN`, `APP_BASE_URL` are set on the herai-api Vercel project. Still optional: `AI_SERVICE_URL` (+ `INTERNAL_API_TOKEN` on both Render and Vercel).
-1. **(Old note) Vercel env vars on the herai-api project:** `CRON_SECRET` (any long random string) so the 09:00 IST support note runs; `RESEND_API_KEY` and `EMAIL_FROM` (verified domain) for guardian-consent and invite emails; optional `AI_SERVICE_URL` (+ `INTERNAL_API_TOKEN` on both Render and Vercel) to let the AI reword partner tips.
+0. **Done:** `CRON_SECRET`, `RESEND_API_KEY`, `EMAIL_FROM`, `CORS_ORIGIN`, `APP_BASE_URL` are set on the lunee-api Vercel project (it still serves the legacy alias herai-api.vercel.app, which `apps/web/vercel.json` proxies to; keep that alias until the rewrite is repointed). Still optional: `AI_SERVICE_URL` (+ `INTERNAL_API_TOKEN` on both Render and Vercel).
+1. **(Old note) Vercel env vars on the lunee-api project:** `CRON_SECRET` (any long random string) so the 09:00 IST support note runs; `RESEND_API_KEY` and `EMAIL_FROM` (verified domain) for guardian-consent and invite emails; optional `AI_SERVICE_URL` (+ `INTERNAL_API_TOKEN` on both Render and Vercel) to let the AI reword partner tips.
 2. **Supabase dashboard:** turn on "Leaked password protection" (Auth > Passwords).
 3. **Payments:** pick a provider account (Razorpay recommended), then implement its adapter in `apps/api/src/payments/providers.ts` and set `PARTNER_PAYWALL=true`.
 4. **Legal:** lawyer review of PRIVACY, TERMS and the provider DPA; confirm the India helpline numbers; DPDP verifiable parental consent standard.
