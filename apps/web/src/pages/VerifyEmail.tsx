@@ -5,6 +5,10 @@ import { Alert } from "@/components/ui/alert";
 import { Spinner } from "@/components/ui/spinner";
 import { api, ApiError } from "@/lib/api";
 
+// On a phone the app may be installed; the browser confirms the email and this button hands the user back to it.
+// (Full in-app verification via App Links / Universal Links is a planned follow-up.)
+const IS_MOBILE = typeof navigator !== "undefined" && /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+
 /** Landing page for the emailed confirmation link. */
 export function VerifyEmail() {
   const [params] = useSearchParams();
@@ -33,6 +37,14 @@ export function VerifyEmail() {
       {state === "done" && (
         <div className="space-y-4 text-center">
           <p className="text-ink-700">Thanks. Log in to start using Lunee.</p>
+          {IS_MOBILE && (
+            <a
+              href="lunee://login"
+              className="inline-flex h-12 w-full items-center justify-center rounded-full border border-brand-600 px-6 font-semibold text-brand-700 hover:bg-brand-50"
+            >
+              Open the Lunee app
+            </a>
+          )}
           <Link
             to="/login"
             className="inline-flex h-12 w-full items-center justify-center rounded-full bg-brand-600 px-6 font-semibold text-white hover:bg-brand-700"

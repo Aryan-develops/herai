@@ -173,17 +173,11 @@ function verifyUrlFor(userId: string): string {
   return `${env.appBaseUrl}/verify-email?token=${encodeURIComponent(createVerificationToken(userId))}`;
 }
 
-/** Auth admin has no lookup by email, so scan the (small) user list. Only used by the rate-limited resend. */
-async function findUserByEmail(email: string) {
-  const target = email.toLowerCase();
-  for (let page = 1; page <= 20; page++) {
-    const { data, error } = await supabaseAdmin.auth.admin.listUsers({ page, perPage: 200 });
-    if (error) return null;
-    const hit = data.users.find((u) => u.email?.toLowerCase() === target);
-    if (hit) return hit;
-    if (data.users.length < 200) return null;
-  }
-  return null;
+/** Indexed lookup through a service-role-only database function (migration auth_user_lookup_by_email). */
+async function findUserByEmail(email: string): Promise<{ id: string; confirmed: boolean; name: string | null } | null> {
+  const { data, error } = await supabaseAdmin.rpc("auth_user_by_email", { p_email: email });
+  if (error || !Array.isArray(data) || data.length === 0) return null;
+  return data[0] as { id: string; confirmed: boolean; name: string | null };
 }
 
 const verifyEmailSchema = z.object({ token: z.string().min(10).max(600) });
@@ -208,8 +202,8 @@ export async function resendVerification(req: AuthedRequest, res: Response) {
     throw new HttpError(429, "Too many requests. Try again in a few minutes.");
   }
   const user = await findUserByEmail(email);
-  if (user && !user.email_confirmed_at) {
-    await sendVerificationEmail({ to: email, name: user.user_metadata?.name as string | undefined, verifyUrl: verifyUrlFor(user.id) }).catch((err) =>
+  if (user && !user.confirmed) {
+    await sendVerificationEmail({ to: email, name: user.name ?? undefined, verifyUrl: verifyUrlFor(user.id) }).catch((err) =>
       console.error("[resend-verification] failed:", err),
     );
   }
